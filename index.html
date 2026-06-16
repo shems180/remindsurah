@@ -160,7 +160,7 @@
             let query = document.getElementById('searchInput').value.trim();
             if (!query) return;
             
-            mainContent.innerHTML = `<div class="py-20 text-emerald-500 animate-pulse text-xl">Recherche et synchronisation Tajweed...</div>`;
+            mainContent.innerHTML = `<div class="py-20 text-emerald-500 animate-pulse text-xl">Recherche et synchronisation des textes...</div>`;
             
             const isQueryArabic = isArabic(query);
             if (!isQueryArabic) {
@@ -185,39 +185,41 @@
         async function fetchAndDisplayEnrichedResults(searchResults) {
             let htmlBuffer = `<h2 class="text-2xl font-bold mb-8 text-emerald-500">${searchResults.length} occurrences trouvées</h2>`;
             
-            // Résout toutes les requêtes de détails en parallèle pour éviter les blocages asynchrones
-            const promises = searchResults.map(item => 
-                fetch(`https://api.quran.com/api/v4/verses/by_key/${item.verse_key}?language=fr&translations=31&fields=text_tajweed`)
-                .then(res => res.json())
-                .catch(() => null)
-            );
+            // Requête séquentielle sécurisée pour éviter les refus de l'API Quran.com
+            for (const item of searchResults) {
+                try {
+                    // On demande à la fois le texte Tajweed ET le texte brut Uthmani en secours pour pallier toute panne de l'API
+                    const res = await fetch(`https://api.quran.com/api/v4/verses/by_key/${item.verse_key}?language=fr&translations=31&fields=text_tajweed,text_uthmani`);
+                    const detailData = await res.json();
+                    
+                    if (detailData && detailData.verse) {
+                        const verse = detailData.verse;
+                        const textFr = verse.translations && verse.translations[0] ? verse.translations[0].text.replace(/<[^>]*>/g, '') : 'Traduction indisponible';
+                        
+                        // Sécurité absolue : si le Tajweed fait défaut, charge la police Uthmani pure. L'arabe ne sera plus jamais absent.
+                        const textArDisplay = verse.text_tajweed || verse.text_uthmani || 'Texte arabe indisponible';
 
-            const detailsResults = await Promise.all(promises);
-
-            detailsResults.forEach(detailData => {
-                if (detailData && detailData.verse) {
-                    const verse = detailData.verse;
-                    const textFr = verse.translations && verse.translations[0] ? verse.translations[0].text.replace(/<[^>]*>/g, '') : 'Traduction indisponible';
-                    const textArTajweed = verse.text_tajweed || 'Texte arabe indisponible';
-
-                    htmlBuffer += `
-                        <div class="glass-card p-6 mb-6 border-l-4 border-emerald-500 text-center space-y-6">
-                            <p class="text-zinc-400 text-xs text-left uppercase font-bold tracking-wider">Référence : Verset ${verse.verse_key}</p>
-                            
-                            <div class="quran-container">
-                                <p class="quran-arabic text-zinc-100" dir="rtl">${textArTajweed}</p>
-                            </div>
-                            
-                            <div class="h-px w-12 bg-emerald-500/20 mx-auto"></div>
-                            
-                            <p class="text-left italic text-zinc-200 text-base md:text-lg leading-relaxed" dir="ltr">"${textFr}"</p>
-                            
-                            <div class="text-left pt-2">
-                                <button onclick="goToVerse('${verse.verse_key}')" class="text-emerald-500 font-bold text-sm hover:text-emerald-300 transition italic tracking-wide">ACCÉDER AU MODE IMMERSIF AVEC AUDIO →</button>
-                            </div>
-                        </div>`;
+                        htmlBuffer += `
+                            <div class="glass-card p-6 mb-6 border-l-4 border-emerald-500 text-center space-y-6">
+                                <p class="text-zinc-400 text-xs text-left uppercase font-bold tracking-wider">Référence : Verset ${verse.verse_key}</p>
+                                
+                                <div class="quran-container">
+                                    <p class="quran-arabic text-zinc-100" dir="rtl">${textArDisplay}</p>
+                                </div>
+                                
+                                <div class="h-px w-12 bg-emerald-500/20 mx-auto"></div>
+                                
+                                <p class="text-left italic text-zinc-200 text-base md:text-lg leading-relaxed" dir="ltr">"${textFr}"</p>
+                                
+                                <div class="text-left pt-2">
+                                    <button onclick="goToVerse('${verse.verse_key}')" class="text-emerald-500 font-bold text-sm hover:text-emerald-300 transition italic tracking-wide">ACCÉDER AU MODE IMMERSIF AVEC AUDIO →</button>
+                                </div>
+                            </div>`;
+                    }
+                } catch (err) {
+                    console.error(`Erreur sur le verset ${item.verse_key}`, err);
                 }
-            });
+            }
 
             mainContent.innerHTML = htmlBuffer;
         }
@@ -244,7 +246,7 @@
             mainContent.innerHTML = `<div class="py-20 text-emerald-500 animate-bounce text-xl font-bold uppercase">Génération du flux...</div>`;
             try {
                 const [vR, aR] = await Promise.all([
-                    fetch(`https://api.quran.com/api/v4/verses/by_chapter/${sid}?language=fr&translations=31&fields=text_tajweed&per_page=300`),
+                    fetch(`https://api.quran.com/api/v4/verses/by_chapter/${sid}?language=fr&translations=31&fields=text_tajweed,text_uthmani&per_page=300`),
                     fetch(`https://api.quran.com/api/v4/chapter_recitations/${rid}/${sid}`)
                 ]);
                 const vD = await vR.json();
@@ -264,7 +266,7 @@
 
             verses.forEach((v, i) => {
                 const textFr = v.translations[0].text.replace(/<[^>]*>/g, '');
-                const textArTajweed = v.text_tajweed; 
+                const textArDisplay = v.text_tajweed || v.text_uthmani; 
                 const dynamicImg = getThemeImage(textFr);
 
                 mainContent.innerHTML += `
@@ -276,7 +278,7 @@
                         </div>
                         <div class="p-8 md:p-14 space-y-10">
                             <div class="quran-container">
-                                <p class="quran-arabic text-zinc-100" dir="rtl">${textArTajweed}</p>
+                                <p class="quran-arabic text-zinc-100" dir="rtl">${textArDisplay}</p>
                             </div>
                             <div class="h-px w-20 bg-emerald-500/30 mx-auto"></div>
                             <p class="text-zinc-300 text-xl md:text-2xl font-light italic leading-relaxed">"${textFr}"</p>
