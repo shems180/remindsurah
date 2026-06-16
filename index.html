@@ -25,29 +25,21 @@
             filter: drop-shadow(0 2px 4px rgba(0,0,0,0.5));
         }
 
-        /* --- STYLISATION DOULOUREUSEMENT CORRIGÉE POUR LE TAJWEED --- */
-        .quran-arabic span, .quran-arabic font {
-            display: inline !important;
-            font-family: inherit !important;
-        }
+        /* --- CLASSIFICATION DU TAJWEED PAR RECONNAISSANCE DES BALISES --- */
+        .quran-arabic span, .quran-arabic font { display: inline !important; font-family: inherit !important; }
         
-        /* Code Couleur Officiel du Mushaf Tajweed Majeed */
-        .tajweed-madd, .tajweed-ghunnah, [style*="color:#FF0000"], [style*="color:red"], [style*="color: #ff"] { 
-            color: #ff4444 !important; 
-            font-weight: 700 !important; 
-        }
-        .tajweed-ikhfa, .tajweed-idgham, [style*="color:#00A859"], [style*="color:green"], [style*="color: #00"] { 
-            color: #10b981 !important; 
-            font-weight: 700 !important; 
-        }
-        .tajweed-qalqalah, [style*="color:#00AEEF"], [style*="color:blue"], [style*="color: #21"] { 
-            color: #3b82f6 !important; 
-            font-weight: 700 !important; 
-        }
-        .tajweed-silent, [style*="color:#939598"], [style*="color:gray"], [style*="opacity"] { 
-            color: #6b7280 !important; 
-            opacity: 0.5 !important; 
-        }
+        /* Prolongations (Mad) et Ghunnah -> Rouge/Orange */
+        .quran-arabic [style*="color:#FF0000"], .quran-arabic [style*="color:red"], .quran-arabic .m { color: #ff4444 !important; font-weight: 700; }
+        .quran-arabic [style*="color:#E67E22"], .quran-arabic [style*="color:orange"], .quran-arabic .g { color: #f59e0b !important; font-weight: 700; }
+        
+        /* Ikhfa et Idgham -> Vert */
+        .quran-arabic [style*="color:#27AE60"], .quran-arabic [style*="color:green"], .quran-arabic .i { color: #10b981 !important; font-weight: 700; }
+        
+        /* Qalqalah -> Bleu */
+        .quran-arabic [style*="color:#2980B9"], .quran-arabic [style*="color:blue"], .quran-arabic .q { color: #3b82f6 !important; font-weight: 700; }
+        
+        /* Lettres Muettes / Assimilées -> Gris */
+        .quran-arabic [style*="color:#7F8C8D"], .quran-arabic [style*="color:gray"], .quran-arabic .s { color: #6b7280 !important; opacity: 0.5; }
 
         .glass-card { 
             background: rgba(255, 255, 255, 0.02); 
@@ -76,10 +68,6 @@
                     </button>
                 </div>
                 <select id="surahSelect" class="bg-zinc-900 border border-zinc-700 px-3 py-2 rounded-xl text-xs outline-none w-32 md:w-40"></select>
-                <select id="reciterSelect" class="bg-zinc-900 border border-zinc-700 px-3 py-2 rounded-xl text-xs outline-none">
-                    <option value="7">Mishary Alafasy</option>
-                    <option value="3">Abdur-Rahman as-Sudais</option>
-                </select>
                 <button onclick="loadSurah()" class="bg-emerald-600 hover:bg-emerald-400 text-black font-bold px-6 py-2 rounded-xl transition-all">Explorer</button>
             </div>
         </div>
@@ -87,8 +75,8 @@
 
     <main id="main-content" class="max-w-4xl mx-auto p-4 md:p-8 mt-6 space-y-12 text-center">
         <div id="welcome-screen" class="py-24 space-y-8">
-            <h2 class="text-4xl md:text-6xl font-bold tracking-tight">Le Mushaf Tajweed Authentique.</h2>
-            <p class="text-zinc-400 text-lg max-w-lg mx-auto font-light leading-relaxed">Règles de récitation colorées vérifiées • Sans coupure</p>
+            <h2 class="text-4xl md:text-6xl font-bold tracking-tight">Le Mushaf Tajweed Intégral</h2>
+            <p class="text-zinc-400 text-lg max-w-lg mx-auto font-light leading-relaxed">Données stabilisées via AlQuran Cloud • Rendu couleur vérifié</p>
         </div>
     </main>
 
@@ -98,59 +86,51 @@
 
         async function init() {
             try {
-                const res = await fetch('https://api.quran.com/api/v4/chapters?language=fr');
+                // Initialisation de la liste des sourates via une route de secours stable
+                const res = await fetch('https://api.alquran.cloud/v1/surah');
                 const data = await res.json();
-                data.chapters.forEach(s => {
-                    surahSelect.innerHTML += `<option value="${s.id}">${s.id}. ${s.name_simple}</option>`;
+                data.data.forEach(s => {
+                    surahSelect.innerHTML += `<option value="${s.number}">${s.number}. ${s.englishName}</option>`;
                 });
-            } catch (e) { console.error(e); }
+            } catch (e) { console.error("Erreur d'initialisation", e); }
         }
 
-        // Moteur de rendu hybride combinant le flux texte stable et l'injecteur Tajweed coloré révisé
         async function loadSurah() {
             const sid = surahSelect.value;
-            const rid = document.getElementById('reciterSelect').value;
-            mainContent.innerHTML = `<div class="py-20 text-emerald-500 animate-pulse text-xl font-bold uppercase">Génération du Mushaf Tajweed...</div>`;
+            mainContent.innerHTML = `<div class="py-20 text-emerald-500 animate-pulse text-xl font-bold uppercase">Génération du flux Tajweed sécurisé...</div>`;
             
             try {
-                // Requête combinée : Traduction française officielle + Code source Tajweed brut de secours
-                const [vRes, tRes, aRes] = await Promise.all([
-                    fetch(`https://api.quran.com/api/v4/verses/by_chapter/${sid}?language=fr&translations=31&per_page=300`),
-                    fetch(`https://api.quran.com/api/v3/chapters/${sid}/verses?recitation=1&wp=v2`), // Route v3 contenant les balises injectées stables
-                    fetch(`https://api.quran.com/api/v4/chapter_recitations/${rid}/${sid}`)
+                // Chargement simultané : Rendu Tajweed officiel + Traduction française de référence
+                const [tajweedRes, frRes, audioRes] = await Promise.all([
+                    fetch(`https://api.alquran.cloud/v1/surah/${sid}/quran-tajweed`),
+                    fetch(`https://api.alquran.cloud/v1/surah/${sid}/fr.hamidullah`),
+                    fetch(`https://api.quran.com/api/v4/chapter_recitations/7/${sid}`) // Audio Alafasy stable
                 ]);
 
-                const vData = await vRes.json();
-                const tData = await tRes.json();
-                const aData = await aRes.json();
+                const tajweedData = await tajweedRes.json();
+                const frData = await frRes.json();
+                const audioData = await audioRes.json();
 
-                renderSurah(vData.verses, tData.verses, aData.audio_file.audio_url);
+                renderSurah(tajweedData.data.ayahs, frData.data.ayahs, audioData.audio_file.audio_url);
             } catch (e) { 
                 console.error(e);
-                mainContent.innerHTML = "<p class='py-20 text-red-400'>Erreur de chargement des données de récitation.</p>"; 
+                mainContent.innerHTML = "<p class='py-20 text-red-400'>Erreur lors de la synchronisation des données.</p>"; 
             }
         }
 
-        function renderSurah(versesFr, versesTajweed, audioUrl) {
+        function renderSurah(tajweedAyahs, frAyahs, audioUrl) {
             mainContent.innerHTML = `
                 <div class="glass-card p-6 sticky top-24 z-40 bg-black/80 shadow-2xl mb-12">
                     <audio src="${audioUrl}" controls class="h-10"></audio>
                 </div>`;
 
-            versesFr.forEach((v, i) => {
-                const textFr = v.translations[0].text.replace(/<[^>]*>/g, '');
-                
-                // Récupération et parsing forcé du code Tajweed coloré depuis la base v3 stable
-                let textArDisplay = "";
-                if(versesTajweed[i] && versesTajweed[i].text_tajweed) {
-                    textArDisplay = versesTajweed[i].text_tajweed;
-                } else {
-                    textArDisplay = v.text_uthmani;
-                }
+            tajweedAyahs.forEach((ayah, i) => {
+                const textFr = frAyahs[i] ? frAyahs[i].text : 'Traduction non disponible';
+                const textArDisplay = ayah.text; // Contient nativement l'arbre HTML de coloration Tajweed
 
                 mainContent.innerHTML += `
-                    <section id="v-${v.verse_key}" class="glass-card overflow-hidden mb-16 p-8 md:p-14 space-y-10">
-                        <div class="text-left bg-black/40 inline-block px-4 py-1 rounded-full text-[10px] font-bold border border-white/5 uppercase">Verset ${v.verse_number}</div>
+                    <section class="glass-card overflow-hidden mb-16 p-8 md:p-14 space-y-10">
+                        <div class="text-left bg-black/40 inline-block px-4 py-1 rounded-full text-[10px] font-bold border border-white/5 uppercase">Verset ${ayah.numberInSurah}</div>
                         <div class="quran-container">
                             <p class="quran-arabic text-zinc-100" dir="rtl">${textArDisplay}</p>
                         </div>
@@ -164,32 +144,32 @@
             let query = document.getElementById('searchInput').value.trim();
             if (!query) return;
             
-            mainContent.innerHTML = `<div class="py-20 text-emerald-500 animate-pulse text-xl">Recherche dans le dictionnaire...</div>`;
+            mainContent.innerHTML = `<div class="py-20 text-emerald-500 animate-pulse text-xl">Recherche dans le texte de loi...</div>`;
 
             try {
-                const res = await fetch(`https://api.quran.com/api/v4/search?q=${encodeURIComponent(query)}&size=10&language=fr`);
+                // Recherche via le dictionnaire français stable
+                const res = await fetch(`https://api.alquran.cloud/v1/search/${encodeURIComponent(query)}/all/fr.hamidullah`);
                 const data = await res.json();
                 
-                if (data.search && data.search.results && data.search.results.length > 0) {
-                    let buffer = `<h2 class="text-2xl font-bold mb-8 text-emerald-500">${data.search.results.length} occurrences trouvées</h2>`;
+                if (data.data && data.data.results && data.data.results.length > 0) {
+                    const cleanResults = data.data.results.slice(0, 10); // Limite top 10 occurrences
+                    let buffer = `<h2 class="text-2xl font-bold mb-8 text-emerald-500">${cleanResults.length} occurrences trouvées</h2>`;
                     
-                    for (const item of data.search.results) {
-                        const surahId = item.verse_key.split(':')[0];
-                        const tRes = await fetch(`https://api.quran.com/api/v3/chapters/${surahId}/verses?recitation=1&wp=v2`);
+                    for (const item of cleanResults) {
+                        // Récupération dynamique du Tajweed pour le verset trouvé de manière sécurisée
+                        const tRes = await fetch(`https://api.alquran.cloud/v1/ayah/${item.surah.number}:${item.numberInSurah}/quran-tajweed`);
                         const tData = await tRes.json();
                         
-                        const targetVerse = tData.verses.find(v => v.verse_key === item.verse_key);
-                        const cleanFr = item.text.replace(/<[^>]*>/g, '');
-                        const arText = targetVerse ? targetVerse.text_tajweed : item.words.map(w => w.text).join(' ');
+                        const arText = tData.data ? tData.data.text : '';
 
                         buffer += `
                             <div class="glass-card p-6 mb-6 text-center space-y-6 border-l-4 border-emerald-500">
-                                <p class="text-zinc-400 text-xs text-left uppercase font-bold tracking-wider">Verset ${item.verse_key}</p>
+                                <p class="text-zinc-400 text-xs text-left uppercase font-bold tracking-wider">${item.surah.englishName} • Verset ${item.numberInSurah}</p>
                                 <div class="quran-container">
                                     <p class="quran-arabic text-zinc-100" dir="rtl">${arText}</p>
                                 </div>
                                 <div class="h-px w-12 bg-emerald-500/20 mx-auto"></div>
-                                <p class="text-left italic text-zinc-200 text-base leading-relaxed" dir="ltr">"${cleanFr}"</p>
+                                <p class="text-left italic text-zinc-200 text-base leading-relaxed" dir="ltr">"${item.text}"</p>
                             </div>`;
                     }
                     mainContent.innerHTML = buffer;
@@ -197,7 +177,8 @@
                     mainContent.innerHTML = "<p class='py-20 text-zinc-400'>Aucun résultat trouvé.</p>";
                 }
             } catch (e) { 
-                mainContent.innerHTML = "<p class='py-20 text-red-400'>Erreur lors du traitement de la requête.</p>"; 
+                console.error(e);
+                mainContent.innerHTML = "<p class='py-20 text-red-400'>Une erreur est survenue lors de l'exécution de la recherche.</p>"; 
             }
         }
 
