@@ -30,7 +30,7 @@
         }
         .quran-arabic { 
             font-family: 'Amiri', serif; 
-            font-size: 2.8rem; 
+            font-size: 2.4rem; 
             line-height: 2.5; 
             display: inline-block;
             filter: drop-shadow(0 2px 4px rgba(0,0,0,0.5));
@@ -160,7 +160,7 @@
             let query = document.getElementById('searchInput').value.trim();
             if (!query) return;
             
-            mainContent.innerHTML = `<div class="py-20 text-emerald-500 animate-pulse text-xl">Recherche adaptative en cours...</div>`;
+            mainContent.innerHTML = `<div class="py-20 text-emerald-500 animate-pulse text-xl">Recherche et synchronisation Tajweed...</div>`;
             
             const isQueryArabic = isArabic(query);
             if (!isQueryArabic) {
@@ -168,11 +168,12 @@
             }
 
             try {
-                const res = await fetch(`https://api.quran.com/api/v4/search?q=${encodeURIComponent(query)}&size=20&language=${isQueryArabic ? 'ar' : 'fr'}`);
+                const res = await fetch(`https://api.quran.com/api/v4/search?q=${encodeURIComponent(query)}&size=15&language=${isQueryArabic ? 'ar' : 'fr'}`);
                 const data = await res.json();
                 
                 if (data.search && data.search.results && data.search.results.length > 0) {
-                    renderSearchResults(data.search.results, isQueryArabic);
+                    // Lancement de la récupération enrichie (Texte Arabe Tajweed + Traduction propre)
+                    await fetchEnrichedResults(data.search.results);
                 } else {
                     mainContent.innerHTML = "<p class='py-20 text-zinc-400'>Aucun résultat trouvé. Modifiez votre mot-clé (ex: Ciel, Marie, Paix).</p>";
                 }
@@ -182,35 +183,47 @@
             }
         }
 
-        function renderSearchResults(results, isQueryArabic) {
-            mainContent.innerHTML = `<h2 class="text-2xl font-bold mb-8 text-emerald-500">${results.length} occurrences trouvées</h2>`;
+        async function fetchEnrichedResults(searchResults) {
+            mainContent.innerHTML = `<h2 class="text-2xl font-bold mb-8 text-emerald-500">${searchResults.length} occurrences trouvées</h2>`;
             
-            results.forEach(r => {
-                // Évite l'erreur 'undefined' en vérifiant les différents nœuds de réponse potentiels
-                const rawText = r.text || (r.translations && r.translations[0] ? r.translations[0].text : '');
-                const cleanText = rawText ? rawText.replace(/<[^>]*>/g, '') : 'Texte disponible au clic';
-                
-                let alignClass, textDirection, blockMarkup;
-                
-                if (isQueryArabic) {
-                    alignClass = 'text-right direction-rtl font-serif text-2xl leading-loose text-zinc-100';
-                    textDirection = 'dir="rtl"';
-                    blockMarkup = `"${cleanText}"`;
-                } else {
-                    alignClass = 'text-left italic text-zinc-200 text-lg leading-relaxed';
-                    textDirection = 'dir="ltr"';
-                    blockMarkup = `"${cleanText}"`;
+            // On parcourt les résultats pour aller chercher la version Tajweed & Traduction de chaque verset trouvé
+            for (const item of searchResults) {
+                const vk = item.verse_key;
+                try {
+                    const response = await fetch(`https://api.quran.com/api/v4/verses/by_key/${vk}?language=fr&translations=31&fields=text_tajweed`);
+                    const detailData = await response.json();
+                    
+                    if(detailData.verse) {
+                        renderSingleSearchResult(detailData.verse);
+                    }
+                } catch(err) {
+                    console.error(`Erreur de synchronisation pour le verset ${vk}`, err);
                 }
+            }
+        }
 
-                mainContent.innerHTML += `
-                    <div class="glass-card p-6 mb-4 border-l-4 border-emerald-500">
-                        <p class="text-zinc-400 text-xs mb-3 text-left uppercase font-bold tracking-wider">Référence : Verset ${r.verse_key}</p>
-                        <p class="${alignClass} mb-5" ${textDirection}>${blockMarkup}</p>
-                        <div class="text-left">
-                            <button onclick="goToVerse('${r.verse_key}')" class="text-emerald-500 font-bold text-sm hover:underline italic tracking-wide">ACCÉDER DIRECTEMENT AU VERSET →</button>
-                        </div>
-                    </div>`;
-            });
+        function renderSingleSearchResult(verse) {
+            const textFr = verse.translations && verse.translations[0] ? verse.translations[0].text.replace(/<[^>]*>/g, '') : 'Texte indisponible';
+            const textArTajweed = verse.text_tajweed || 'Texte arabe indisponible';
+
+            const cardMarkup = `
+                <div class="glass-card p-6 mb-6 border-l-4 border-emerald-500 text-center space-y-6">
+                    <p class="text-zinc-400 text-xs text-left uppercase font-bold tracking-wider">Référence : Verset ${verse.verse_key}</p>
+                    
+                    <div class="quran-container">
+                        <p class="quran-arabic text-zinc-100" dir="rtl">${textArTajweed}</p>
+                    </div>
+                    
+                    <div class="h-px w-12 bg-emerald-500/20 mx-auto"></div>
+                    
+                    <p class="text-left italic text-zinc-200 text-base md:text-lg leading-relaxed dir="ltr"">"${textFr}"</p>
+                    
+                    <div class="text-left pt-2">
+                        <button onclick="goToVerse('${verse.verse_key}')" class="text-emerald-500 font-bold text-sm hover:text-emerald-300 transition italic tracking-wide">ACCÉDER AU MODE IMMERSIF AVEC AUDIO →</button>
+                    </div>
+                </div>`;
+                
+            mainContent.innerHTML += cardMarkup;
         }
 
         async function goToVerse(vk) {
