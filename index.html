@@ -24,21 +24,48 @@
         .quran-container { direction: rtl; text-align: right; }
         .quran-arabic { 
             font-family: 'Amiri', serif; 
-            font-size: 2.5rem; 
-            line-height: 2.5; 
+            font-size: 2.6rem; 
+            line-height: 2.6; 
             display: inline-block;
             filter: drop-shadow(0 2px 4px rgba(0,0,0,0.5));
         }
 
-        /* Rendre toutes les balises enfants héritières des styles principaux */
-        .quran-arabic * { font-family: inherit; font-size: inherit; line-height: inherit; display: inline; }
+        /* --- MAPPAGE INTÉGRAL DU CODE COULEUR DU MUSHAF TAJWEED --- */
+        .quran-arabic span, .quran-arabic text, .quran-arabic font {
+            font-family: inherit !important;
+            font-size: inherit !important;
+            line-height: inherit !important;
+            display: inline !important;
+        }
         
-        /* Interprétation et forçage des codes couleurs du Mushaf Tajweed officiel */
-        .quran-arabic [style*="color:#FF0000"], .quran-arabic [style*="color:red"], .quran-arabic .ghunnah { color: #ff3333 !important; font-weight: bold; }
-        .quran-arabic [style*="color:#00A859"], .quran-arabic [style*="color:green"], .quran-arabic .ikhfa { color: #10b981 !important; font-weight: bold; }
-        .quran-arabic [style*="color:#F26522"], .quran-arabic [style*="color:orange"], .quran-arabic .iqlab { color: #f59e0b !important; }
-        .quran-arabic [style*="color:#00AEEF"], .quran-arabic [style*="color:blue"], .quran-arabic .qalqalah { color: #3b82f6 !important; font-weight: bold; }
-        .quran-arabic [style*="color:#939598"], .quran-arabic [style*="color:gray"], .quran-arabic .idgham { color: #6b7280 !important; opacity: 0.7; }
+        /* 1. ROUGE / ORANGE : Ghunnah & Prolongations (Mad) */
+        .quran-arabic [class*="ghunnah"], .quran-arabic [class*="madd"], 
+        .quran-arabic [style*="color:#FF0000"], .quran-arabic [style*="color:red"],
+        .quran-arabic [style*="color:#F26522"], .quran-arabic [style*="color:orange"] { 
+            color: #ff4545 !important; 
+            font-weight: 700 !important; 
+        }
+        
+        /* 2. VERT : Ikhfa & Idgham (Règles du Noon Sakinah / Tanween) */
+        .quran-arabic [class*="ikhfa"], .quran-arabic [class*="idgham"], 
+        .quran-arabic [style*="color:#00A859"], .quran-arabic [style*="color:green"] { 
+            color: #10b981 !important; 
+            font-weight: 700 !important; 
+        }
+        
+        /* 3. BLEU : Qalqalah (Résonance) */
+        .quran-arabic [class*="qalqalah"], 
+        .quran-arabic [style*="color:#00AEEF"], .quran-arabic [style*="color:blue"] { 
+            color: #3b82f6 !important; 
+            font-weight: 700 !important; 
+        }
+        
+        /* 4. GRIS : Lettres muettes / non prononcées */
+        .quran-arabic [class*="silent"], .quran-arabic [class*="iqlab"],
+        .quran-arabic [style*="color:#939598"], .quran-arabic [style*="color:gray"] { 
+            color: #6b7280 !important; 
+            opacity: 0.6; 
+        }
 
         .glass-card { 
             background: rgba(255, 255, 255, 0.02); 
@@ -86,7 +113,7 @@
                 <svg class="w-16 h-16 text-emerald-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5s3.332.477 4.5 1.253v13C19.832 18.477 18.246 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"></path></svg>
             </div>
             <h2 class="text-4xl md:text-6xl font-bold tracking-tight">Méditez sur les Signes.</h2>
-            <p class="text-zinc-400 text-lg max-w-lg mx-auto font-light leading-relaxed">Mushaf Tajweed Officiel • Visuels Naturels Purifiés sans visages</p>
+            <p class="text-zinc-400 text-lg max-w-lg mx-auto font-light leading-relaxed">Mushaf Tajweed Couleur • Règles de Récitation Intégrées</p>
         </div>
     </main>
 
@@ -142,7 +169,7 @@
             let query = document.getElementById('searchInput').value.trim();
             if (!query) return;
             
-            mainContent.innerHTML = `<div class="py-20 text-emerald-500 animate-pulse text-xl">Recherche et application du Tajweed...</div>`;
+            mainContent.innerHTML = `<div class="py-20 text-emerald-500 animate-pulse text-xl">Recherche et synchronisation Tajweed...</div>`;
             const isQueryArabic = isArabic(query);
             if (!isQueryArabic) query = corrigerTerme(query);
 
@@ -166,15 +193,12 @@
             
             for (const item of results) {
                 try {
-                    // Forcer l'API à renvoyer le format de texte "text_tajweed" précis
                     const res = await fetch(`https://api.quran.com/api/v4/verses/by_key/${item.verse_key}?language=fr&translations=31&fields=text_tajweed`);
                     const detail = await res.json();
                     
                     if (detail && detail.verse) {
                         const v = detail.verse;
                         const fr = v.translations && v.translations[0] ? v.translations[0].text.replace(/<[^>]*>/g, '') : 'Traduction non disponible';
-                        
-                        // Injection directe du flux HTML contenant les balises de couleur du Tajweed
                         const ar = v.text_tajweed || 'Texte arabe indisponible';
 
                         buffer += `
@@ -186,7 +210,7 @@
                                 <div class="h-px w-12 bg-emerald-500/20 mx-auto"></div>
                                 <p class="text-left italic text-zinc-200 text-base md:text-lg leading-relaxed" dir="ltr">"${fr}"</p>
                                 <div class="text-left pt-2">
-                                    <button onclick="goToVerse('${v.verse_key}')" class="text-emerald-500 font-bold text-sm hover:text-emerald-300 transition italic tracking-wide">ACCÉDER DIRECTEMENT AU VERSET →</button>
+                                    <button onclick="goToVerse('${v.verse_key}')" class="text-emerald-500 font-bold text-sm hover:text-emerald-300 transition italic tracking-wide">ACCÉDER AU MODE IMMERSIF AUDIO →</button>
                                 </div>
                             </div>`;
                     }
