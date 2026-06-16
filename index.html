@@ -98,7 +98,7 @@
                 <svg class="w-16 h-16 text-emerald-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5s3.332.477 4.5 1.253v13C19.832 18.477 18.246 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"></path></svg>
             </div>
             <h2 class="text-4xl md:text-6xl font-bold tracking-tight">Méditez sur les Signes.</h2>
-            <p class="text-zinc-400 text-lg max-w-lg mx-auto font-light leading-relaxed">Mushaf Tajweed Standardisé • Correction de recherche d'accents à la volée</p>
+            <p class="text-zinc-400 text-lg max-w-lg mx-auto font-light leading-relaxed">Mushaf Tajweed Standardisé • Visuels Naturels Purifiés sans visages</p>
         </div>
     </main>
 
@@ -107,24 +107,25 @@
         const surahSelect = document.getElementById('surahSelect');
         let currentVersesList = [];
 
+        // Sélection stricte d'identifiants d'images de paysages déserts et géométries sans aucun humain
         const imageBank = {
-            espace: "https://picsum.photos/id/962/1200/600",    
-            ocean: "https://picsum.photos/id/1011/1200/600",     
-            nature: "https://picsum.photos/id/1043/1200/600",    
-            montagne: "https://picsum.photos/id/1036/1200/600",  
-            lumiere: "https://picsum.photos/id/1051/1200/600",   
-            desert: "https://picsum.photos/id/1015/1200/600",    
-            defaut: "https://picsum.photos/id/1057/1200/600"     
+            espace: "https://images.unsplash.com/photo-1506318137071-a8e063b4bec0?auto=format&fit=crop&w=1200&q=80",    // Ciel étoilé abstrait
+            ocean: "https://images.unsplash.com/photo-1505118380757-91f5f5632de0?auto=format&fit=crop&w=1200&q=80",     // Horizon marin pur
+            nature: "https://images.unsplash.com/photo-1441974231531-c6227db76b6e?auto=format&fit=crop&w=1200&q=80",    // Forêt mystique sans aucun personnage
+            montagne: "https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?auto=format&fit=crop&w=1200&q=80",  // Sommets de montagnes épurés
+            lumiere: "https://images.unsplash.com/photo-1546587348-d12660c30c50?auto=format&fit=crop&w=1200&q=80",   // Rayons de soleil filtrés sur l'eau
+            desert: "https://images.unsplash.com/photo-1509316975850-ff9c5deb0cd9?auto=format&fit=crop&w=1200&q=80",    // Dunes de sable sans empreintes
+            defaut: "https://images.unsplash.com/photo-1518156677180-95a2893f3e9f?auto=format&fit=crop&w=1200&q=80"     // Texture de fond ambrée neutre/spirituelle
         };
 
         function getThemeImage(textFr) {
             const clean = textFr.toLowerCase();
-            if (clean.includes("mer") || clean.includes("eau") || clean.includes("fleuve") || clean.includes("pluie") || clean.includes("source")) return imageBank.ocean;
+            if (clean.includes("mer") || clean.includes("eau") || clean.includes("fleuve") || clean.includes("pluie") || clean.includes("source") || clean.includes("vagues")) return imageBank.ocean;
             if (clean.includes("ciel") || clean.includes("cieux") || clean.includes("nuit") || clean.includes("étoile") || clean.includes("univers") || clean.includes("lune")) return imageBank.espace;
-            if (clean.includes("terre") || clean.includes("jardin") || clean.includes("arbre") || clean.includes("plantes") || clean.includes("fruits")) return imageBank.nature;
-            if (clean.includes("soleil") || clean.includes("jour") || clean.includes("lumière") || clean.includes("clarté")) return imageBank.lumiere;
-            if (clean.includes("montagne") || clean.includes("montagnes") || clean.includes("rochers")) return imageBank.montagne;
-            if (clean.includes("désert") || clean.includes("sable")) return imageBank.desert;
+            if (clean.includes("terre") || clean.includes("jardin") || clean.includes("arbre") || clean.includes("plantes") || clean.includes("fruits") || clean.includes("verdure")) return imageBank.nature;
+            if (clean.includes("soleil") || clean.includes("jour") || clean.includes("lumière") || clean.includes("clarté") || clean.includes("éclairer")) return imageBank.lumiere;
+            if (clean.includes("montagne") || clean.includes("montagnes") || clean.includes("rochers") || clean.includes("mont")) return imageBank.montagne;
+            if (clean.includes("désert") || clean.includes("sable") || clean.includes("aride") || clean.includes("chaleur")) return imageBank.desert;
             return imageBank.defaut;
         }
 
@@ -193,19 +194,14 @@
             if(results.length === 0) { mainContent.innerHTML += "<p>Aucun résultat trouvé pour cette écriture.</p>"; return; }
             
             results.forEach(r => {
-                // Nettoyage complet des balises HTML parasites renvoyées par le moteur de recherche
                 const cleanText = r.text.replace(/<[^>]*>/g, '');
-                
-                // Configuration de l'affichage selon la langue de la requête de l'utilisateur
                 let alignClass, textDirection, blockMarkup;
                 
                 if (isQueryArabic) {
-                    // Si l'utilisateur cherche en Arabe, on n'affiche que l'Arabe dans l'aperçu
                     alignClass = 'text-right direction-rtl font-serif text-2xl leading-loose text-zinc-100';
                     textDirection = 'dir="rtl"';
                     blockMarkup = `"${cleanText}"`;
                 } else {
-                    // Si l'utilisateur cherche en Français, on récupère uniquement la traduction (gérée par r.translations ou nettoyée)
                     alignClass = 'text-left italic text-zinc-200 text-lg leading-relaxed';
                     textDirection = 'dir="ltr"';
                     blockMarkup = `"${cleanText}"`;
