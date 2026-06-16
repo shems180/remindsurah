@@ -1,0 +1,213 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>QuranVision - Immersion Spirituelle</title>
+    
+    <link rel="manifest" href="manifest.json">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <link rel="apple-touch-icon" href="icon-192.png">
+
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Amiri:wght@400;700&family=Inter:wght@300;500;700&display=swap" rel="stylesheet">
+    
+    <style>
+        :root { 
+            --emerald: #10b981; 
+            --gold: #fbbf24; 
+        }
+        body { 
+            background: radial-gradient(circle at top, #0f172a 0%, #020617 100%);
+            color: #f8fafc; 
+            font-family: 'Inter', sans-serif; 
+            min-height: 100vh;
+        }
+        .quran-arabic { 
+            font-family: 'Amiri', serif; 
+            font-size: 2.8rem; 
+            line-height: 2.2; 
+            text-align: right;
+            background: linear-gradient(to bottom, var(--gold), #d97706);
+            background-clip: text;
+            -webkit-background-clip: text; 
+            -webkit-text-fill-color: transparent;
+            filter: drop-shadow(0 2px 4px rgba(0,0,0,0.5));
+        }
+        .glass-card { 
+            background: rgba(255, 255, 255, 0.02); 
+            backdrop-filter: blur(15px);
+            border: 1px solid rgba(255, 255, 255, 0.08); 
+            border-radius: 2.5rem;
+            transition: all 0.4s ease;
+        }
+        .glass-card:hover { 
+            border-color: var(--emerald); 
+            transform: translateY(-3px); 
+        }
+        .search-input { 
+            background: rgba(0,0,0,0.4); 
+            border: 1px solid rgba(255,255,255,0.1); 
+        }
+        .search-input:focus { 
+            border-color: var(--emerald); 
+            outline: none; 
+        }
+        audio { 
+            border-radius: 50px; 
+            width: 100%;
+        }
+    </style>
+</head>
+<body class="overflow-x-hidden">
+
+    <nav class="sticky top-0 z-50 p-4 bg-black/60 backdrop-blur-xl border-b border-white/5">
+        <div class="max-w-7xl mx-auto flex flex-col lg:flex-row justify-between items-center gap-4">
+            <h1 onclick="window.location.reload()" class="cursor-pointer text-2xl font-bold tracking-tighter text-emerald-500 flex items-center gap-2">
+                <span class="bg-emerald-500 text-black px-2 py-1 rounded-lg text-sm italic font-black">IQRA</span> QURAN<span class="text-white font-light">VISION</span>
+            </h1>
+            
+            <div class="flex flex-wrap justify-center items-center gap-3">
+                <div class="relative">
+                    <input type="text" id="searchInput" placeholder="Mot-clé (ex: Paix)..." class="search-input w-40 md:w-56 px-4 py-2 rounded-xl text-sm text-white">
+                    <button onclick="searchVerse()" class="absolute right-3 top-2 text-emerald-400 hover:text-white transition">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" stroke-width="2" stroke-linecap="round"></path></svg>
+                    </button>
+                </div>
+                <select id="surahSelect" class="bg-zinc-900 border border-zinc-700 px-3 py-2 rounded-xl text-xs outline-none w-32 md:w-40"></select>
+                <select id="reciterSelect" class="bg-zinc-900 border border-zinc-700 px-3 py-2 rounded-xl text-xs outline-none">
+                    <option value="7">Mishary Alafasy</option>
+                    <option value="3">Abdur-Rahman as-Sudais</option>
+                    <option value="128">Yasser Ad-Dussary</option>
+                    <option value="6">Abu Bakr al-Shatri</option>
+                </select>
+                <button onclick="loadSurah()" class="bg-emerald-600 hover:bg-emerald-400 text-black font-bold px-6 py-2 rounded-xl transition-all shadow-lg shadow-emerald-900/20">Explorer</button>
+            </div>
+        </div>
+    </nav>
+
+    <main id="main-content" class="max-w-4xl mx-auto p-4 md:p-8 mt-6 space-y-12 text-center">
+        <div id="welcome-screen" class="py-24 space-y-8">
+            <div class="inline-block p-6 rounded-full bg-emerald-500/10 animate-pulse">
+                <svg class="w-16 h-16 text-emerald-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5s3.332.477 4.5 1.253v13C19.832 18.477 18.246 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"></path></svg>
+            </div>
+            <h2 class="text-4xl md:text-6xl font-bold tracking-tight">Méditez sur les Signes.</h2>
+            <p class="text-zinc-400 text-lg max-w-lg mx-auto font-light leading-relaxed">Images sans visages • Audio HD • Dawa simplifiée.</p>
+        </div>
+    </main>
+
+    <script>
+        const mainContent = document.getElementById('main-content');
+        const surahSelect = document.getElementById('surahSelect');
+        const themes = ["cosmos", "galaxy", "mountain", "nebula", "desert", "ocean", "nature", "architecture-islamic", "stars", "forest"];
+
+        // Initialisation : Liste des sourates
+        async function init() {
+            try {
+                const res = await fetch('https://api.quran.com/api/v4/chapters?language=fr');
+                const data = await res.json();
+                data.chapters.forEach(s => {
+                    surahSelect.innerHTML += `<option value="${s.id}">${s.id}. ${s.name_simple}</option>`;
+                });
+            } catch (e) { console.error("Erreur chargement sourates", e); }
+        }
+
+        // Recherche par mot-clé
+        async function searchVerse() {
+            const query = document.getElementById('searchInput').value;
+            if (!query) return;
+            mainContent.innerHTML = `<div class="py-20 text-emerald-500 animate-pulse text-xl">Recherche de "${query}"...</div>`;
+            try {
+                const res = await fetch(`https://api.quran.com/api/v4/search?q=${query}&language=fr`);
+                const data = await res.json();
+                renderSearchResults(data.search.results, query);
+            } catch (e) { mainContent.innerHTML = "Erreur de connexion."; }
+        }
+
+        function renderSearchResults(results, query) {
+            mainContent.innerHTML = `<h2 class="text-2xl font-bold mb-8 text-emerald-500">${results.length} résultats trouvés</h2>`;
+            if(results.length === 0) { mainContent.innerHTML += "<p>Aucun résultat.</p>"; return; }
+            results.forEach(r => {
+                mainContent.innerHTML += `
+                    <div class="glass-card p-6 mb-4 text-left border-l-4 border-emerald-500">
+                        <p class="text-zinc-400 text-xs mb-2 uppercase">Référence : ${r.verse_key}</p>
+                        <p class="text-zinc-200 italic mb-4">"...${r.text}..."</p>
+                        <button onclick="goToVerse('${r.verse_key}')" class="text-emerald-500 font-bold text-sm hover:underline italic">LIRE LE VERSET COMPLET →</button>
+                    </div>`;
+            });
+        }
+
+        async function goToVerse(vk) {
+            document.getElementById('surahSelect').value = vk.split(':')[0];
+            await loadSurah();
+            setTimeout(() => {
+                const el = document.getElementById(`v-${vk}`);
+                if(el) el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            }, 800);
+        }
+
+        // Chargement de la sourate complète
+        async function loadSurah() {
+            const sid = surahSelect.value;
+            const rid = document.getElementById('reciterSelect').value;
+            mainContent.innerHTML = `<div class="py-20 text-emerald-500 animate-bounce text-xl font-bold uppercase tracking-widest">Inspiration en cours...</div>`;
+            try {
+                const [vR, aR] = await Promise.all([
+                    fetch(`https://api.quran.com/api/v4/verses/by_chapter/${sid}?language=fr&translations=31&fields=text_uthmani`),
+                    fetch(`https://api.quran.com/api/v4/chapter_recitations/${rid}/${sid}`)
+                ]);
+                const vD = await vR.json();
+                const aD = await aR.json();
+                renderSurah(vD.verses, aD.audio_file.audio_url);
+            } catch (e) { mainContent.innerHTML = "Une erreur est survenue."; }
+        }
+
+        function renderSurah(verses, audio) {
+            mainContent.innerHTML = `
+                <div class="glass-card p-6 sticky top-24 z-40 bg-black/80 shadow-2xl mb-12">
+                    <p class="text-xs font-bold text-emerald-500 mb-2 tracking-widest uppercase">Récitation HD</p>
+                    <audio src="${audio}" controls class="h-10"></audio>
+                </div>`;
+
+            verses.forEach((v, i) => {
+                const theme = themes[i % themes.length];
+                const img = `https://loremflickr.com/1200/600/${theme}?lock=${v.id}`;
+                const textAr = v.text_uthmani;
+                const textFr = v.translations[0].text.replace(/<[^>]*>/g, '');
+
+                mainContent.innerHTML += `
+                    <section id="v-${v.verse_key}" class="glass-card overflow-hidden mb-16">
+                        <div class="relative h-64 md:h-96">
+                            <img src="${img}" class="w-full h-full object-cover opacity-50" loading="lazy">
+                            <div class="absolute inset-0 bg-gradient-to-t from-[#020617] to-transparent"></div>
+                            <div class="absolute top-6 left-6 bg-black/50 px-4 py-1 rounded-full text-[10px] font-bold border border-white/10 uppercase">Verset ${v.verse_number}</div>
+                        </div>
+                        <div class="p-8 md:p-14 space-y-10">
+                            <p class="quran-arabic" dir="rtl">${textAr}</p>
+                            <div class="h-px w-20 bg-emerald-500/30 mx-auto"></div>
+                            <p class="text-zinc-300 text-xl md:text-2xl font-light italic leading-relaxed">"${textFr}"</p>
+                            <button onclick="share('${textAr.replace(/'/g," ")}', '${textFr.replace(/'/g," ")}', '${v.verse_key}')" 
+                                    class="mx-auto flex items-center gap-2 text-zinc-500 hover:text-emerald-400 transition-colors text-xs font-bold uppercase tracking-widest">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6a3 3 0 100-2.684l6.632-3.316m0 0a3 3 0 110 2.684" stroke-width="2"></path></svg>
+                                Partager ce verset
+                            </button>
+                        </div>
+                    </section>`;
+            });
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+
+        function share(ar, fr, vk) {
+            const msg = `📖 *Sourate ${vk}*\n\n"${ar}"\n\n_${fr}_\n\nDécouvert sur QuranVision`;
+            if (navigator.share) {
+                navigator.share({ text: msg });
+            } else {
+                window.open(`https://wa.me/?text=${encodeURIComponent(msg)}`);
+            }
+        }
+
+        init();
+    </script>
+</body>
+</html>
