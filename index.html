@@ -100,8 +100,11 @@
     <script>
         const mainContent = document.getElementById('main-content');
         const surahSelect = document.getElementById('surahSelect');
+        const themes = ["nature", "milkyway", "mountains", "ocean", "stars", "clouds", "desert", "waterfall", "sunrise", "space"];
+        
+        // On va stocker temporairement les versets ici pour éviter les bugs de guillemets au partage
+        let currentVersesList = [];
 
-        // Initialisation : Liste des sourates
         async function init() {
             try {
                 const res = await fetch('https://api.quran.com/api/v4/chapters?language=fr');
@@ -112,7 +115,6 @@
             } catch (e) { console.error("Erreur chargement sourates", e); }
         }
 
-        // Recherche par mot-clé
         async function searchVerse() {
             const query = document.getElementById('searchInput').value;
             if (!query) return;
@@ -146,19 +148,20 @@
             }, 800);
         }
 
-        // Chargement de la sourate complète
         async function loadSurah() {
             const sid = surahSelect.value;
             const rid = document.getElementById('reciterSelect').value;
             mainContent.innerHTML = `<div class="py-20 text-emerald-500 animate-bounce text-xl font-bold uppercase tracking-widest">Inspiration en cours...</div>`;
             try {
                 const [vR, aR] = await Promise.all([
-                    // Ajout du paramètre &per_page=300 pour charger l'intégralité des versets
                     fetch(`https://api.quran.com/api/v4/verses/by_chapter/${sid}?language=fr&translations=31&fields=text_uthmani&per_page=300`),
                     fetch(`https://api.quran.com/api/v4/chapter_recitations/${rid}/${sid}`)
                 ]);
                 const vD = await vR.json();
                 const aD = await aR.json();
+                
+                // Sauvegarde de la liste propre
+                currentVersesList = vD.verses;
                 renderSurah(vD.verses, aD.audio_file.audio_url);
             } catch (e) { mainContent.innerHTML = "Une erreur est survenue."; }
         }
@@ -173,11 +176,13 @@
             verses.forEach((v, i) => {
                 const textAr = v.text_uthmani;
                 const textFr = v.translations[0].text.replace(/<[^>]*>/g, '');
+                const currentTheme = themes[i % themes.length];
+                const dynamicImg = `https://images.unsplash.com/featured/1200x600/?${currentTheme},landscape&sig=${v.id}`;
 
                 mainContent.innerHTML += `
                     <section id="v-${v.verse_key}" class="glass-card overflow-hidden mb-16">
                         <div class="relative h-64 md:h-96">
-                            <img src="https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?auto=format&fit=crop&w=1200&q=80&sig=${v.id}" class="w-full h-full object-cover opacity-40" loading="lazy">
+                            <img src="${dynamicImg}" class="w-full h-full object-cover opacity-40" loading="lazy">
                             <div class="absolute inset-0 bg-gradient-to-t from-[#020617] to-transparent"></div>
                             <div class="absolute top-6 left-6 bg-black/50 px-4 py-1 rounded-full text-[10px] font-bold border border-white/10 uppercase">Verset ${v.verse_number}</div>
                         </div>
@@ -185,10 +190,11 @@
                             <p class="quran-arabic" dir="rtl">${textAr}</p>
                             <div class="h-px w-20 bg-emerald-500/30 mx-auto"></div>
                             <p class="text-zinc-300 text-xl md:text-2xl font-light italic leading-relaxed">"${textFr}"</p>
-                            <button onclick="share('${textAr.replace(/'/g," ")}', '${textFr.replace(/'/g," ")}', '${v.verse_key}')" 
+                            
+                            <button onclick="shareVerseByIndex(${i})" 
                                     class="mx-auto flex items-center gap-2 text-zinc-500 hover:text-emerald-400 transition-colors text-xs font-bold uppercase tracking-widest">
                                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6a3 3 0 100-2.684l6.632-3.316m0 0a3 3 0 110 2.684" stroke-width="2"></path></svg>
-                                Partager ce verset
+                                Partager sur WhatsApp
                             </button>
                         </div>
                     </section>`;
@@ -196,13 +202,20 @@
             window.scrollTo({ top: 0, behavior: 'smooth' });
         }
 
-        function share(ar, fr, vk) {
-            const msg = `📖 *Sourate ${vk}*\n\n"${ar}"\n\n_${fr}_\n\nDécouvert sur QuranVision`;
-            if (navigator.share) {
-                navigator.share({ text: msg });
-            } else {
-                window.open(`https://wa.me/?text=${encodeURIComponent(msg)}`);
-            }
+        // Nouvelle fonction de partage ultra sécurisée et directe
+        function shareVerseByIndex(index) {
+            const v = currentVersesList[index];
+            if (!v) return;
+
+            const textAr = v.text_uthmani;
+            const textFr = v.translations[0].text.replace(/<[^>]*>/g, '');
+            const reference = v.verse_key;
+
+            const msg = `📖 *Sourate (Verset ${reference})*\n\n"${textAr}"\n\n_"${textFr}"_\n\nDécouvert sur QuranVision`;
+            
+            // On ouvre DIRECTEMENT WhatsApp pour s'assurer que ça fonctionne sur PC et Mobile
+            const whatsappUrl = `https://api.whatsapp.com/send?text=${encodeURIComponent(msg)}`;
+            window.open(whatsappUrl, '_blank');
         }
 
         init();
