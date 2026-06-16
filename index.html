@@ -27,15 +27,20 @@
         .quran-arabic { 
             font-family: 'Amiri', serif; 
             font-size: 2.8rem; 
-            line-height: 2.2; 
+            line-height: 2.3; 
             text-align: right;
             direction: rtl;
-            background: linear-gradient(to bottom, var(--gold), #d97706);
-            background-clip: text;
-            -webkit-background-clip: text; 
-            -webkit-text-fill-color: transparent;
             filter: drop-shadow(0 2px 4px rgba(0,0,0,0.5));
         }
+        
+        /* Classes de rendu de notre moteur de Tajweed autonome */
+        .taj-regle { display: inline; font-family: inherit; }
+        .taj-madd { color: #ef4444 !important; font-weight: 700; }        /* Prolongations - Rouge */
+        .taj-ghunnah { color: #10b981 !important; font-weight: 700; }     /* Ghunnah - Vert Émeraude */
+        .taj-ikhfa { color: #a855f7 !important; }                         /* Ikhfa - Violet */
+        .taj-qalqalah { color: #f59e0b !important; font-weight: 700; }    /* Qalqalah - Or/Orange */
+        .taj-muet { color: #4b5563 !important; opacity: 0.6; }            /* Lettres muettes - Gris */
+
         .glass-card { 
             background: rgba(255, 255, 255, 0.02); 
             backdrop-filter: blur(15px);
@@ -94,7 +99,7 @@
                 <svg class="w-16 h-16 text-emerald-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5s3.332.477 4.5 1.253v13C19.832 18.477 18.246 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"></path></svg>
             </div>
             <h2 class="text-4xl md:text-6xl font-bold tracking-tight">Méditez sur les Signes.</h2>
-            <p class="text-zinc-400 text-lg max-w-lg mx-auto font-light leading-relaxed">Analyse contextuelle dynamique • Images sans visages • Partage universel</p>
+            <p class="text-zinc-400 text-lg max-w-lg mx-auto font-light leading-relaxed">Moteur de Tajweed intégré • Illustrations thématiques fluides • Partage total</p>
         </div>
     </main>
 
@@ -103,38 +108,48 @@
         const surahSelect = document.getElementById('surahSelect');
         let currentVersesList = [];
 
-        // Liste de mots vides en français à ignorer pour ne garder que les mots clés importants
-        const stopWords = ["le", "la", "les", "de", "des", "un", "une", "et", "en", "que", "qui", "dans", "pour", "par", "sur", "avec", "ils", "vous", "nous", "est", "sont", "ce", "cette", "dans", "aux", "pas", "plus"];
+        // Banque visuelle thématique stable (Picsum HD) - Aucun visage possible
+        const imageBank = {
+            espace: "https://picsum.photos/id/962/1200/600",    // Ciel, Étoiles, Nuit, Univers
+            ocean: "https://picsum.photos/id/1011/1200/600",     // Mer, Eau, Fleuves, Pluie
+            nature: "https://picsum.photos/id/1043/1200/600",    // Terre, Jardins, Arbres, Création
+            montagne: "https://picsum.photos/id/1036/1200/600",  // Montagnes, Rochers, Solide
+            lumiere: "https://picsum.photos/id/1051/1200/600",   // Soleil, Jour, Clarté
+            desert: "https://picsum.photos/id/1015/1200/600",    // Désert, Sable, Épreuves
+            defaut: "https://picsum.photos/id/1057/1200/600"     // Texture abstraite spirituelle
+        };
 
-        // Analyseur intelligent : prend le texte français et extrait le mot thématique principal
-        function extractKeyword(textFr) {
-            const cleanText = textFr.toLowerCase()
-                .replace(/[.,\/#!$%\^&\*;:{}=\-_`~()?"']/g, "") // Supprime la ponctuation
-                .split(/\s+/); // Découpe en mots
+        // Analyseur sémantique pour lier l'illustration au sens du verset
+        function getThemeImage(textFr) {
+            const clean = textFr.toLowerCase();
+            if (clean.includes("mer") || clean.includes("eau") || clean.includes("fleuve") || clean.includes("pluie") || clean.includes("source")) return imageBank.ocean;
+            if (clean.includes("ciel") || clean.includes("cieux") || clean.includes("nuit") || clean.includes("étoile") || clean.includes("univers")) return imageBank.espace;
+            if (clean.includes("terre") || clean.includes("jardin") || clean.includes("arbre") || clean.includes("plantes") || clean.includes("fruits")) return imageBank.nature;
+            if (clean.includes("soleil") || clean.includes("lune") || clean.includes("jour") || clean.includes("lumière") || clean.includes("clarté")) return imageBank.lumiere;
+            if (clean.includes("montagne") || clean.includes("montagnes") || clean.includes("rochers")) return imageBank.montagne;
+            if (clean.includes("désert") || clean.includes("sable") || clean.includes("terre aride")) return imageBank.desert;
+            return imageBank.defaut;
+        }
 
-            // Liste de mots prioritaires hautement visuels s'ils apparaissent
-            const priorityWords = ["ciel", "cieux", "terre", "mer", "ocean", "fleuve", "eau", "nuit", "soleil", "lune", "etoile", "etoiles", "lumiere", "obscurite", "montagne", "montagnes", "feu", "jardin", "arbre", "arbres", "vent", "nuage", "nuages", "desert", "or", "argent"];
+        // Moteur de Tajweed autonome : injecte les couleurs directement sur le texte Uthmani standard
+        function appliquerTajweedMaison(texteArabe) {
+            let html = texteArabe;
             
-            for (let word of cleanText) {
-                if (priorityWords.includes(word)) {
-                    // Traduction rapide pour optimiser la recherche d'images Unsplash
-                    if (word === "cieux" || word === "ciel") return "sky";
-                    if (word === "mer" || word === "ocean" || word === "eau") return "ocean";
-                    if (word === "terre") return "nature,planet";
-                    if (word === "nuit" || word === "obscurite") return "night,stars";
-                    if (word === "soleil" || word === "lumiere") return "sunlight";
-                    if (word === "lune") return "moon";
-                    if (word === "etoile" || word === "etoiles") return "galaxy";
-                    if (word === "montagne" || word === "montagnes") return "mountains";
-                    if (word === "jardin" || word === "arbre" || word === "arbres") return "forest";
-                    if (word === "desert") return "desert";
-                    return word;
-                }
-            }
+            // 1. Les Prolongations (Madd) : repère les petits signes de vagues et alif de prolongation
+            html = html.replace(/([\u0640\u0653-\u0655]*[\u064A\u0641\u0645]\u0654)/g, '<span class="taj-regle taj-madd">$1</span>');
+            html = html.replace(/(\u065C|\u064E\u0650?\u0627)/g, '<span class="taj-regle taj-madd">$1</span>');
+            
+            // 2. Les Ghunnah (Noon et Meem avec Shaddah)
+            html = html.replace(/([\u0646\u0645]\u0651)/g, '<span class="taj-regle taj-ghunnah">$1</span>');
+            
+            // 3. La Qalqalah (Lettres du rebond : ق ط ب ج د avec Soukoun)
+            html = html.replace(/([\u0642\u0637\u0628\u062c\u062f]\u0652)/g, '<span class="taj-regle taj-qalqalah">$1</span>');
+            
+            // 4. Lettres de l'Ikhfa (Tanween suivi d'un espace)
+            html = html.replace(/([\u064B\u064C\u064D]\s)/g, '<span class="taj-regle taj-ikhfa">$1</span>');
 
-            // Si aucun mot prioritaire n'est trouvé, on prend le premier mot de plus de 4 lettres qui n'est pas un mot vide
-            const longWords = cleanText.filter(w => w.length > 4 && !stopWords.includes(w));
-            return longWords.length > 0 ? longWords[0] : "abstract,texture";
+            // Si aucune règle n'a matché sur un mot, on garde une couleur de base blanche/or harmonieuse
+            return html;
         }
 
         async function init() {
@@ -144,7 +159,7 @@
                 data.chapters.forEach(s => {
                     surahSelect.innerHTML += `<option value="${s.id}">${s.id}. ${s.name_simple}</option>`;
                 });
-            } catch (e) { console.error("Erreur chargement sourates", e); }
+            } catch (e) { console.error("Erreur sourates", e); }
         }
 
         async function searchVerse() {
@@ -183,7 +198,7 @@
         async function loadSurah() {
             const sid = surahSelect.value;
             const rid = document.getElementById('reciterSelect').value;
-            mainContent.innerHTML = `<div class="py-20 text-emerald-500 animate-bounce text-xl font-bold uppercase tracking-widest">Inspiration en cours...</div>`;
+            mainContent.innerHTML = `<div class="py-20 text-emerald-500 animate-bounce text-xl font-bold uppercase tracking-widest">Chargement sécurisé...</div>`;
             try {
                 const [vR, aR] = await Promise.all([
                     fetch(`https://api.quran.com/api/v4/verses/by_chapter/${sid}?language=fr&translations=31&fields=text_uthmani&per_page=300`),
@@ -194,7 +209,7 @@
                 
                 currentVersesList = vD.verses;
                 renderSurah(vD.verses, aD.audio_file.audio_url);
-            } catch (e) { mainContent.innerHTML = "Une erreur est survenue."; }
+            } catch (e) { mainContent.innerHTML = "Erreur réseau. Réessayez."; }
         }
 
         function renderSurah(verses, audio) {
@@ -205,25 +220,23 @@
                 </div>`;
 
             verses.forEach((v, i) => {
-                const textAr = v.text_uthmani;
                 const textFr = v.translations[0].text.replace(/<[^>]*>/g, '');
                 
-                // 1. Extraction dynamique du mot clé
-                const keyword = extractKeyword(textFr);
+                // Application de notre moteur de Tajweed sur le texte Uthmani reçu
+                const textArTajweed = appliquerTajweedMaison(v.text_uthmani);
                 
-                // 2. Génération de l'image Unsplash correspondante au mot clé exact du verset
-                // On rajoute "landscape" pour éviter strictement les visages humains et garder de superbes paysages nature/espace
-                const dynamicImg = `https://images.unsplash.com/featured/1200x600/?${keyword},landscape&sig=${v.id}`;
+                // Sélection de l'illustration parfaite basée sur le sens du verset
+                const dynamicImg = getThemeImage(textFr);
 
                 mainContent.innerHTML += `
                     <section id="v-${v.verse_key}" class="glass-card overflow-hidden mb-16">
                         <div class="relative h-64 md:h-96">
-                            <img src="${dynamicImg}" class="w-full h-full object-cover opacity-30 transition-all duration-700" loading="lazy">
+                            <img src="${dynamicImg}" class="w-full h-full object-cover opacity-25" loading="lazy">
                             <div class="absolute inset-0 bg-gradient-to-t from-[#020617] to-transparent"></div>
-                            <div class="absolute top-6 left-6 bg-black/50 px-4 py-1 rounded-full text-[10px] font-bold border border-white/10 uppercase tracking-wider">Verset ${v.verse_number} • Thème : ${keyword}</div>
+                            <div class="absolute top-6 left-6 bg-black/50 px-4 py-1 rounded-full text-[10px] font-bold border border-white/10 uppercase">Verset ${v.verse_number}</div>
                         </div>
                         <div class="p-8 md:p-14 space-y-10">
-                            <p class="quran-arabic" dir="rtl">${textAr}</p>
+                            <p class="quran-arabic text-zinc-100" dir="rtl">${textArTajweed}</p>
                             <div class="h-px w-20 bg-emerald-500/30 mx-auto"></div>
                             <p class="text-zinc-300 text-xl md:text-2xl font-light italic leading-relaxed">"${textFr}"</p>
                             
@@ -244,23 +257,16 @@
             window.scrollTo({ top: 0, behavior: 'smooth' });
         }
 
+        // Gestion partages
         function shareVerse(index) {
             const v = currentVersesList[index];
             if (!v) return;
-
-            const textAr = v.text_uthmani;
             const textFr = v.translations[0].text.replace(/<[^>]*>/g, '');
-            const reference = v.verse_key;
             const currentUrl = window.location.href;
-
-            const msg = `📖 *Sourate (Verset ${reference})*\n\n"${textAr}"\n\n_"${textFr}"_\n\nDécouvert sur QuranVision :\n${currentUrl}`;
+            const msg = `导 *Sourate (Verset ${v.verse_key})*\n\n"${v.text_uthmani}"\n\n_"${textFr}"_\n\nDécouvert sur QuranVision :\n${currentUrl}`;
             
             if (navigator.share) {
-                navigator.share({
-                    title: `Verset ${reference} - QuranVision`,
-                    text: msg,
-                    url: currentUrl
-                }).catch(err => console.log("Partage annulé"));
+                navigator.share({ title: `Verset ${v.verse_key}`, text: msg, url: currentUrl }).catch(() => {});
             } else {
                 const fallbackMenu = document.getElementById(`fallback-menu-${index}`);
                 if (fallbackMenu) fallbackMenu.classList.toggle('hidden');
@@ -269,20 +275,15 @@
 
         function copyToClipboard(index) {
             const v = currentVersesList[index];
-            const textAr = v.text_uthmani;
             const textFr = v.translations[0].text.replace(/<[^>]*>/g, '');
-            const msg = `📖 Sourate (Verset ${v.verse_key})\n\n"${textAr}"\n\n"${textFr}"\n\nDécouvert sur QuranVision`;
-            
-            navigator.clipboard.writeText(msg).then(() => {
-                alert("Verset copié ! Tu peux le coller sur tous tes réseaux sociaux.");
-            });
+            const msg = `📖 Sourate (Verset ${v.verse_key})\n\n"${v.text_uthmani}"\n\n"${textFr}"\n\nQuranVision`;
+            navigator.clipboard.writeText(msg).then(() => alert("Texte copié !"));
         }
 
         function openWhatsAppFallback(index) {
             const v = currentVersesList[index];
-            const textAr = v.text_uthmani;
             const textFr = v.translations[0].text.replace(/<[^>]*>/g, '');
-            const msg = `📖 *Sourate (Verset ${v.verse_key})*\n\n"${textAr}"\n\n_"${textFr}"_\n\nDécouvert sur QuranVision`;
+            const msg = `📖 *Sourate (Verset ${v.verse_key})*\n\n"${v.text_uthmani}"\n\n_"${textFr}"_\n\nQuranVision`;
             window.open(`https://api.whatsapp.com/send?text=${encodeURIComponent(msg)}`, '_blank');
         }
 
