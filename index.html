@@ -153,7 +153,6 @@
             return /[\u0600-\u06FF]/.test(text);
         }
 
-        // Normalisation stricte pour la recherche locale et dictionnaire de secours pour l'API
         function corrigerTerme(query) {
             const normalized = query.toLowerCase().trim().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
             if (normalized === "moise") return "Moïse";
@@ -175,7 +174,6 @@
                 query = corrigerTerme(query);
             }
 
-            // Utilisation d'un paramètre de recherche tolérant sur l'API v4
             try {
                 const res = await fetch(`https://api.quran.com/api/v4/search?q=${encodeURIComponent(query)}&size=20&page=1`);
                 const data = await res.json();
@@ -192,19 +190,33 @@
 
         function renderSearchResults(results, isQueryArabic) {
             mainContent.innerHTML = `<h2 class="text-2xl font-bold mb-8 text-emerald-500">${results.length} occurrences trouvées</h2>`;
-            if(results.length === 0) { mainContent.innerHTML += "<p>Aucun résultat trouvé pour cette orthographe.</p>"; return; }
+            if(results.length === 0) { mainContent.innerHTML += "<p>Aucun résultat trouvé pour cette écriture.</p>"; return; }
             
             results.forEach(r => {
+                // Nettoyage complet des balises HTML parasites renvoyées par le moteur de recherche
                 const cleanText = r.text.replace(/<[^>]*>/g, '');
-                const alignClass = isQueryArabic ? 'text-right direction-rtl font-serif text-xl' : 'text-left italic text-zinc-200';
-                const textDirection = isQueryArabic ? 'dir="rtl"' : 'dir="ltr"';
+                
+                // Configuration de l'affichage selon la langue de la requête de l'utilisateur
+                let alignClass, textDirection, blockMarkup;
+                
+                if (isQueryArabic) {
+                    // Si l'utilisateur cherche en Arabe, on n'affiche que l'Arabe dans l'aperçu
+                    alignClass = 'text-right direction-rtl font-serif text-2xl leading-loose text-zinc-100';
+                    textDirection = 'dir="rtl"';
+                    blockMarkup = `"${cleanText}"`;
+                } else {
+                    // Si l'utilisateur cherche en Français, on récupère uniquement la traduction (gérée par r.translations ou nettoyée)
+                    alignClass = 'text-left italic text-zinc-200 text-lg leading-relaxed';
+                    textDirection = 'dir="ltr"';
+                    blockMarkup = `"${cleanText}"`;
+                }
 
                 mainContent.innerHTML += `
                     <div class="glass-card p-6 mb-4 border-l-4 border-emerald-500">
-                        <p class="text-zinc-400 text-xs mb-2 text-left uppercase">Référence : ${r.verse_key}</p>
-                        <p class="${alignClass} mb-4" ${textDirection}>"${cleanText}"</p>
+                        <p class="text-zinc-400 text-xs mb-3 text-left uppercase font-bold tracking-wider">Référence : Verset ${r.verse_key}</p>
+                        <p class="${alignClass} mb-5" ${textDirection}>${blockMarkup}</p>
                         <div class="text-left">
-                            <button onclick="goToVerse('${r.verse_key}')" class="text-emerald-500 font-bold text-sm hover:underline italic">ACCÉDER DIRECTEMENT AU VERSET →</button>
+                            <button onclick="goToVerse('${r.verse_key}')" class="text-emerald-500 font-bold text-sm hover:underline italic tracking-wide">ACCÉDER DIRECTEMENT AU VERSET →</button>
                         </div>
                     </div>`;
             });
