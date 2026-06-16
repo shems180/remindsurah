@@ -29,12 +29,21 @@
             font-size: 2.8rem; 
             line-height: 2.2; 
             text-align: right;
-            background: linear-gradient(to bottom, var(--gold), #d97706);
-            background-clip: text;
-            -webkit-background-clip: text; 
-            -webkit-text-fill-color: transparent;
+            direction: rtl;
             filter: drop-shadow(0 2px 4px rgba(0,0,0,0.5));
         }
+        /* Styles indispensables pour l'affichage correct des couleurs du Tajweed fourni par l'API */
+        .quran-arabic .tajweed { display: inline; font-family: inherit; }
+        .quran-arabic .ham_wasl { color: #aaaaaa; }
+        .quran-arabic .silent { color: #555555; }
+        .quran-arabic .lam_shamsiyyah { color: #555555; }
+        .quran-arabic .madd_2, .quran-arabic .madd_246, .quran-arabic .madd_muttasil, .quran-arabic .madd_munfasil, .quran-arabic .madd_6 { color: #ff4500; }
+        .quran-arabic .ghunnah { color: #10b981; }
+        .quran-arabic .ikhfa, .quran-arabic .ikhfa_shafawi { color: #9333ea; }
+        .quran-arabic .idghaam, .quran-arabic .idghaam_ghunnah, .quran-arabic .idghaam_no_ghunnah, .quran-arabic .idghaam_mutajaanisain, .quran-arabic .idghaam_mutaqaaribain { color: #16a34a; }
+        .quran-arabic .iqlab { color: #4f46e5; }
+        .quran-arabic .qalqalah { color: #d97706; }
+
         .glass-card { 
             background: rgba(255, 255, 255, 0.02); 
             backdrop-filter: blur(15px);
@@ -93,16 +102,13 @@
                 <svg class="w-16 h-16 text-emerald-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5s3.332.477 4.5 1.253v13C19.832 18.477 18.246 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"></path></svg>
             </div>
             <h2 class="text-4xl md:text-6xl font-bold tracking-tight">Méditez sur les Signes.</h2>
-            <p class="text-zinc-400 text-lg max-w-lg mx-auto font-light leading-relaxed">Images sans visages • Audio HD • Dawa simplifiée.</p>
+            <p class="text-zinc-400 text-lg max-w-lg mx-auto font-light leading-relaxed">Écriture Tajweed colorée • Images abstraites stables • Audio HD</p>
         </div>
     </main>
 
     <script>
         const mainContent = document.getElementById('main-content');
         const surahSelect = document.getElementById('surahSelect');
-        const themes = ["nature", "milkyway", "mountains", "ocean", "stars", "clouds", "desert", "waterfall", "sunrise", "space"];
-        
-        // On va stocker temporairement les versets ici pour éviter les bugs de guillemets au partage
         let currentVersesList = [];
 
         async function init() {
@@ -154,13 +160,13 @@
             mainContent.innerHTML = `<div class="py-20 text-emerald-500 animate-bounce text-xl font-bold uppercase tracking-widest">Inspiration en cours...</div>`;
             try {
                 const [vR, aR] = await Promise.all([
-                    fetch(`https://api.quran.com/api/v4/verses/by_chapter/${sid}?language=fr&translations=31&fields=text_uthmani&per_page=300`),
+                    // Demande explicite du champ text_uthmani_tajweed à l'API
+                    fetch(`https://api.quran.com/api/v4/verses/by_chapter/${sid}?language=fr&translations=31&fields=text_uthmani_tajweed&per_page=300`),
                     fetch(`https://api.quran.com/api/v4/chapter_recitations/${rid}/${sid}`)
                 ]);
                 const vD = await vR.json();
                 const aD = await aR.json();
                 
-                // Sauvegarde de la liste propre
                 currentVersesList = vD.verses;
                 renderSurah(vD.verses, aD.audio_file.audio_url);
             } catch (e) { mainContent.innerHTML = "Une erreur est survenue."; }
@@ -174,15 +180,17 @@
                 </div>`;
 
             verses.forEach((v, i) => {
-                const textAr = v.text_uthmani;
+                // Utilisation du texte Tajweed s'il existe, sinon fallback sur l'écriture standard
+                const textAr = v.text_uthmani_tajweed ? v.text_uthmani_tajweed : v.text_uthmani;
                 const textFr = v.translations[0].text.replace(/<[^>]*>/g, '');
-                const currentTheme = themes[i % themes.length];
-                const dynamicImg = `https://images.unsplash.com/featured/1200x600/?${currentTheme},landscape&sig=${v.id}`;
+                
+                // Picsum Photos stable avec effet de flou (blur) pour un arrière-plan ultra propre sans aucun visage
+                const dynamicImg = `https://picsum.photos/id/${(v.id % 50) + 10}/1200/600?blur=5`;
 
                 mainContent.innerHTML += `
                     <section id="v-${v.verse_key}" class="glass-card overflow-hidden mb-16">
                         <div class="relative h-64 md:h-96">
-                            <img src="${dynamicImg}" class="w-full h-full object-cover opacity-40" loading="lazy">
+                            <img src="${dynamicImg}" class="w-full h-full object-cover opacity-30" loading="lazy">
                             <div class="absolute inset-0 bg-gradient-to-t from-[#020617] to-transparent"></div>
                             <div class="absolute top-6 left-6 bg-black/50 px-4 py-1 rounded-full text-[10px] font-bold border border-white/10 uppercase">Verset ${v.verse_number}</div>
                         </div>
@@ -202,18 +210,17 @@
             window.scrollTo({ top: 0, behavior: 'smooth' });
         }
 
-        // Nouvelle fonction de partage ultra sécurisée et directe
         function shareVerseByIndex(index) {
             const v = currentVersesList[index];
             if (!v) return;
 
-            const textAr = v.text_uthmani;
+            // Pour le partage, on nettoie les balises HTML du Tajweed pour envoyer du texte propre sur WhatsApp
+            const rawAr = v.text_uthmani_tajweed ? v.text_uthmani_tajweed.replace(/<[^>]*>/g, '') : v.text_uthmani;
             const textFr = v.translations[0].text.replace(/<[^>]*>/g, '');
             const reference = v.verse_key;
 
-            const msg = `📖 *Sourate (Verset ${reference})*\n\n"${textAr}"\n\n_"${textFr}"_\n\nDécouvert sur QuranVision`;
+            const msg = `📖 *Sourate (Verset ${reference})*\n\n"${rawAr}"\n\n_"${textFr}"_\n\nDécouvert sur QuranVision`;
             
-            // On ouvre DIRECTEMENT WhatsApp pour s'assurer que ça fonctionne sur PC et Mobile
             const whatsappUrl = `https://api.whatsapp.com/send?text=${encodeURIComponent(msg)}`;
             window.open(whatsappUrl, '_blank');
         }
