@@ -153,14 +153,14 @@
             return /[\u0600-\u06FF]/.test(text);
         }
 
-        // Dictionnaire de correspondances phonétiques pour corriger les requêtes vers l'API
-        function corrigerRechercheDictionnaire(query) {
-            const normalized = query.toLowerCase().trim();
-            if (normalized === "moise" || normalized === "moïse") return "Moïse";
-            if (normalized === "jesus" || normalized === "jésus") return "Jésus";
+        // Normalisation stricte pour la recherche locale et dictionnaire de secours pour l'API
+        function corrigerTerme(query) {
+            const normalized = query.toLowerCase().trim().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+            if (normalized === "moise") return "Moïse";
+            if (normalized === "jesus") return "Jésus";
+            if (normalized === "noe") return "Noé";
+            if (normalized === "marie") return "Marie";
             if (normalized === "abraham") return "Abraham";
-            if (normalized === "noe" || normalized === "noé") return "Noé";
-            if (normalized === "pharaon") return "Pharaon";
             return query;
         }
 
@@ -168,21 +168,23 @@
             let query = document.getElementById('searchInput').value.trim();
             if (!query) return;
             
-            mainContent.innerHTML = `<div class="py-20 text-emerald-500 animate-pulse text-xl">Recherche intelligente en cours...</div>`;
+            mainContent.innerHTML = `<div class="py-20 text-emerald-500 animate-pulse text-xl">Recherche adaptative en cours...</div>`;
             
             const isQueryArabic = isArabic(query);
-            
-            // Applique la correction dictionnaire automatique si la saisie est en français
             if (!isQueryArabic) {
-                query = corrigerRechercheDictionnaire(query);
+                query = corrigerTerme(query);
             }
 
-            const langParam = isQueryArabic ? '' : '&language=fr';
-            
+            // Utilisation d'un paramètre de recherche tolérant sur l'API v4
             try {
-                const res = await fetch(`https://api.quran.com/api/v4/search?q=${encodeURIComponent(query)}${langParam}`);
+                const res = await fetch(`https://api.quran.com/api/v4/search?q=${encodeURIComponent(query)}&size=20&page=1`);
                 const data = await res.json();
-                renderSearchResults(data.search.results, isQueryArabic);
+                
+                if (data.search && data.search.results) {
+                    renderSearchResults(data.search.results, isQueryArabic);
+                } else {
+                    mainContent.innerHTML = "<p>Aucun résultat trouvé. Modifiez votre mot-clé.</p>";
+                }
             } catch (e) { 
                 mainContent.innerHTML = "Erreur réseau lors de la recherche."; 
             }
@@ -190,7 +192,7 @@
 
         function renderSearchResults(results, isQueryArabic) {
             mainContent.innerHTML = `<h2 class="text-2xl font-bold mb-8 text-emerald-500">${results.length} occurrences trouvées</h2>`;
-            if(results.length === 0) { mainContent.innerHTML += "<p>Aucun résultat trouvé pour cette écriture. Essayez avec une autre orthographe.</p>"; return; }
+            if(results.length === 0) { mainContent.innerHTML += "<p>Aucun résultat trouvé pour cette orthographe.</p>"; return; }
             
             results.forEach(r => {
                 const cleanText = r.text.replace(/<[^>]*>/g, '');
