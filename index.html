@@ -116,7 +116,7 @@
             ocean: "https://images.unsplash.com/photo-1505118380757-91f5f5632de0?auto=format&fit=crop&w=1200&q=80",     
             nature: "https://images.unsplash.com/photo-1441974231531-c6227db76b6e?auto=format&fit=crop&w=1200&q=80",    
             montagne: "https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?auto=format&fit=crop&w=1200&q=80",  
-            lumiere: "https://images.unsplash.com/photo-1546587348-d12660c30c50?auto=format&fit=crop&w=1200&q=80",   
+            lumiere: "https://images.unsplash.com/photo-1546587348-d12660c30c30?auto=format&fit=crop&w=1200&q=80",   
             desert: "https://images.unsplash.com/photo-1509316975850-ff9c5deb0cd9?auto=format&fit=crop&w=1200&q=80",    
             defaut: "https://images.unsplash.com/photo-1518156677180-95a2893f3e9f?auto=format&fit=crop&w=1200&q=80"     
         };
@@ -186,7 +186,10 @@
             mainContent.innerHTML = `<h2 class="text-2xl font-bold mb-8 text-emerald-500">${results.length} occurrences trouvées</h2>`;
             
             results.forEach(r => {
-                const cleanText = r.text.replace(/<[^>]*>/g, '');
+                // Correction de la récupération textuelle pour s'adapter aux variations structurelles du JSON de l'API
+                const rawText = r.text || (r.translations && r.translations[0] ? r.translations[0].text : '');
+                const cleanText = rawText ? rawText.replace(/<[^>]*>/g, '') : 'Texte indisponible';
+                
                 let alignClass, textDirection, blockMarkup;
                 
                 if (isQueryArabic) {
@@ -231,7 +234,6 @@
             const rid = document.getElementById('reciterSelect').value;
             mainContent.innerHTML = `<div class="py-20 text-emerald-500 animate-bounce text-xl font-bold uppercase">Génération du flux...</div>`;
             try {
-                // Utilisation du champ natif text_tajweed fourni par l'API de quran.com
                 const [vR, aR] = await Promise.all([
                     fetch(`https://api.quran.com/api/v4/verses/by_chapter/${sid}?language=fr&translations=31&fields=text_tajweed&per_page=300`),
                     fetch(`https://api.quran.com/api/v4/chapter_recitations/${rid}/${sid}`)
@@ -253,7 +255,6 @@
 
             verses.forEach((v, i) => {
                 const textFr = v.translations[0].text.replace(/<[^>]*>/g, '');
-                // Injection directe du flux HTML Tajweed officiel nettoyé
                 const textArTajweed = v.text_tajweed; 
                 const dynamicImg = getThemeImage(textFr);
 
