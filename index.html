@@ -186,9 +186,9 @@
             mainContent.innerHTML = `<h2 class="text-2xl font-bold mb-8 text-emerald-500">${results.length} occurrences trouvées</h2>`;
             
             results.forEach(r => {
-                // Correction de la récupération textuelle pour s'adapter aux variations structurelles du JSON de l'API
+                // Évite l'erreur 'undefined' en vérifiant les différents nœuds de réponse potentiels
                 const rawText = r.text || (r.translations && r.translations[0] ? r.translations[0].text : '');
-                const cleanText = rawText ? rawText.replace(/<[^>]*>/g, '') : 'Texte indisponible';
+                const cleanText = rawText ? rawText.replace(/<[^>]*>/g, '') : 'Texte disponible au clic';
                 
                 let alignClass, textDirection, blockMarkup;
                 
