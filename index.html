@@ -100,7 +100,6 @@
     <script>
         const mainContent = document.getElementById('main-content');
         const surahSelect = document.getElementById('surahSelect');
-        const themes = ["cosmos", "galaxy", "mountain", "nebula", "desert", "ocean", "nature", "architecture-islamic", "stars", "forest"];
 
         // Initialisation : Liste des sourates
         async function init() {
@@ -154,7 +153,8 @@
             mainContent.innerHTML = `<div class="py-20 text-emerald-500 animate-bounce text-xl font-bold uppercase tracking-widest">Inspiration en cours...</div>`;
             try {
                 const [vR, aR] = await Promise.all([
-                    fetch(`https://api.quran.com/api/v4/verses/by_chapter/${sid}?language=fr&translations=31&fields=text_uthmani`),
+                    // Ajout du paramètre &per_page=300 pour charger l'intégralité des versets
+                    fetch(`https://api.quran.com/api/v4/verses/by_chapter/${sid}?language=fr&translations=31&fields=text_uthmani&per_page=300`),
                     fetch(`https://api.quran.com/api/v4/chapter_recitations/${rid}/${sid}`)
                 ]);
                 const vD = await vR.json();
@@ -171,15 +171,13 @@
                 </div>`;
 
             verses.forEach((v, i) => {
-                const theme = themes[i % themes.length];
-                const img = `https://loremflickr.com/1200/600/${theme}?lock=${v.id}`;
                 const textAr = v.text_uthmani;
                 const textFr = v.translations[0].text.replace(/<[^>]*>/g, '');
 
                 mainContent.innerHTML += `
                     <section id="v-${v.verse_key}" class="glass-card overflow-hidden mb-16">
                         <div class="relative h-64 md:h-96">
-                            <img src="${img}" class="w-full h-full object-cover opacity-50" loading="lazy">
+                            <img src="https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?auto=format&fit=crop&w=1200&q=80&sig=${v.id}" class="w-full h-full object-cover opacity-40" loading="lazy">
                             <div class="absolute inset-0 bg-gradient-to-t from-[#020617] to-transparent"></div>
                             <div class="absolute top-6 left-6 bg-black/50 px-4 py-1 rounded-full text-[10px] font-bold border border-white/10 uppercase">Verset ${v.verse_number}</div>
                         </div>
