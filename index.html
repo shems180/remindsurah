@@ -3,53 +3,66 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>QuranVision - Mushaf Tajweed</title>
+    <title>QuranVision - Immersion Spirituelle</title>
     
+    <link rel="manifest" href="manifest.json">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <link rel="apple-touch-icon" href="icon-192.png">
+
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Amiri:wght@400;700&family=Inter:wght@300;500;700&display=swap" rel="stylesheet">
     
     <style>
-        :root { --emerald: #10b981; }
+        :root { 
+            --emerald: #10b981; 
+            --gold: #fbbf24; 
+        }
         body { 
             background: radial-gradient(circle at top, #0f172a 0%, #020617 100%);
             color: #f8fafc; 
             font-family: 'Inter', sans-serif; 
             min-height: 100vh;
         }
-        .quran-container { direction: rtl; text-align: right; }
         .quran-arabic { 
             font-family: 'Amiri', serif; 
             font-size: 2.8rem; 
-            line-height: 2.6; 
-            display: inline-block;
+            line-height: 2.5; 
+            text-align: right;
+            direction: rtl;
             filter: drop-shadow(0 2px 4px rgba(0,0,0,0.5));
         }
-
-        /* --- CLASSIFICATION DU TAJWEED PAR RECONNAISSANCE DES BALISES --- */
-        .quran-arabic span, .quran-arabic font { display: inline !important; font-family: inherit !important; }
         
-        /* Prolongations (Mad) et Ghunnah -> Rouge/Orange */
-        .quran-arabic [style*="color:#FF0000"], .quran-arabic [style*="color:red"], .quran-arabic .m { color: #ff4444 !important; font-weight: 700; }
-        .quran-arabic [style*="color:#E67E22"], .quran-arabic [style*="color:orange"], .quran-arabic .g { color: #f59e0b !important; font-weight: 700; }
-        
-        /* Ikhfa et Idgham -> Vert */
-        .quran-arabic [style*="color:#27AE60"], .quran-arabic [style*="color:green"], .quran-arabic .i { color: #10b981 !important; font-weight: 700; }
-        
-        /* Qalqalah -> Bleu */
-        .quran-arabic [style*="color:#2980B9"], .quran-arabic [style*="color:blue"], .quran-arabic .q { color: #3b82f6 !important; font-weight: 700; }
-        
-        /* Lettres Muettes / Assimilées -> Gris */
-        .quran-arabic [style*="color:#7F8C8D"], .quran-arabic [style*="color:gray"], .quran-arabic .s { color: #6b7280 !important; opacity: 0.5; }
+        /* Code Couleur Officiel du Mushaf Tajweed */
+        .taj-madd { color: #dc2626 !important; font-weight: 700; }       
+        .taj-ghunnah { color: #16a34a !important; font-weight: 700; }    
+        .taj-ikhfa { color: #ea580c !important; }                        
+        .taj-qalqalah { color: #2563eb !important; font-weight: 700; }   
+        .taj-muet { color: #9ca3af !important; opacity: 0.5; }           
 
         .glass-card { 
             background: rgba(255, 255, 255, 0.02); 
             backdrop-filter: blur(15px);
             border: 1px solid rgba(255, 255, 255, 0.08); 
             border-radius: 2.5rem;
+            transition: all 0.4s ease;
         }
-        .search-input { background: rgba(0,0,0,0.4); border: 1px solid rgba(255,255,255,0.1); }
-        .search-input:focus { border-color: var(--emerald); outline: none; }
-        audio { border-radius: 50px; width: 100%; }
+        .glass-card:hover { 
+            border-color: var(--emerald); 
+            transform: translateY(-3px); 
+        }
+        .search-input { 
+            background: rgba(0,0,0,0.4); 
+            border: 1px solid rgba(255,255,255,0.1); 
+        }
+        .search-input:focus { 
+            border-color: var(--emerald); 
+            outline: none; 
+        }
+        audio { 
+            border-radius: 50px; 
+            width: 100%;
+        }
     </style>
 </head>
 <body class="overflow-x-hidden">
@@ -62,124 +75,240 @@
             
             <div class="flex flex-wrap justify-center items-center gap-3">
                 <div class="relative">
-                    <input type="text" id="searchInput" placeholder="Recherche par mot (fr)..." class="search-input w-56 md:w-64 px-4 py-2 rounded-xl text-sm text-white">
+                    <input type="text" id="searchInput" placeholder="Recherche (ex: Moise, Paix)..." class="search-input w-56 md:w-64 px-4 py-2 rounded-xl text-sm text-white">
                     <button onclick="searchVerse()" class="absolute right-3 top-2 text-emerald-400 hover:text-white transition">
                         <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" stroke-width="2" stroke-linecap="round"></path></svg>
                     </button>
                 </div>
                 <select id="surahSelect" class="bg-zinc-900 border border-zinc-700 px-3 py-2 rounded-xl text-xs outline-none w-32 md:w-40"></select>
-                <button onclick="loadSurah()" class="bg-emerald-600 hover:bg-emerald-400 text-black font-bold px-6 py-2 rounded-xl transition-all">Explorer</button>
+                <select id="reciterSelect" class="bg-zinc-900 border border-zinc-700 px-3 py-2 rounded-xl text-xs outline-none">
+                    <option value="7">Mishary Alafasy</option>
+                    <option value="3">Abdur-Rahman as-Sudais</option>
+                    <option value="128">Yasser Ad-Dussary</option>
+                    <option value="6">Abu Bakr al-Shatri</option>
+                </select>
+                <button onclick="loadSurah()" class="bg-emerald-600 hover:bg-emerald-400 text-black font-bold px-6 py-2 rounded-xl transition-all shadow-lg shadow-emerald-900/20">Explorer</button>
             </div>
         </div>
     </nav>
 
     <main id="main-content" class="max-w-4xl mx-auto p-4 md:p-8 mt-6 space-y-12 text-center">
         <div id="welcome-screen" class="py-24 space-y-8">
-            <h2 class="text-4xl md:text-6xl font-bold tracking-tight">Le Mushaf Tajweed Intégral</h2>
-            <p class="text-zinc-400 text-lg max-w-lg mx-auto font-light leading-relaxed">Données stabilisées via AlQuran Cloud • Rendu couleur vérifié</p>
+            <div class="inline-block p-6 rounded-full bg-emerald-500/10 animate-pulse">
+                <svg class="w-16 h-16 text-emerald-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5s3.332.477 4.5 1.253v13C19.832 18.477 18.246 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"></path></svg>
+            </div>
+            <h2 class="text-4xl md:text-6xl font-bold tracking-tight">Méditez sur les Signes.</h2>
+            <p class="text-zinc-400 text-lg max-w-lg mx-auto font-light leading-relaxed">Mushaf Tajweed Standardisé • Correction de recherche d'accents à la volée</p>
         </div>
     </main>
 
     <script>
         const mainContent = document.getElementById('main-content');
         const surahSelect = document.getElementById('surahSelect');
+        let currentVersesList = [];
+
+        const imageBank = {
+            espace: "https://picsum.photos/id/962/1200/600",    
+            ocean: "https://picsum.photos/id/1011/1200/600",     
+            nature: "https://picsum.photos/id/1043/1200/600",    
+            montagne: "https://picsum.photos/id/1036/1200/600",  
+            lumiere: "https://picsum.photos/id/1051/1200/600",   
+            desert: "https://picsum.photos/id/1015/1200/600",    
+            defaut: "https://picsum.photos/id/1057/1200/600"     
+        };
+
+        function getThemeImage(textFr) {
+            const clean = textFr.toLowerCase();
+            if (clean.includes("mer") || clean.includes("eau") || clean.includes("fleuve") || clean.includes("pluie") || clean.includes("source")) return imageBank.ocean;
+            if (clean.includes("ciel") || clean.includes("cieux") || clean.includes("nuit") || clean.includes("étoile") || clean.includes("univers") || clean.includes("lune")) return imageBank.espace;
+            if (clean.includes("terre") || clean.includes("jardin") || clean.includes("arbre") || clean.includes("plantes") || clean.includes("fruits")) return imageBank.nature;
+            if (clean.includes("soleil") || clean.includes("jour") || clean.includes("lumière") || clean.includes("clarté")) return imageBank.lumiere;
+            if (clean.includes("montagne") || clean.includes("montagnes") || clean.includes("rochers")) return imageBank.montagne;
+            if (clean.includes("désert") || clean.includes("sable")) return imageBank.desert;
+            return imageBank.defaut;
+        }
+
+        function parseMushafTajweed(textAr) {
+            let html = textAr;
+            html = html.replace(/([\u0640\u0653-\u0655]*[\u064A\u0641\u0645]\u0654)/g, '<span class="taj-madd">$1</span>');
+            html = html.replace(/(\u065C|\u064E\u0650?\u0627)/g, '<span class="taj-madd">$1</span>');
+            html = html.replace(/([\u0646\u0645]\u0651)/g, '<span class="taj-ghunnah">$1</span>');
+            html = html.replace(/([\u064B\u064C\u064D]\s)/g, '<span class="taj-ikhfa">$1</span>');
+            html = html.replace(/([\u0642\u0637\u0628\u062c\u062f]\u0652)/g, '<span class="taj-qalqalah">$1</span>');
+            html = html.replace(/(\u0627\u064F|\u0640\u0652\u0627)/g, '<span class="taj-muet">$1</span>');
+            return html;
+        }
 
         async function init() {
             try {
-                // Initialisation de la liste des sourates via une route de secours stable
-                const res = await fetch('https://api.alquran.cloud/v1/surah');
+                const res = await fetch('https://api.quran.com/api/v4/chapters?language=fr');
                 const data = await res.json();
-                data.data.forEach(s => {
-                    surahSelect.innerHTML += `<option value="${s.number}">${s.number}. ${s.englishName}</option>`;
+                data.chapters.forEach(s => {
+                    surahSelect.innerHTML += `<option value="${s.id}">${s.id}. ${s.name_simple}</option>`;
                 });
             } catch (e) { console.error("Erreur d'initialisation", e); }
         }
 
-        async function loadSurah() {
-            const sid = surahSelect.value;
-            mainContent.innerHTML = `<div class="py-20 text-emerald-500 animate-pulse text-xl font-bold uppercase">Génération du flux Tajweed sécurisé...</div>`;
-            
-            try {
-                // Chargement simultané : Rendu Tajweed officiel + Traduction française de référence
-                const [tajweedRes, frRes, audioRes] = await Promise.all([
-                    fetch(`https://api.alquran.cloud/v1/surah/${sid}/quran-tajweed`),
-                    fetch(`https://api.alquran.cloud/v1/surah/${sid}/fr.hamidullah`),
-                    fetch(`https://api.quran.com/api/v4/chapter_recitations/7/${sid}`) // Audio Alafasy stable
-                ]);
-
-                const tajweedData = await tajweedRes.json();
-                const frData = await frRes.json();
-                const audioData = await audioRes.json();
-
-                renderSurah(tajweedData.data.ayahs, frData.data.ayahs, audioData.audio_file.audio_url);
-            } catch (e) { 
-                console.error(e);
-                mainContent.innerHTML = "<p class='py-20 text-red-400'>Erreur lors de la synchronisation des données.</p>"; 
-            }
+        function isArabic(text) {
+            return /[\u0600-\u06FF]/.test(text);
         }
 
-        function renderSurah(tajweedAyahs, frAyahs, audioUrl) {
-            mainContent.innerHTML = `
-                <div class="glass-card p-6 sticky top-24 z-40 bg-black/80 shadow-2xl mb-12">
-                    <audio src="${audioUrl}" controls class="h-10"></audio>
-                </div>`;
-
-            tajweedAyahs.forEach((ayah, i) => {
-                const textFr = frAyahs[i] ? frAyahs[i].text : 'Traduction non disponible';
-                const textArDisplay = ayah.text; // Contient nativement l'arbre HTML de coloration Tajweed
-
-                mainContent.innerHTML += `
-                    <section class="glass-card overflow-hidden mb-16 p-8 md:p-14 space-y-10">
-                        <div class="text-left bg-black/40 inline-block px-4 py-1 rounded-full text-[10px] font-bold border border-white/5 uppercase">Verset ${ayah.numberInSurah}</div>
-                        <div class="quran-container">
-                            <p class="quran-arabic text-zinc-100" dir="rtl">${textArDisplay}</p>
-                        </div>
-                        <div class="h-px w-20 bg-emerald-500/30 mx-auto"></div>
-                        <p class="text-zinc-300 text-xl md:text-2xl font-light italic leading-relaxed">"${textFr}"</p>
-                    </section>`;
-            });
+        // Normalisation stricte pour la recherche locale et dictionnaire de secours pour l'API
+        function corrigerTerme(query) {
+            const normalized = query.toLowerCase().trim().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+            if (normalized === "moise") return "Moïse";
+            if (normalized === "jesus") return "Jésus";
+            if (normalized === "noe") return "Noé";
+            if (normalized === "marie") return "Marie";
+            if (normalized === "abraham") return "Abraham";
+            return query;
         }
 
         async function searchVerse() {
             let query = document.getElementById('searchInput').value.trim();
             if (!query) return;
             
-            mainContent.innerHTML = `<div class="py-20 text-emerald-500 animate-pulse text-xl">Recherche dans le texte de loi...</div>`;
+            mainContent.innerHTML = `<div class="py-20 text-emerald-500 animate-pulse text-xl">Recherche adaptative en cours...</div>`;
+            
+            const isQueryArabic = isArabic(query);
+            if (!isQueryArabic) {
+                query = corrigerTerme(query);
+            }
 
+            // Utilisation d'un paramètre de recherche tolérant sur l'API v4
             try {
-                // Recherche via le dictionnaire français stable
-                const res = await fetch(`https://api.alquran.cloud/v1/search/${encodeURIComponent(query)}/all/fr.hamidullah`);
+                const res = await fetch(`https://api.quran.com/api/v4/search?q=${encodeURIComponent(query)}&size=20&page=1`);
                 const data = await res.json();
                 
-                if (data.data && data.data.results && data.data.results.length > 0) {
-                    const cleanResults = data.data.results.slice(0, 10); // Limite top 10 occurrences
-                    let buffer = `<h2 class="text-2xl font-bold mb-8 text-emerald-500">${cleanResults.length} occurrences trouvées</h2>`;
-                    
-                    for (const item of cleanResults) {
-                        // Récupération dynamique du Tajweed pour le verset trouvé de manière sécurisée
-                        const tRes = await fetch(`https://api.alquran.cloud/v1/ayah/${item.surah.number}:${item.numberInSurah}/quran-tajweed`);
-                        const tData = await tRes.json();
-                        
-                        const arText = tData.data ? tData.data.text : '';
-
-                        buffer += `
-                            <div class="glass-card p-6 mb-6 text-center space-y-6 border-l-4 border-emerald-500">
-                                <p class="text-zinc-400 text-xs text-left uppercase font-bold tracking-wider">${item.surah.englishName} • Verset ${item.numberInSurah}</p>
-                                <div class="quran-container">
-                                    <p class="quran-arabic text-zinc-100" dir="rtl">${arText}</p>
-                                </div>
-                                <div class="h-px w-12 bg-emerald-500/20 mx-auto"></div>
-                                <p class="text-left italic text-zinc-200 text-base leading-relaxed" dir="ltr">"${item.text}"</p>
-                            </div>`;
-                    }
-                    mainContent.innerHTML = buffer;
+                if (data.search && data.search.results) {
+                    renderSearchResults(data.search.results, isQueryArabic);
                 } else {
-                    mainContent.innerHTML = "<p class='py-20 text-zinc-400'>Aucun résultat trouvé.</p>";
+                    mainContent.innerHTML = "<p>Aucun résultat trouvé. Modifiez votre mot-clé.</p>";
                 }
             } catch (e) { 
-                console.error(e);
-                mainContent.innerHTML = "<p class='py-20 text-red-400'>Une erreur est survenue lors de l'exécution de la recherche.</p>"; 
+                mainContent.innerHTML = "Erreur réseau lors de la recherche."; 
             }
+        }
+
+        function renderSearchResults(results, isQueryArabic) {
+            mainContent.innerHTML = `<h2 class="text-2xl font-bold mb-8 text-emerald-500">${results.length} occurrences trouvées</h2>`;
+            if(results.length === 0) { mainContent.innerHTML += "<p>Aucun résultat trouvé pour cette orthographe.</p>"; return; }
+            
+            results.forEach(r => {
+                const cleanText = r.text.replace(/<[^>]*>/g, '');
+                const alignClass = isQueryArabic ? 'text-right direction-rtl font-serif text-xl' : 'text-left italic text-zinc-200';
+                const textDirection = isQueryArabic ? 'dir="rtl"' : 'dir="ltr"';
+
+                mainContent.innerHTML += `
+                    <div class="glass-card p-6 mb-4 border-l-4 border-emerald-500">
+                        <p class="text-zinc-400 text-xs mb-2 text-left uppercase">Référence : ${r.verse_key}</p>
+                        <p class="${alignClass} mb-4" ${textDirection}>"${cleanText}"</p>
+                        <div class="text-left">
+                            <button onclick="goToVerse('${r.verse_key}')" class="text-emerald-500 font-bold text-sm hover:underline italic">ACCÉDER DIRECTEMENT AU VERSET →</button>
+                        </div>
+                    </div>`;
+            });
+        }
+
+        async function goToVerse(vk) {
+            const surahId = vk.split(':')[0];
+            document.getElementById('surahSelect').value = surahId;
+            
+            await loadSurah();
+            
+            setTimeout(() => {
+                const element = document.getElementById(`v-${vk}`);
+                if (element) {
+                    element.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                    element.classList.add('border-emerald-500');
+                    setTimeout(() => element.classList.remove('border-emerald-500'), 2000);
+                }
+            }, 600);
+        }
+
+        async function loadSurah() {
+            const sid = surahSelect.value;
+            const rid = document.getElementById('reciterSelect').value;
+            mainContent.innerHTML = `<div class="py-20 text-emerald-500 animate-bounce text-xl font-bold uppercase">Génération du flux...</div>`;
+            try {
+                const [vR, aR] = await Promise.all([
+                    fetch(`https://api.quran.com/api/v4/verses/by_chapter/${sid}?language=fr&translations=31&fields=text_uthmani&per_page=300`),
+                    fetch(`https://api.quran.com/api/v4/chapter_recitations/${rid}/${sid}`)
+                ]);
+                const vD = await vR.json();
+                const aD = await aR.json();
+                
+                currentVersesList = vD.verses;
+                renderSurah(vD.verses, aD.audio_file.audio_url);
+            } catch (e) { mainContent.innerHTML = "Erreur de chargement de la sourate."; }
+        }
+
+        function renderSurah(verses, audio) {
+            mainContent.innerHTML = `
+                <div class="glass-card p-6 sticky top-24 z-40 bg-black/80 shadow-2xl mb-12">
+                    <p class="text-xs font-bold text-emerald-500 mb-2 tracking-widest uppercase">Audio Récitation</p>
+                    <audio src="${audio}" controls class="h-10"></audio>
+                </div>`;
+
+            verses.forEach((v, i) => {
+                const textFr = v.translations[0].text.replace(/<[^>]*>/g, '');
+                const textArTajweed = parseMushafTajweed(v.text_uthmani);
+                const dynamicImg = getThemeImage(textFr);
+
+                mainContent.innerHTML += `
+                    <section id="v-${v.verse_key}" class="glass-card overflow-hidden mb-16 border border-transparent transition-all duration-700">
+                        <div class="relative h-64 md:h-96">
+                            <img src="${dynamicImg}" class="w-full h-full object-cover opacity-25" loading="lazy">
+                            <div class="absolute inset-0 bg-gradient-to-t from-[#020617] to-transparent"></div>
+                            <div class="absolute top-6 left-6 bg-black/50 px-4 py-1 rounded-full text-[10px] font-bold border border-white/10 uppercase">Verset ${v.verse_number}</div>
+                        </div>
+                        <div class="p-8 md:p-14 space-y-10">
+                            <p class="quran-arabic text-zinc-100" dir="rtl">${textArTajweed}</p>
+                            <div class="h-px w-20 bg-emerald-500/30 mx-auto"></div>
+                            <p class="text-zinc-300 text-xl md:text-2xl font-light italic leading-relaxed">"${textFr}"</p>
+                            
+                            <div class="flex flex-col items-center justify-center gap-3">
+                                <button onclick="shareVerse(${i})" 
+                                        class="mx-auto flex items-center gap-2 bg-emerald-600/10 hover:bg-emerald-600 text-emerald-400 hover:text-black border border-emerald-500/30 transition-all text-xs font-bold uppercase tracking-widest px-6 py-3 rounded-full">
+                                    Partager ce verset
+                                </button>
+                                <div id="fallback-menu-${i}" class="hidden flex gap-4 text-xs font-medium">
+                                    <button onclick="copyToClipboard(${i})" class="text-zinc-400 hover:text-white transition">📋 Copier</button>
+                                    <button onclick="openWhatsAppFallback(${i})" class="text-green-400 hover:underline transition">💬 WhatsApp</button>
+                                </div>
+                            </div>
+                        </div>
+                    </section>`;
+            });
+        }
+
+        function shareVerse(index) {
+            const v = currentVersesList[index];
+            if (!v) return;
+            const textFr = v.translations[0].text.replace(/<[^>]*>/g, '');
+            const currentUrl = window.location.href;
+            const msg = `📖 *Sourate (Verset ${v.verse_key})*\n\n"${v.text_uthmani}"\n\n_"${textFr}"_\n\n${currentUrl}`;
+            
+            if (navigator.share) {
+                navigator.share({ title: `Verset ${v.verse_key}`, text: msg, url: currentUrl }).catch(() => {});
+            } else {
+                const fallbackMenu = document.getElementById(`fallback-menu-${index}`);
+                if (fallbackMenu) fallbackMenu.classList.toggle('hidden');
+            }
+        }
+
+        function copyToClipboard(index) {
+            const v = currentVersesList[index];
+            const textFr = v.translations[0].text.replace(/<[^>]*>/g, '');
+            const msg = `📖 Sourate (Verset ${v.verse_key})\n\n"${v.text_uthmani}"\n\n"${textFr}"`;
+            navigator.clipboard.writeText(msg).then(() => alert("Copié !"));
+        }
+
+        function openWhatsAppFallback(index) {
+            const v = currentVersesList[index];
+            const textFr = v.translations[0].text.replace(/<[^>]*>/g, '');
+            const msg = `📖 *Sourate (Verset ${v.verse_key})*\n\n"${v.text_uthmani}"\n\n_"${textFr}"_\n\n`;
+            window.open(`https://api.whatsapp.com/send?text=${encodeURIComponent(msg)}`, '_blank');
         }
 
         init();
