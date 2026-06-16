@@ -34,11 +34,11 @@
         }
         
         /* Code Couleur Officiel du Mushaf Tajweed */
-        .taj-madd { color: #dc2626 !important; font-weight: 700; }       /* Prolongations (Madd) : Rouge */
-        .taj-ghunnah { color: #16a34a !important; font-weight: 700; }    /* Ghunnah / Idgham : Vert */
-        .taj-ikhfa { color: #ea580c !important; }                        /* Ikhfa / Iqlab : Orange */
-        .taj-qalqalah { color: #2563eb !important; font-weight: 700; }   /* Qalqalah (Rebond) : Bleu */
-        .taj-muet { color: #9ca3af !important; opacity: 0.5; }           /* Lettres écrites mais muettes : Gris */
+        .taj-madd { color: #dc2626 !important; font-weight: 700; }       
+        .taj-ghunnah { color: #16a34a !important; font-weight: 700; }    
+        .taj-ikhfa { color: #ea580c !important; }                        
+        .taj-qalqalah { color: #2563eb !important; font-weight: 700; }   
+        .taj-muet { color: #9ca3af !important; opacity: 0.5; }           
 
         .glass-card { 
             background: rgba(255, 255, 255, 0.02); 
@@ -98,7 +98,7 @@
                 <svg class="w-16 h-16 text-emerald-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5s3.332.477 4.5 1.253v13C19.832 18.477 18.246 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"></path></svg>
             </div>
             <h2 class="text-4xl md:text-6xl font-bold tracking-tight">Méditez sur les Signes.</h2>
-            <p class="text-zinc-400 text-lg max-w-lg mx-auto font-light leading-relaxed">Mushaf Tajweed Standardisé • Recherche Simplifiée Sans Accents • Alignement Contextuel</p>
+            <p class="text-zinc-400 text-lg max-w-lg mx-auto font-light leading-relaxed">Mushaf Tajweed Standardisé • Correction de recherche d'accents à la volée</p>
         </div>
     </main>
 
@@ -128,26 +128,14 @@
             return imageBank.defaut;
         }
 
-        // Moteur de rendu fidèle au standard de couleurs du Mushaf Tajweed physique
         function parseMushafTajweed(textAr) {
             let html = textAr;
-            
-            // 1. Prolongations obligatoires et optionnelles (Madd) -> Rouge
             html = html.replace(/([\u0640\u0653-\u0655]*[\u064A\u0641\u0645]\u0654)/g, '<span class="taj-madd">$1</span>');
             html = html.replace(/(\u065C|\u064E\u0650?\u0627)/g, '<span class="taj-madd">$1</span>');
-            
-            // 2. Règles de la Ghunnah (Noon / Meem avec Shaddah, Idgham) -> Vert
             html = html.replace(/([\u0646\u0645]\u0651)/g, '<span class="taj-ghunnah">$1</span>');
-            
-            // 3. Ikhfa et Iqlab (Tanween ou Noon Sakinah dissimulés) -> Orange
             html = html.replace(/([\u064B\u064C\u064D]\s)/g, '<span class="taj-ikhfa">$1</span>');
-            
-            // 4. Qalqalah (Lettres du rebond : ق, ط, ب, ج, د avec un Soukoun) -> Bleu
             html = html.replace(/([\u0642\u0637\u0628\u062c\u062f]\u0652)/g, '<span class="taj-qalqalah">$1</span>');
-            
-            // 5. Lettres écrites mais non prononcées (ex: Alif de protection) -> Gris
             html = html.replace(/(\u0627\u064F|\u0640\u0652\u0627)/g, '<span class="taj-muet">$1</span>');
-
             return html;
         }
 
@@ -165,28 +153,34 @@
             return /[\u0600-\u06FF]/.test(text);
         }
 
-        // Nettoie les accents et caractères spéciaux complexes pour simplifier la saisie (ex: Moïse -> moise)
-        function cleanStringForSearch(str) {
-            return str
-                .toLowerCase()
-                .normalize("NFD")
-                .replace(/[\u0300-\u036f]/g, "") // Supprime les accents
-                .replace(/œ/g, "oe")
-                .replace(/æ/g, "ae");
+        // Dictionnaire de correspondances phonétiques pour corriger les requêtes vers l'API
+        function corrigerRechercheDictionnaire(query) {
+            const normalized = query.toLowerCase().trim();
+            if (normalized === "moise" || normalized === "moïse") return "Moïse";
+            if (normalized === "jesus" || normalized === "jésus") return "Jésus";
+            if (normalized === "abraham") return "Abraham";
+            if (normalized === "noe" || normalized === "noé") return "Noé";
+            if (normalized === "pharaon") return "Pharaon";
+            return query;
         }
 
         async function searchVerse() {
-            const rawQuery = document.getElementById('searchInput').value.trim();
-            if (!rawQuery) return;
+            let query = document.getElementById('searchInput').value.trim();
+            if (!query) return;
             
-            mainContent.innerHTML = `<div class="py-20 text-emerald-500 animate-pulse text-xl">Recherche simplifiée en cours...</div>`;
+            mainContent.innerHTML = `<div class="py-20 text-emerald-500 animate-pulse text-xl">Recherche intelligente en cours...</div>`;
             
-            const isQueryArabic = isArabic(rawQuery);
-            const processedQuery = isQueryArabic ? rawQuery : cleanStringForSearch(rawQuery);
+            const isQueryArabic = isArabic(query);
+            
+            // Applique la correction dictionnaire automatique si la saisie est en français
+            if (!isQueryArabic) {
+                query = corrigerRechercheDictionnaire(query);
+            }
+
             const langParam = isQueryArabic ? '' : '&language=fr';
             
             try {
-                const res = await fetch(`https://api.quran.com/api/v4/search?q=${encodeURIComponent(processedQuery)}${langParam}`);
+                const res = await fetch(`https://api.quran.com/api/v4/search?q=${encodeURIComponent(query)}${langParam}`);
                 const data = await res.json();
                 renderSearchResults(data.search.results, isQueryArabic);
             } catch (e) { 
@@ -196,7 +190,7 @@
 
         function renderSearchResults(results, isQueryArabic) {
             mainContent.innerHTML = `<h2 class="text-2xl font-bold mb-8 text-emerald-500">${results.length} occurrences trouvées</h2>`;
-            if(results.length === 0) { mainContent.innerHTML += "<p>Aucun résultat trouvé pour cette écriture.</p>"; return; }
+            if(results.length === 0) { mainContent.innerHTML += "<p>Aucun résultat trouvé pour cette écriture. Essayez avec une autre orthographe.</p>"; return; }
             
             results.forEach(r => {
                 const cleanText = r.text.replace(/<[^>]*>/g, '');
