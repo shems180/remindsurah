@@ -193,13 +193,19 @@
             
             for (const item of results) {
                 try {
-                    const res = await fetch(`https://api.quran.com/api/v4/verses/by_key/${item.verse_key}?language=fr&translations=31&fields=text_tajweed`);
+                    // Ajout explicite de text_uthmani en secours automatique
+                    const res = await fetch(`https://api.quran.com/api/v4/verses/by_key/${item.verse_key}?language=fr&translations=31&fields=text_tajweed,text_uthmani`);
                     const detail = await res.json();
                     
                     if (detail && detail.verse) {
                         const v = detail.verse;
                         const fr = v.translations && v.translations[0] ? v.translations[0].text.replace(/<[^>]*>/g, '') : 'Traduction non disponible';
-                        const ar = v.text_tajweed || 'Texte arabe indisponible';
+                        
+                        // Sécurité anti-undefined : si text_tajweed n'existe pas ou est invalide, utiliser text_uthmani
+                        let ar = v.text_tajweed || v.text_uthmani || 'Texte arabe indisponible';
+                        if (ar === "undefined" || ar === undefined) {
+                            ar = v.text_uthmani || 'Texte arabe indisponible';
+                        }
 
                         buffer += `
                             <div class="glass-card p-6 mb-6 border-l-4 border-emerald-500 text-center space-y-6">
@@ -240,7 +246,7 @@
             mainContent.innerHTML = `<div class="py-20 text-emerald-500 animate-bounce text-xl font-bold uppercase">Génération du flux...</div>`;
             try {
                 const [vR, aR] = await Promise.all([
-                    fetch(`https://api.quran.com/api/v4/verses/by_chapter/${sid}?language=fr&translations=31&fields=text_tajweed&per_page=300`),
+                    fetch(`https://api.quran.com/api/v4/verses/by_chapter/${sid}?language=fr&translations=31&fields=text_tajweed,text_uthmani&per_page=300`),
                     fetch(`https://api.quran.com/api/v4/chapter_recitations/${rid}/${sid}`)
                 ]);
                 const vD = await vR.json();
@@ -260,7 +266,13 @@
 
             verses.forEach((v, i) => {
                 const textFr = v.translations[0].text.replace(/<[^>]*>/g, '');
-                const textArDisplay = v.text_tajweed; 
+                
+                // Sécurité anti-undefined identique pour l'affichage par sourate
+                let textArDisplay = v.text_tajweed || v.text_uthmani; 
+                if (textArDisplay === "undefined" || textArDisplay === undefined) {
+                    textArDisplay = v.text_uthmani;
+                }
+
                 const dynamicImg = getThemeImage(textFr);
 
                 mainContent.innerHTML += `
