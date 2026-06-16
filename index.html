@@ -98,7 +98,7 @@
                 <svg class="w-16 h-16 text-emerald-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5s3.332.477 4.5 1.253v13C19.832 18.477 18.246 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"></path></svg>
             </div>
             <h2 class="text-4xl md:text-6xl font-bold tracking-tight">Méditez sur les Signes.</h2>
-            <p class="text-zinc-400 text-lg max-w-lg mx-auto font-light leading-relaxed">Mushaf Tajweed Standardisé • Visuels Naturels Purifiés sans visages</p>
+            <p class="text-zinc-400 text-lg max-w-lg mx-auto font-light leading-relaxed">Mushaf Tajweed Standardisé • Correction de recherche d'accents à la volée</p>
         </div>
     </main>
 
@@ -107,25 +107,24 @@
         const surahSelect = document.getElementById('surahSelect');
         let currentVersesList = [];
 
-        // Sélection stricte d'identifiants d'images de paysages et géométries sans aucun humain
         const imageBank = {
-            espace: "https://images.unsplash.com/photo-1506318137071-a8e063b4bec0?auto=format&fit=crop&w=1200&q=80",    
-            ocean: "https://images.unsplash.com/photo-1505118380757-91f5f5632de0?auto=format&fit=crop&w=1200&q=80",     
-            nature: "https://images.unsplash.com/photo-1441974231531-c6227db76b6e?auto=format&fit=crop&w=1200&q=80",    
-            montagne: "https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?auto=format&fit=crop&w=1200&q=80",  
-            lumiere: "https://images.unsplash.com/photo-1546587348-d12660c30c50?auto=format&fit=crop&w=1200&q=80",   
-            desert: "https://images.unsplash.com/photo-1509316975850-ff9c5deb0cd9?auto=format&fit=crop&w=1200&q=80",    
-            defaut: "https://images.unsplash.com/photo-1518156677180-95a2893f3e9f?auto=format&fit=crop&w=1200&q=80"     
+            espace: "https://picsum.photos/id/962/1200/600",    
+            ocean: "https://picsum.photos/id/1011/1200/600",     
+            nature: "https://picsum.photos/id/1043/1200/600",    
+            montagne: "https://picsum.photos/id/1036/1200/600",  
+            lumiere: "https://picsum.photos/id/1051/1200/600",   
+            desert: "https://picsum.photos/id/1015/1200/600",    
+            defaut: "https://picsum.photos/id/1057/1200/600"     
         };
 
         function getThemeImage(textFr) {
             const clean = textFr.toLowerCase();
-            if (clean.includes("mer") || clean.includes("eau") || clean.includes("fleuve") || clean.includes("pluie") || clean.includes("source") || clean.includes("vagues")) return imageBank.ocean;
+            if (clean.includes("mer") || clean.includes("eau") || clean.includes("fleuve") || clean.includes("pluie") || clean.includes("source")) return imageBank.ocean;
             if (clean.includes("ciel") || clean.includes("cieux") || clean.includes("nuit") || clean.includes("étoile") || clean.includes("univers") || clean.includes("lune")) return imageBank.espace;
-            if (clean.includes("terre") || clean.includes("jardin") || clean.includes("arbre") || clean.includes("plantes") || clean.includes("fruits") || clean.includes("verdure")) return imageBank.nature;
-            if (clean.includes("soleil") || clean.includes("jour") || clean.includes("lumière") || clean.includes("clarté") || clean.includes("éclairer")) return imageBank.lumiere;
-            if (clean.includes("montagne") || clean.includes("montagnes") || clean.includes("rochers") || clean.includes("mont")) return imageBank.montagne;
-            if (clean.includes("désert") || clean.includes("sable") || clean.includes("aride") || clean.includes("chaleur")) return imageBank.desert;
+            if (clean.includes("terre") || clean.includes("jardin") || clean.includes("arbre") || clean.includes("plantes") || clean.includes("fruits")) return imageBank.nature;
+            if (clean.includes("soleil") || clean.includes("jour") || clean.includes("lumière") || clean.includes("clarté")) return imageBank.lumiere;
+            if (clean.includes("montagne") || clean.includes("montagnes") || clean.includes("rochers")) return imageBank.montagne;
+            if (clean.includes("désert") || clean.includes("sable")) return imageBank.desert;
             return imageBank.defaut;
         }
 
@@ -154,6 +153,7 @@
             return /[\u0600-\u06FF]/.test(text);
         }
 
+        // Normalisation stricte pour la recherche locale et dictionnaire de secours pour l'API
         function corrigerTerme(query) {
             const normalized = query.toLowerCase().trim().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
             if (normalized === "moise") return "Moïse";
@@ -175,45 +175,36 @@
                 query = corrigerTerme(query);
             }
 
+            // Utilisation d'un paramètre de recherche tolérant sur l'API v4
             try {
-                // Endpoint et paramètres corrigés pour assurer l'interrogation correcte de l'API
-                const res = await fetch(`https://api.quran.com/api/v4/search?q=${encodeURIComponent(query)}&size=20&language=${isQueryArabic ? 'ar' : 'fr'}`);
+                const res = await fetch(`https://api.quran.com/api/v4/search?q=${encodeURIComponent(query)}&size=20&page=1`);
                 const data = await res.json();
                 
-                if (data.search && data.search.results && data.search.results.length > 0) {
+                if (data.search && data.search.results) {
                     renderSearchResults(data.search.results, isQueryArabic);
                 } else {
-                    mainContent.innerHTML = "<p class='py-20 text-zinc-400'>Aucun résultat trouvé. Modifiez votre mot-clé (ex: Ciel, Marie, Paix).</p>";
+                    mainContent.innerHTML = "<p>Aucun résultat trouvé. Modifiez votre mot-clé.</p>";
                 }
             } catch (e) { 
-                console.error(e);
-                mainContent.innerHTML = "<p class='py-20 text-red-400'>Erreur réseau lors de la recherche.</p>"; 
+                mainContent.innerHTML = "Erreur réseau lors de la recherche."; 
             }
         }
 
         function renderSearchResults(results, isQueryArabic) {
             mainContent.innerHTML = `<h2 class="text-2xl font-bold mb-8 text-emerald-500">${results.length} occurrences trouvées</h2>`;
+            if(results.length === 0) { mainContent.innerHTML += "<p>Aucun résultat trouvé pour cette orthographe.</p>"; return; }
             
             results.forEach(r => {
                 const cleanText = r.text.replace(/<[^>]*>/g, '');
-                let alignClass, textDirection, blockMarkup;
-                
-                if (isQueryArabic) {
-                    alignClass = 'text-right direction-rtl font-serif text-2xl leading-loose text-zinc-100';
-                    textDirection = 'dir="rtl"';
-                    blockMarkup = `"${cleanText}"`;
-                } else {
-                    alignClass = 'text-left italic text-zinc-200 text-lg leading-relaxed';
-                    textDirection = 'dir="ltr"';
-                    blockMarkup = `"${cleanText}"`;
-                }
+                const alignClass = isQueryArabic ? 'text-right direction-rtl font-serif text-xl' : 'text-left italic text-zinc-200';
+                const textDirection = isQueryArabic ? 'dir="rtl"' : 'dir="ltr"';
 
                 mainContent.innerHTML += `
                     <div class="glass-card p-6 mb-4 border-l-4 border-emerald-500">
-                        <p class="text-zinc-400 text-xs mb-3 text-left uppercase font-bold tracking-wider">Référence : Verset ${r.verse_key}</p>
-                        <p class="${alignClass} mb-5" ${textDirection}>${blockMarkup}</p>
+                        <p class="text-zinc-400 text-xs mb-2 text-left uppercase">Référence : ${r.verse_key}</p>
+                        <p class="${alignClass} mb-4" ${textDirection}>"${cleanText}"</p>
                         <div class="text-left">
-                            <button onclick="goToVerse('${r.verse_key}')" class="text-emerald-500 font-bold text-sm hover:underline italic tracking-wide">ACCÉDER DIRECTEMENT AU VERSET →</button>
+                            <button onclick="goToVerse('${r.verse_key}')" class="text-emerald-500 font-bold text-sm hover:underline italic">ACCÉDER DIRECTEMENT AU VERSET →</button>
                         </div>
                     </div>`;
             });
