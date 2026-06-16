@@ -107,15 +107,15 @@
         const surahSelect = document.getElementById('surahSelect');
         let currentVersesList = [];
 
-        // Sélection stricte d'identifiants d'images de paysages déserts et géométries sans aucun humain
+        // Sélection stricte d'identifiants d'images de paysages et géométries sans aucun humain
         const imageBank = {
-            espace: "https://images.unsplash.com/photo-1506318137071-a8e063b4bec0?auto=format&fit=crop&w=1200&q=80",    // Ciel étoilé abstrait
-            ocean: "https://images.unsplash.com/photo-1505118380757-91f5f5632de0?auto=format&fit=crop&w=1200&q=80",     // Horizon marin pur
-            nature: "https://images.unsplash.com/photo-1441974231531-c6227db76b6e?auto=format&fit=crop&w=1200&q=80",    // Forêt mystique sans aucun personnage
-            montagne: "https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?auto=format&fit=crop&w=1200&q=80",  // Sommets de montagnes épurés
-            lumiere: "https://images.unsplash.com/photo-1546587348-d12660c30c50?auto=format&fit=crop&w=1200&q=80",   // Rayons de soleil filtrés sur l'eau
-            desert: "https://images.unsplash.com/photo-1509316975850-ff9c5deb0cd9?auto=format&fit=crop&w=1200&q=80",    // Dunes de sable sans empreintes
-            defaut: "https://images.unsplash.com/photo-1518156677180-95a2893f3e9f?auto=format&fit=crop&w=1200&q=80"     // Texture de fond ambrée neutre/spirituelle
+            espace: "https://images.unsplash.com/photo-1506318137071-a8e063b4bec0?auto=format&fit=crop&w=1200&q=80",    
+            ocean: "https://images.unsplash.com/photo-1505118380757-91f5f5632de0?auto=format&fit=crop&w=1200&q=80",     
+            nature: "https://images.unsplash.com/photo-1441974231531-c6227db76b6e?auto=format&fit=crop&w=1200&q=80",    
+            montagne: "https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?auto=format&fit=crop&w=1200&q=80",  
+            lumiere: "https://images.unsplash.com/photo-1546587348-d12660c30c50?auto=format&fit=crop&w=1200&q=80",   
+            desert: "https://images.unsplash.com/photo-1509316975850-ff9c5deb0cd9?auto=format&fit=crop&w=1200&q=80",    
+            defaut: "https://images.unsplash.com/photo-1518156677180-95a2893f3e9f?auto=format&fit=crop&w=1200&q=80"     
         };
 
         function getThemeImage(textFr) {
@@ -176,22 +176,23 @@
             }
 
             try {
-                const res = await fetch(`https://api.quran.com/api/v4/search?q=${encodeURIComponent(query)}&size=20&page=1`);
+                // Endpoint et paramètres corrigés pour assurer l'interrogation correcte de l'API
+                const res = await fetch(`https://api.quran.com/api/v4/search?q=${encodeURIComponent(query)}&size=20&language=${isQueryArabic ? 'ar' : 'fr'}`);
                 const data = await res.json();
                 
-                if (data.search && data.search.results) {
+                if (data.search && data.search.results && data.search.results.length > 0) {
                     renderSearchResults(data.search.results, isQueryArabic);
                 } else {
-                    mainContent.innerHTML = "<p>Aucun résultat trouvé. Modifiez votre mot-clé.</p>";
+                    mainContent.innerHTML = "<p class='py-20 text-zinc-400'>Aucun résultat trouvé. Modifiez votre mot-clé (ex: Ciel, Marie, Paix).</p>";
                 }
             } catch (e) { 
-                mainContent.innerHTML = "Erreur réseau lors de la recherche."; 
+                console.error(e);
+                mainContent.innerHTML = "<p class='py-20 text-red-400'>Erreur réseau lors de la recherche.</p>"; 
             }
         }
 
         function renderSearchResults(results, isQueryArabic) {
             mainContent.innerHTML = `<h2 class="text-2xl font-bold mb-8 text-emerald-500">${results.length} occurrences trouvées</h2>`;
-            if(results.length === 0) { mainContent.innerHTML += "<p>Aucun résultat trouvé pour cette écriture.</p>"; return; }
             
             results.forEach(r => {
                 const cleanText = r.text.replace(/<[^>]*>/g, '');
