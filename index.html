@@ -113,7 +113,6 @@
         let isAdminActive = false; 
         let db;
 
-        // BANQUE D'IMAGES EMBARKÉES (Pour éviter les bugs d'appareils)
         const globalPublishedImages = {};
 
         function checkAdminPassword() {
@@ -131,7 +130,6 @@
             document.getElementById('exportBtn').style.display = "inline-block";
         }
 
-        // Base locale de secours
         const dbRequest = indexedDB.open("QuranVisionDB", 1);
         dbRequest.onupgradeneeded = function(e) {
             db = e.target.result;
@@ -140,7 +138,6 @@
         dbRequest.onsuccess = function(e) { db = e.target.result; init(); };
         dbRequest.onerror = function() { init(); };
 
-        // Images de secours fiables par Unsplash qui marchent sur tous les téléphones
         const imageBank = {
             univers: "https://images.unsplash.com/photo-1451187580459-43490279c0fa?auto=format&fit=crop&w=1200&q=80",
             balance: "https://images.unsplash.com/photo-1505664194779-8beaceb93744?auto=format&fit=crop&w=1200&q=80", 
@@ -224,15 +221,16 @@
 
         function isArabic(text) { return /[\u0600-\u06FF]/.test(text); }
 
-        // RECHERCHE PAR TRADUCTION SÉCURISÉE (PASSE PAR ID DE TRADUCTION DIRECTE POUR ÉVITER LE BUG CORS)
         async function searchVerse() {
-            const query = document.getElementById('searchInput').value.trim();
+            let query = document.getElementById('searchInput').value.trim();
             if (!query) return;
             
             mainContent.innerHTML = `<div class="py-20 text-emerald-500 animate-pulse text-xl">Recherche globale de "${query}"...</div>`;
             
+            // Correction orthographique automatique pour l'API externe
+            if(query.toLowerCase() === "moise") query = "Moïse";
+
             try {
-                // Utilisation de l'endpoint de recherche standard de l'API Quran.com corrigé
                 const url = `https://api.quran.com/api/v4/search?q=${encodeURIComponent(query)}&size=20&language=fr`;
                 const res = await fetch(url);
                 const data = await res.json();
@@ -248,7 +246,7 @@
                             </div>`;
                     });
                 } else {
-                    mainContent.innerHTML = `<p class='py-20 text-zinc-400'>Aucun résultat trouvé pour "${query}". Essayez un mot comme "Moise", "Ciel", ou "Feu".</p>`;
+                    mainContent.innerHTML = `<p class='py-20 text-zinc-400'>Aucun résultat trouvé pour "${query}". Essayez avec une orthographe différente ou un autre mot.</p>`;
                 }
             } catch (e) {
                 mainContent.innerHTML = "<p class='py-20 text-red-400'>Erreur de connexion avec l'API. Essayez de charger une sourate directement.</p>";
@@ -285,7 +283,7 @@
                 mainContent.innerHTML += `
                     <section id="v-${v.verse_key}" class="glass-card overflow-hidden mb-16 shadow-2xl">
                         <div class="relative h-64 w-full bg-zinc-950 flex items-center justify-center">
-                            <img id="img-view-${v.verse_key}" src="${fallbackImg}" class="w-full h-full object-cover opacity-30 mix-blend-screen" loading="lazy">
+                            <img id="img-view-${v.verse_key}" src="${fallbackImg}" class="w-full h-full object-cover opacity-40" loading="lazy">
                             <div class="absolute inset-0 bg-gradient-to-t from-[#020617] via-transparent to-black/30"></div>
                             <label class="admin-upload-btn absolute top-6 right-6 bg-emerald-500/20 hover:bg-emerald-500/50 text-emerald-300 text-xs font-medium px-3 py-1.5 rounded-xl cursor-pointer transition border border-emerald-500/30 backdrop-blur-sm z-20" style="display: ${isAdminActive ? 'block' : 'none'};">
                                 📷 Modifier la photo
@@ -300,7 +298,6 @@
                         </div>
                     </section>`;
                 
-                // Tente de charger l'image custom si elle existe, sinon laisse l'image par défaut d'Unsplash
                 getCustomImage(v.verse_key, fallbackImg, function(finalSrc) {
                     const targetImg = document.getElementById(`img-view-${v.verse_key}`);
                     if (targetImg && finalSrc !== fallbackImg) targetImg.src = finalSrc;
