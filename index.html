@@ -84,7 +84,7 @@
                 <svg class="w-16 h-16 text-emerald-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5s3.332.477 4.5 1.253v13C19.832 18.477 18.246 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"></path></svg>
             </div>
             <h2 class="text-4xl md:text-6xl font-bold tracking-tight">Méditez sur les Signes.</h2>
-            <p class="text-zinc-400 text-lg max-w-lg mx-auto font-light leading-relaxed">Mushaf Stable — Images & Textes Sécurisés</p>
+            <p class="text-zinc-400 text-lg max-w-lg mx-auto font-light leading-relaxed">Mushaf Corrigé — Chargement Immédiat</p>
         </div>
     </main>
 
@@ -92,7 +92,6 @@
         const mainContent = document.getElementById('main-content');
         const surahSelect = document.getElementById('surahSelect');
 
-        // IMAGES SÉCURISÉES : NATURE ET PAYSAGES UNIQUEMENT (SANS VISAGE)
         const imageBank = {
             cosmos: "https://images.unsplash.com/photo-1462331940025-496dfbfc7564?auto=format&fit=crop&w=1200&q=80",
             ocean: "https://images.unsplash.com/photo-1507525428034-b723cf961d3e?auto=format&fit=crop&w=1200&q=80",
@@ -123,6 +122,7 @@
             try {
                 const res = await fetch('https://api.quran.com/api/v4/chapters?language=fr');
                 const data = await res.json();
+                surahSelect.innerHTML = ''; // Nettoyage de sécurité
                 data.chapters.forEach(s => {
                     surahSelect.innerHTML += `<option value="${s.id}">${s.id}. ${s.name_simple}</option>`;
                 });
@@ -170,32 +170,20 @@
         async function loadSurah() {
             const sid = surahSelect.value;
             const rid = document.getElementById('reciterSelect').value;
-            mainContent.innerHTML = `<div class="py-20 text-emerald-500 animate-bounce text-xl font-bold">CHARGEMENT...</div>`;
+            mainContent.innerHTML = `<div class="py-20 text-emerald-500 animate-bounce text-xl font-bold">CHARGEMENT DIRECT...</div>`;
             
             try {
-                // APPEL API SÉCURISÉ : Extraction combinée pour éviter les conflits de clés
-                const res = await fetch(`https://api.quran.com/api/v4/verses/by_chapter/${sid}?language=fr&translations=31&per_page=300`);
+                // UNE SEULE REQUÊTE GROUPÉE : Pas de conflit, pas de blocage serveur
+                const res = await fetch(`https://api.quran.com/api/v4/verses/by_chapter/${sid}?language=fr&translations=31&fields=text_uthmani&per_page=300`);
                 const data = await res.json();
                 
-                // Deuxième appel pour récupérer l'arabe stable (text_uthmani) par chapitre
-                const arabicRes = await fetch(`https://api.quran.com/api/v4/quran/verses/uthmani?chapter_number=${sid}`);
-                const arabicData = await arabicRes.json();
-
                 const audioRes = await fetch(`https://api.quran.com/api/v4/chapter_recitations/${rid}/${sid}`);
                 const audioData = await audioRes.json();
                 
-                // Fusion locale des données pour garantir l'affichage
-                const mergedVerses = data.verses.map((verse, index) => {
-                    return {
-                        ...verse,
-                        text_uthmani: arabicData.verses[index] ? arabicData.verses[index].text_uthmani : "Erreur Arabe"
-                    };
-                });
-
-                renderSurah(mergedVerses, audioData.audio_file.audio_url);
+                renderSurah(data.verses, audioData.audio_file.audio_url);
             } catch (e) { 
                 console.error(e);
-                mainContent.innerHTML = "<div class='py-20 text-red-400'>Erreur de chargement. Veuillez réessayer.</div>"; 
+                mainContent.innerHTML = "<div class='py-20 text-red-400'>Erreur de connexion avec l'API. Réessayez.</div>"; 
             }
         }
 
@@ -208,7 +196,7 @@
             verses.forEach((v) => {
                 const textFr = v.translations[0].text.replace(/<[^>]*>/g, '');
                 const dynamicImg = getThemeImage(textFr);
-                const verseHtml = v.text_uthmani;
+                const verseHtml = v.text_uthmani; // Reçu proprement du premier coup
 
                 mainContent.innerHTML += `
                     <section id="v-${v.verse_key}" class="glass-card overflow-hidden mb-16 shadow-2xl">
