@@ -100,11 +100,11 @@
         
         let isAdminActive = false; 
         let db;
+        let globalPublishedImages = {};
 
         // Fonction de vérification simplifiée et ultra-fiable
         function checkAdminPassword() {
             if (isAdminActive) {
-                // Si déjà connecté, un clic déconnecte proprement
                 location.reload();
                 return;
             }
@@ -112,7 +112,6 @@
             const input = prompt("Entrez le mot de passe Administrateur :");
             if (!input) return;
 
-            // Mot de passe direct à taper : admin123
             if (input === "admin123") {
                 isAdminActive = true;
                 activateAdminFeatures();
@@ -126,7 +125,6 @@
             document.getElementById('adminBadge').className = "text-[10px] bg-red-600 text-white font-bold px-2 py-0.5 rounded";
             document.getElementById('exportBtn').style.display = "inline-block";
             
-            // Si des versets sont déjà chargés à l'écran, on affiche leurs boutons d'importation
             document.querySelectorAll('.admin-upload-btn').forEach(btn => {
                 btn.style.display = 'block';
             });
@@ -140,10 +138,10 @@
                 db.createObjectStore("images", { keyPath: "verseKey" });
             }
         };
-        dbRequest.onsuccess = function(e) { db = e.target.result; init(); };
-
-        // Liens d'images publiques dures (à figer plus tard avec ton export)
-        const globalPublishedImages = {};
+        dbRequest.onsuccess = function(e) { 
+            db = e.target.result; 
+            init(); 
+        };
 
         const imageBank = {
             univers: "https://images.unsplash.com/photo-1451187580459-43490279c0fa?auto=format&fit=crop&w=1200&q=80",
@@ -164,13 +162,17 @@
         }
 
         function getCustomImage(verseKey, fallbackUrl, callback) {
-            if (globalPublishedImages[verseKey]) { callback(globalPublishedImages[verseKey]); return; }
-            if (!db) { callback(fallbackUrl); return; }
+            if (!db) { 
+                if (globalPublishedImages[verseKey]) callback(globalPublishedImages[verseKey]);
+                else callback(fallbackUrl);
+                return; 
+            }
             const transaction = db.transaction(["images"], "readonly");
             const store = transaction.objectStore("images");
             const request = store.get(verseKey);
             request.onsuccess = function() {
                 if (request.result) callback(request.result.data);
+                else if (globalPublishedImages[verseKey]) callback(globalPublishedImages[verseKey]);
                 else callback(fallbackUrl);
             };
             request.onerror = function() { callback(fallbackUrl); };
@@ -214,6 +216,7 @@
         }
 
         async function init() {
+            // 1. Chargement des sourates
             try {
                 const res = await fetch('https://api.quran.com/api/v4/chapters?language=fr');
                 const data = await res.json();
@@ -222,6 +225,14 @@
                     surahSelect.innerHTML += `<option value="${s.id}">${s.id}. ${s.name_simple}</option>`;
                 });
             } catch (e) { console.error(e); }
+
+            // 2. Chargement automatique des images enregistrées sur le serveur pour le public
+            try {
+                const resImages = await fetch('sauvegarder.php');
+                if (resImages.ok) {
+                    globalPublishedImages = await resImages.json();
+                }
+            } catch (e) { console.error("Pas encore d'images configurées sur le serveur."); }
         }
 
         function isArabic(text) { return /[\u0600-\u06FF]/.test(text); }
@@ -273,7 +284,6 @@
             } catch (e) { mainContent.innerHTML = "<div class='py-20 text-red-400'>Erreur.</div>"; }
         }
 
-        // LE RENDU RESTE PROPRE AVEC BOUTON INVISIBLE SANS CONNEXION
         function renderSurah(verses, audio) {
             mainContent.innerHTML = `<div class="sticky top-24 z-40 w-full mb-12 px-4"><div class="audio-player-container"><audio src="${audio}" controls></audio></div></div>`;
             verses.forEach((v) => {
@@ -305,20 +315,39 @@
             });
         }
 
-        function exportConfig() {
+        // Le bouton sauvegarde tout directement sur le serveur en arrière-plan
+        async function exportConfig() {
             if (!db) return;
+            
+            const btn = document.getElementById('exportBtn');
+            btn.innerHTML = "⏳ Enregistrement en cours...";
+            
             const transaction = db.transaction(["images"], "readonly");
             const store = transaction.objectStore("images");
             const request = store.getAll();
-            request.onsuccess = function() {
+            
+            request.onsuccess = async function() {
                 const currentData = {};
                 request.result.forEach(item => { currentData[item.verseKey] = item.data; });
-                const blob = new Blob([JSON.stringify(currentData)], {type: "text/plain"});
-                const a = document.createElement("a");
-                a.href = URL.createObjectURL(blob);
-                a.download = "configuration-images.txt";
-                a.click();
-                alert("Fichier téléchargé ! Transmets-le moi dès que tu veux figer tes choix pour ton public.");
+                
+                try {
+                    const response = await fetch('sauvegarder.php', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(currentData)
+                    });
+                    
+                    if (response.ok) {
+                        alert("✨ Succès ! Les modifications sont instantanément visibles par le public !");
+                        globalPublishedImages = currentData;
+                    } else {
+                        alert("Erreur lors de la sauvegarde sur le serveur.");
+                    }
+                } catch (error) {
+                    alert("Erreur réseau : impossible de joindre le serveur.");
+                } finally {
+                    btn.innerHTML = "💾 Sauvegarder les modifs pour le public";
+                }
             };
         }
     </script>
