@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>QuranVision</title>
     
-    <link rel="manifest" href="manifest.json?v=4">
+    <link rel="manifest" href="manifest.json?v=5">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <link class="apple-touch-icon" href="icon-192.png">
@@ -21,7 +21,6 @@
             min-height: 100vh;
         }
         .quran-container { direction: rtl; text-align: right; }
-        
         .quran-arabic { 
             font-family: 'Amiri', serif !important; 
             font-size: 1.6rem !important; 
@@ -31,15 +30,9 @@
             text-align: center;
             word-spacing: 2px;
         }
-        
         @media (min-width: 768px) {
-            .quran-arabic {
-                font-size: 2.4rem !important;
-                line-height: 2.5 !important;
-                word-spacing: 4px;
-            }
+            .quran-arabic { font-size: 2.4rem !important; line-height: 2.5 !important; word-spacing: 4px; }
         }
-
         .glass-card { 
             background: rgba(15, 23, 42, 0.6); 
             backdrop-filter: blur(20px);
@@ -67,13 +60,8 @@
                 <h1 onclick="window.location.reload()" class="cursor-pointer text-2xl font-bold tracking-tighter text-emerald-500 flex items-center gap-2">
                     <span class="bg-emerald-500 text-black px-2 py-1 rounded-lg text-sm italic font-black">IQRA</span> QURAN<span class="text-white font-light">VISION</span>
                 </h1>
-                
-                <button onclick="checkAdminPassword()" id="adminBadge" class="text-[10px] bg-zinc-800 text-zinc-400 px-2 py-0.5 rounded border border-zinc-700 hover:text-white transition">
-                    Connexion Admin
-                </button>
-                <button onclick="exportConfig()" id="exportBtn" class="hidden text-[10px] bg-emerald-900/50 text-emerald-400 px-2 py-0.5 rounded border border-emerald-700/50 hover:bg-emerald-500 hover:text-black transition">
-                    📦 Télécharger le HTML mis à jour pour GitHub
-                </button>
+                <button onclick="checkAdminPassword()" id="adminBadge" class="text-[10px] bg-zinc-800 text-zinc-400 px-2 py-0.5 rounded border border-zinc-700 hover:text-white transition">Connexion Admin</button>
+                <button onclick="exportConfig()" id="exportBtn" class="hidden text-[10px] bg-emerald-900/50 text-emerald-400 px-2 py-0.5 rounded border border-emerald-700/50 hover:bg-emerald-500 hover:text-black transition">📦 Télécharger le HTML mis à jour</button>
             </div>
             
             <div class="flex flex-wrap justify-center items-center gap-3">
@@ -89,7 +77,7 @@
                     <option value="3">Abdur-Rahman as-Sudais</option>
                     <option value="128">Yasser Ad-Dussary</option>
                 </select>
-                <button onclick="loadSurah()" class="bg-emerald-600 hover:bg-emerald-400 text-black font-bold px-6 py-2 rounded-xl transition-all shadow-lg shadow-emerald-900/20">Explorer</button>
+                <button onclick="loadSurah()" class="bg-emerald-600 hover:bg-emerald-400 text-black font-bold px-6 py-2 rounded-xl transition-all">Explorer</button>
             </div>
         </div>
     </nav>
@@ -100,50 +88,28 @@
                 <svg class="w-16 h-16 text-emerald-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5s3.332.477 4.5 1.253v13C19.832 18.477 18.246 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"></path></svg>
             </div>
             <h2 class="text-4xl md:text-6xl font-bold tracking-tight">Accès QuranVision</h2>
-            <p id="loading-status" class="text-zinc-400 text-lg max-w-lg mx-auto font-light leading-relaxed">Moteur hybride local indexé. Faites une recherche.</p>
+            <p class="text-zinc-400 text-lg max-w-lg mx-auto font-light">Moteur de recherche interne forcé. Saisissez un terme.</p>
         </div>
     </main>
 
     <script>
         const mainContent = document.getElementById('main-content');
         const surahSelect = document.getElementById('surahSelect');
-        
         let isAdminActive = false; 
         let db;
 
         const globalPublishedImages = {};
 
-        // INDEX TEXTUEL ABSOLU ULTRA-COMPRESSÉ POUR MOÏSE (136 OCCURRENCES) ET LE PARADIS
+        // INDEXATION INTERNE DES INDEXS STATIQUES POUR EVITER TOUT BRIDAGE API
         const staticSearchIndex = {
-            "moise": [
-                "2:51","2:53","2:54","2:55","2:60","2:61","2:67","2:87","2:92","2:108","2:136","2:246","2:248",
-                "3:84","4:153","4:164","5:20","5:22","5:24","6:84","6:91","7:103","7:115","7:117","7:122","7:127",
-                "7:128","7:131","7:134","7:138","7:142","7:143","7:144","7:148","7:150","7:154","7:155","7:159","7:160",
-                "10:75","10:77","10:80","10:81","10:83","10:84","10:87","10:88","11:17","11:96","11:110","14:5","14:6",
-                "14:8","17:2","17:101","18:60","18:66","19:51","20:9","20:11","20:17","20:19","20:36","20:40","20:49",
-                "20:57","20:61","20:65","20:67","20:70","20:77","20:83","20:86","20:88","20:91","21:48","22:44","23:45",
-                "25:35","26:10","26:30","26:43","26:45","26:48","26:52","26:61","26:62","26:63","26:65","27:7","27:9",
-                "27:10","28:3","28:7","28:10","28:15","28:18","28:19","28:20","28:29","28:30","28:31","28:36","28:37",
-                "28:38","28:43","28:44","28:48","28:76","29:39","32:23","33:7","33:69","37:114","37:120","40:23","40:26",
-                "40:27","40:28","40:34","40:53","41:45","42:13","43:46","46:12","46:30","51:38","53:36","61:5","79:15",
-                "87:19"
-            ],
-            "paradis": [
-                "2:82","2:111","2:214","2:221","3:133","3:142","3:185","4:124","5:72","7:40","7:42","7:43","7:44",
-                "7:46","7:48","7:50","9:111","11:108","13:23","15:45","18:107","19:60","22:56","23:11","25:15",
-                "26:85","29:58","32:19","36:26","39:73","39:74","40:40","41:30","42:7","43:70","43:73","47:6",
-                "50:31","52:17","53:15","54:54","55:46","56:12","56:89","59:20","66:11","69:21","70:38","76:12",
-                "79:41","81:13","85:11","88:10","98:8"
-            ]
+            "moise": ["2:51","2:53","2:54","2:55","2:60","2:61","2:67","2:87","2:92","2:108","2:136","2:246","2:248","3:84","4:153","4:164","5:20","5:22","5:24","6:84","6:91","7:103","7:115","7:117","7:122","7:127","7:128","7:131","7:134","7:138","7:142","7:143","7:144","7:148","7:150","7:154","7:155","7:159","7:160","10:75","10:77","10:80","10:81","10:83","10:84","10:87","10:88","11:17","11:96","11:110","14:5","14:6","14:8","17:2","17:101","18:60","18:66","19:51","20:9","20:11","20:17","20:19","20:36","20:40","20:49","20:57","20:61","20:65","20:67","20:70","20:77","20:83","20:86","20:88","20:91","21:48","22:44","23:45","25:35","26:10","26:30","26:43","26:45","26:48","26:52","26:61","26:62","26:63","26:65","27:7","27:9","27:10","28:3","28:7","28:10","28:15","28:18","28:19","28:20","28:29","28:30","28:31","28:36","28:37","28:38","28:43","28:44","28:48","28:76","29:39","32:23","33:7","33:69","37:114","37:120","40:23","40:26","40:27","40:28","40:34","40:53","41:45","42:13","43:46","46:12","46:30","51:38","53:36","61:5","79:15","87:19"],
+            "paradis": ["2:82","2:111","2:214","2:221","3:133","3:142","3:185","4:124","5:72","7:40","7:42","7:43","7:44","7:44","7:46","7:48","7:50","9:111","11:108","13:23","15:45","18:107","19:60","22:56","23:11","25:15","26:85","29:58","32:19","36:26","39:73","39:74","40:40","41:30","42:7","43:70","43:73","47:6","50:31","52:17","53:15","54:54","55:46","56:12","56:89","59:20","66:11","69:21","70:38","76:12","79:41","81:13","85:11","88:10","98:8"]
         };
 
         function checkAdminPassword() {
             if (isAdminActive) { location.reload(); return; }
             const input = prompt("Entrez le mot de passe Administrateur :");
-            if (input === "admin123") {
-                isAdminActive = true;
-                activateAdminFeatures();
-            } else if (input) { alert("Mot de passe incorrect."); }
+            if (input === "admin123") { isAdminActive = true; activateAdminFeatures(); }
         }
 
         function activateAdminFeatures() {
@@ -158,7 +124,6 @@
             if (!db.objectStoreNames.contains("images")) db.createObjectStore("images", { keyPath: "verseKey" });
         };
         dbRequest.onsuccess = function(e) { db = e.target.result; init(); };
-        dbRequest.onerror = function() { init(); };
 
         const imageBank = {
             univers: "https://images.unsplash.com/photo-1451187580459-43490279c0fa?auto=format&fit=crop&w=1200&q=80",
@@ -179,21 +144,15 @@
         }
 
         function getCustomImage(verseKey, fallbackUrl, callback) {
-            if (globalPublishedImages && globalPublishedImages[verseKey]) {
-                callback(globalPublishedImages[verseKey]);
-                return;
-            }
+            if (globalPublishedImages && globalPublishedImages[verseKey]) { callback(globalPublishedImages[verseKey]); return; }
             if (!db) { callback(fallbackUrl); return; }
-            try {
-                const transaction = db.transaction(["images"], "readonly");
-                const store = transaction.objectStore("images");
-                const request = store.get(verseKey);
-                request.onsuccess = function() {
-                    if (request.result) callback(request.result.data);
-                    else callback(fallbackUrl);
-                };
-                request.onerror = function() { callback(fallbackUrl); };
-            } catch(e) { callback(fallbackUrl); }
+            const transaction = db.transaction(["images"], "readonly");
+            const store = transaction.objectStore("images");
+            const request = store.get(verseKey);
+            request.onsuccess = function() {
+                if (request.result) callback(request.result.data);
+                else callback(fallbackUrl);
+            };
         }
 
         function handleImageUpload(event, verseKey) {
@@ -201,22 +160,17 @@
             if (!file) return;
             const targetLabel = event.target.parentElement;
             targetLabel.innerHTML = "⚡ Compression...";
-            
             const reader = new FileReader();
             reader.onload = function(e) {
                 const img = new Image();
                 img.onload = function() {
                     const canvas = document.createElement('canvas');
                     const ctx = canvas.getContext('2d');
-                    const maxDim = 800; 
                     let w = img.width, h = img.height;
-                    if (w > h && w > maxDim) { h = Math.round((h * maxDim) / w); w = maxDim; }
-                    else if (h > maxDim) { w = Math.round((w * maxDim) / h); h = maxDim; }
+                    if (w > 800) { h = Math.round((h * 800) / w); w = 800; }
                     canvas.width = w; canvas.height = h;
                     ctx.drawImage(img, 0, 0, w, h);
-                    
                     const optimizedDataUrl = canvas.toDataURL('image/jpeg', 0.60);
-
                     const transaction = db.transaction(["images"], "readwrite");
                     const store = transaction.objectStore("images");
                     store.put({ verseKey: verseKey, data: optimizedDataUrl });
@@ -241,73 +195,57 @@
             } catch (e) { console.error(e); }
         }
 
-        // MOTEUR SECURISE SANS BRIDAGE D'API
+        // RECHERCHE DIRECTE DEPASSANT LE BRIDAGE DE L'API EXTERNE
         async function searchVerse() {
             let userQuery = document.getElementById('searchInput').value.trim();
             if (!userQuery) return;
             
-            mainContent.innerHTML = `<div class="py-20 text-emerald-500 animate-pulse text-xl">Recherche instantanée en cours...</div>`;
-            
+            mainContent.innerHTML = `<div class="py-20 text-emerald-500 animate-pulse text-xl">Calcul du moteur local...</div>`;
             let normalizedKey = userQuery.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
-            
-            // Si le mot clé est indexé en local, on génère directement le rendu sans passer par l'API bridée
+
             if (staticSearchIndex[normalizedKey]) {
                 let keys = staticSearchIndex[normalizedKey];
                 mainContent.innerHTML = `<h2 class="text-2xl font-bold mb-8 text-emerald-500">${keys.length} occurrence(s) trouvée(s) pour "${userQuery}"</h2>`;
                 
-                for (let vk of keys) {
+                keys.forEach(vk => {
                     mainContent.innerHTML += `
                         <div class="glass-card p-6 md:p-8 mb-6 bg-white/5 border-l-4 border-emerald-500 text-left space-y-4">
-                            <div class="flex justify-between items-center text-zinc-400 text-xs">
-                                <span>Verset ${vk}</span>
-                            </div>
-                            <p id="text-pre-${vk.replace(':','-')}" class="text-zinc-200 font-light italic text-sm md:text-base animate-pulse">Chargement de la traduction...</p>
+                            <div class="flex justify-between items-center text-zinc-400 text-xs"><span>Verset ${vk}</span></div>
+                            <p id="text-pre-${vk.replace(':','-')}" class="text-zinc-200 font-light italic text-sm md:text-base animate-pulse">Chargement...</p>
                             <button onclick="goToVerse('${vk}')" class="text-emerald-500 text-xs font-bold pt-2 block hover:underline">LIRE LE VERSET EN IMAGE →</button>
                         </div>`;
-                    
-                    // Chargement asynchrone ciblé du texte du verset pour ne pas saturer la mémoire
                     fetchVerseTextAsync(vk);
-                }
+                });
                 return;
             }
 
-            // Moteur de secours dynamique si le mot n'est ni Moïse ni Paradis
+            // Fallback API standard si mot différent
             try {
-                const res = await fetch(`https://api.quran.com/api/v4/search?q=${encodeURIComponent(userQuery)}&size=100&language=fr`);
+                const res = await fetch(`https://api.quran.com/api/v4/search?q=${encodeURIComponent(userQuery)}&size=100&language=fr&nocache=${Date.now()}`);
                 const data = await res.json();
                 if (data && data.search && data.search.results) {
                     let results = data.search.results;
-                    mainContent.innerHTML = `<h2 class="text-2xl font-bold mb-8 text-emerald-500">${results.length} occurrence(s) trouvée(s) pour "${userQuery}"</h2>`;
+                    mainContent.innerHTML = `<h2 class="text-2xl font-bold mb-8 text-emerald-500">${results.length} occurrence(s)</h2>`;
                     results.forEach(r => {
-                        let textClean = r.text.replace(/<[^>]*>/g, '');
                         mainContent.innerHTML += `
                             <div class="glass-card p-6 md:p-8 mb-6 bg-white/5 border-l-4 border-emerald-500 text-left space-y-4">
-                                <div class="flex justify-between items-center text-zinc-400 text-xs">
-                                    <span>Verset ${r.verse_key}</span>
-                                </div>
-                                <p class="text-zinc-200 font-light italic text-sm md:text-base">"${textClean}"</p>
-                                <button onclick="goToVerse('${r.verse_key}')" class="text-emerald-500 text-xs font-bold pt-2 block hover:underline">LIRE LE VERSET EN IMAGE →</button>
+                                <div class="flex justify-between items-center text-zinc-400 text-xs"><span>Verset ${r.verse_key}</span></div>
+                                <p class="text-zinc-200 font-light italic text-sm md:text-base">"${r.text.replace(/<[^>]*>/g, '')}"</p>
+                                <button onclick="goToVerse('${r.verse_key}')" class="text-emerald-500 text-xs font-bold pt-2 block hover:underline">LIRE EN IMAGE →</button>
                             </div>`;
                     });
-                } else {
-                    mainContent.innerHTML = `<p class='py-20 text-zinc-400'>Aucun résultat.</p>`;
                 }
-            } catch (e) {
-                mainContent.innerHTML = "<p class='py-20 text-red-400'>Erreur de connexion.</p>";
-            }
+            } catch (e) { mainContent.innerHTML = "<p class='py-20 text-red-400'>Erreur réseau.</p>"; }
         }
 
         async function fetchVerseTextAsync(vk) {
             try {
-                const res = await fetch(`https://api.quran.com/api/v4/verses/by_key/${vk}?language=fr&translations=31`);
+                const res = await fetch(`https://api.quran.com/api/v4/verses/by_key/${vk}?language=fr&translations=31&nocache=${Date.now()}`);
                 const data = await res.json();
                 if (data && data.verse && data.verse.translations) {
                     let text = data.verse.translations[0].text.replace(/<[^>]*>/g, '');
                     const el = document.getElementById(`text-pre-${vk.replace(':','-')}`);
-                    if (el) {
-                        el.innerText = `"${text}"`;
-                        el.classList.remove('animate-pulse');
-                    }
+                    if (el) { el.innerText = `"${text}"`; el.classList.remove('animate-pulse'); }
                 }
             } catch (e) {}
         }
@@ -324,36 +262,33 @@
         async function loadSurah() {
             const sid = surahSelect.value;
             const rid = document.getElementById('reciterSelect').value;
-            mainContent.innerHTML = `<div class="py-20 text-emerald-500 animate-bounce text-xl font-bold">CHARGEMENT DES VERSETS...</div>`;
+            mainContent.innerHTML = `<div class="py-20 text-emerald-500 animate-bounce text-xl font-bold">CHARGEMENT...</div>`;
             try {
                 const res = await fetch(`https://api.quran.com/api/v4/verses/by_chapter/${sid}?language=fr&translations=31&fields=text_uthmani&per_page=300`);
                 const data = await res.json();
                 const audioRes = await fetch(`https://api.quran.com/api/v4/chapter_recitations/${rid}/${sid}`);
                 const audioData = await audioRes.json();
                 renderSurah(data.verses, audioData.audio_file.audio_url);
-            } catch (e) { mainContent.innerHTML = "<div class='py-20 text-red-400'>Erreur réseau lors du chargement.</div>"; }
+            } catch (e) { mainContent.innerHTML = "<div class='py-20 text-red-400'>Erreur.</div>"; }
         }
 
         function renderSurah(verses, audio) {
             mainContent.innerHTML = `<div class="sticky top-24 z-40 w-full mb-12 px-4"><div class="audio-player-container"><audio src="${audio}" controls></audio></div></div>`;
             verses.forEach((v) => {
                 const textFr = v.translations[0].text.replace(/<[^>]*>/g, '');
-                
                 let finalImgSrc = getFallbackImage(textFr);
-                if (globalPublishedImages && globalPublishedImages[v.verse_key]) {
-                    finalImgSrc = globalPublishedImages[v.verse_key];
-                }
+                if (globalPublishedImages && globalPublishedImages[v.verse_key]) finalImgSrc = globalPublishedImages[v.verse_key];
 
                 mainContent.innerHTML += `
                     <section id="v-${v.verse_key}" class="glass-card overflow-hidden mb-16 shadow-2xl">
                         <div class="relative h-64 w-full bg-zinc-950 flex items-center justify-center">
-                            <img id="img-view-${v.verse_key}" src="${finalImgSrc}" class="w-full h-full object-cover opacity-40 transition-opacity duration-300" loading="lazy">
+                            <img id="img-view-${v.verse_key}" src="${finalImgSrc}" class="w-full h-full object-cover opacity-40 transition-opacity" loading="lazy">
                             <div class="absolute inset-0 bg-gradient-to-t from-[#020617] via-transparent to-black/40"></div>
-                            <label class="admin-upload-btn absolute top-6 right-6 bg-emerald-500/20 hover:bg-emerald-500/50 text-emerald-300 text-xs font-medium px-3 py-1.5 rounded-xl cursor-pointer transition border border-emerald-500/30 backdrop-blur-sm z-20" style="display: ${isAdminActive ? 'block' : 'none'};">
+                            <label class="admin-upload-btn absolute top-6 right-6 bg-emerald-500/20 text-emerald-300 text-xs px-3 py-1.5 rounded-xl cursor-pointer border border-emerald-500/30 z-20" style="display: ${isAdminActive ? 'block' : 'none'};">
                                 📷 Modifier la photo
                                 <input type="file" accept="image/*" class="hidden" onchange="handleImageUpload(event, '${v.verse_key}')">
                             </label>
-                            <div class="absolute top-6 left-6 bg-black/60 backdrop-blur-md px-4 py-1 rounded-full text-xs font-bold border border-white/10 text-emerald-400">Verset ${v.verse_key}</div>
+                            <div class="absolute top-6 left-6 bg-black/60 px-4 py-1 rounded-full text-xs font-bold text-emerald-400">Verset ${v.verse_key}</div>
                         </div>
                         <div class="p-6 md:p-12 space-y-8 -mt-16 relative z-10 bg-gradient-to-b from-transparent to-[#020617]/95">
                             <div class="quran-container"><p class="quran-arabic text-zinc-100" dir="rtl">${v.text_uthmani}</p></div>
@@ -361,7 +296,6 @@
                             <p class="text-zinc-200 text-lg md:text-2xl font-light italic leading-relaxed max-w-2xl mx-auto">"${textFr}"</p>
                         </div>
                     </section>`;
-                
                 if (!globalPublishedImages[v.verse_key]) {
                     getCustomImage(v.verse_key, finalImgSrc, function(localSrc) {
                         const targetImg = document.getElementById(`img-view-${v.verse_key}`);
@@ -372,56 +306,22 @@
         }
 
         function exportConfig() {
-            if (!db) { alert("Le stockage local n'est pas prêt."); return; }
-            const btn = document.getElementById('exportBtn');
-            btn.innerHTML = "⏳ Compilation en cours...";
-            btn.disabled = true;
-
+            if (!db) return;
             const transaction = db.transaction(["images"], "readonly");
             const store = transaction.objectStore("images");
             const request = store.getAll();
-            
             request.onsuccess = function() {
-                try {
-                    const currentData = {};
-                    request.result.forEach(item => { currentData[item.verseKey] = item.data; });
-                    
-                    const parser = new DOMParser();
-                    const doc = parser.parseFromString(document.documentElement.outerHTML, 'text/html');
-                    
-                    const adminBadge = doc.getElementById('adminBadge');
-                    if (adminBadge) {
-                        adminBadge.innerHTML = "Connexion Admin";
-                        adminBadge.className = "text-[10px] bg-zinc-800 text-zinc-400 px-2 py-0.5 rounded border border-zinc-700 hover:text-white transition";
-                    }
-                    const exportBtn = doc.getElementById('exportBtn');
-                    if (exportBtn) exportBtn.style.display = "none";
-                    
-                    let htmlContent = doc.documentElement.outerHTML;
-                    const regex = /const globalPublishedImages = \{[\s\S]*?\};/;
-                    const newDataString = `const globalPublishedImages = ${JSON.stringify(currentData, null, 4)};`;
-                    htmlContent = "<!DOCTYPE html>\n" + htmlContent.replace(regex, newDataString);
-                    
-                    const blob = new Blob([htmlContent], {type: "text/html;charset=utf-8"});
-                    const url = URL.createObjectURL(blob);
-                    const a = document.createElement("a");
-                    a.href = url;
-                    a.download = "index.html";
-                    document.body.appendChild(a);
-                    a.click();
-                    
-                    setTimeout(() => {
-                        document.body.removeChild(a);
-                        URL.revokeObjectURL(url);
-                        btn.innerHTML = "📦 Télécharger le HTML mis à jour pour GitHub";
-                        btn.disabled = false;
-                        alert("✨ Code exporté !");
-                    }, 500);
-                } catch (error) {
-                    btn.innerHTML = "📦 Télécharger le HTML mis à jour pour GitHub";
-                    btn.disabled = false;
-                    alert("Erreur lors de l'export.");
-                }
+                const currentData = {};
+                request.result.forEach(item => { currentData[item.verseKey] = item.data; });
+                const parser = new DOMParser();
+                const doc = parser.parseFromString(document.documentElement.outerHTML, 'text/html');
+                let htmlContent = doc.documentElement.outerHTML;
+                const regex = /const globalPublishedImages = \{[\s\S]*?\};/;
+                htmlContent = "<!DOCTYPE html>\n" + htmlContent.replace(regex, `const globalPublishedImages = ${JSON.stringify(currentData, null, 4)};`);
+                const blob = new Blob([htmlContent], {type: "text/html;charset=utf-8"});
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement("a");
+                a.href = url; a.download = "index.html"; a.click();
             };
         }
     </script>
