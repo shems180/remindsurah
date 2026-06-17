@@ -22,20 +22,22 @@
         }
         .quran-container { direction: rtl; text-align: right; }
         
-        /* TAILLE AJUSTÉE : 1.8rem sur téléphone, 3rem sur ordinateur pour éviter les pavés */
+        /* FORCE STRICTEMENT LA PETITE TAILLE SUR MOBILE */
         .quran-arabic { 
-            font-family: 'Amiri', serif; 
-            font-size: 1.8rem; 
-            line-height: 2.2; 
+            font-family: 'Amiri', serif !important; 
+            font-size: 1.6rem !important; 
+            line-height: 2.2 !important; 
             display: inline-block;
             width: 100%;
             text-align: center;
             word-spacing: 2px;
         }
+        
+        /* TAILLE ORDINATEUR (ÉCRANS PLUS GRANDS QUE 768px) */
         @media (min-width: 768px) {
             .quran-arabic {
-                font-size: 3rem;
-                line-height: 2.5;
+                font-size: 3rem !important;
+                line-height: 2.5 !important;
                 word-spacing: 4px;
             }
         }
@@ -111,7 +113,7 @@
         let isAdminActive = false; 
         let db;
 
-        // BANQUE D'IMAGES SAUVEGARDÉES (S'alimente automatiquement lors de l'export)
+        // BANQUE D'IMAGES SAUVEGARDÉES
         const globalPublishedImages = {};
 
         function checkAdminPassword() {
@@ -130,12 +132,14 @@
             document.querySelectorAll('.admin-upload-btn').forEach(btn => btn.style.display = 'block');
         }
 
+        // Initialisation de la base locale (uniquement utile en mode Admin)
         const dbRequest = indexedDB.open("QuranVisionDB", 1);
         dbRequest.onupgradeneeded = function(e) {
             db = e.target.result;
             if (!db.objectStoreNames.contains("images")) db.createObjectStore("images", { keyPath: "verseKey" });
         };
         dbRequest.onsuccess = function(e) { db = e.target.result; init(); };
+        dbRequest.onerror = function() { init(); }; // Si IndexedDB échoue (ex: navigation privée), on lance quand même le site
 
         const imageBank = {
             univers: "https://images.unsplash.com/photo-1451187580459-43490279c0fa?auto=format&fit=crop&w=1200&q=80",
@@ -156,18 +160,28 @@
         }
 
         function getCustomImage(verseKey, fallbackUrl, callback) {
-            if (!db) {
-                callback(globalPublishedImages[verseKey] || fallbackUrl);
+            // Si on a une image globale publiée (cas du téléphone), on la prend en priorité absolue
+            if (globalPublishedImages && globalPublishedImages[verseKey]) {
+                callback(globalPublishedImages[verseKey]);
                 return;
             }
-            const transaction = db.transaction(["images"], "readonly");
-            const store = transaction.objectStore("images");
-            const request = store.get(verseKey);
-            request.onsuccess = function() {
-                if (request.result) callback(request.result.data);
-                else callback(globalPublishedImages[verseKey] || fallbackUrl);
-            };
-            request.onerror = function() { callback(globalPublishedImages[verseKey] || fallbackUrl); };
+            // Sinon on regarde en base locale (cas du mode admin PC)
+            if (!db) {
+                callback(fallbackUrl);
+                return;
+            }
+            try {
+                const transaction = db.transaction(["images"], "readonly");
+                const store = transaction.objectStore("images");
+                const request = store.get(verseKey);
+                request.onsuccess = function() {
+                    if (request.result) callback(request.result.data);
+                    else callback(fallbackUrl);
+                };
+                request.onerror = function() { callback(fallbackUrl); };
+            } catch(e) {
+                callback(fallbackUrl);
+            }
         }
 
         function handleImageUpload(event, verseKey) {
@@ -350,21 +364,15 @@
                         URL.revokeObjectURL(url);
                         btn.innerHTML = "📦 Télécharger le HTML mis à jour pour GitHub";
                         btn.disabled = false;
-                        alert("✨ Super ! Ton fichier 'index.html' a été généré avec succès et téléchargé. Glisse-le sur ton dépôt GitHub pour mettre le site public à jour.");
+                        alert("✨ Super ! Ton fichier 'index.html' a été généré avec succès. Glisse-le sur ton dépôt GitHub.");
                     }, 500);
 
                 } catch (error) {
                     console.error(error);
                     btn.innerHTML = "📦 Télécharger le HTML mis à jour pour GitHub";
                     btn.disabled = false;
-                    alert("Erreur lors de la compilation. Vos images intégrées sont peut-être trop lourdes.");
+                    alert("Erreur lors de la compilation.");
                 }
-            };
-            
-            request.onerror = function() {
-                btn.innerHTML = "📦 Télécharger le HTML mis à jour pour GitHub";
-                btn.disabled = false;
-                alert("Impossible d'accéder aux fichiers de stockage.");
             };
         }
     </script>
