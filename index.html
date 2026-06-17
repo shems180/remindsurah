@@ -28,19 +28,19 @@
         }
         .quran-arabic { 
             font-family: 'Amiri', serif; 
-            font-size: 3.4rem; 
+            font-size: 3.5rem; 
             line-height: 2.3; 
             display: inline-block;
             width: 100%;
-            word-spacing: 6px;
         }
 
-        /* Styles de secours forcés si la feuille de style externe est bloquée */
-        .quran-arabic .ghunnah, .quran-arabic [class*="ghunnah"] { color: #10b981 !important; }
-        .quran-arabic .qalqalah, .quran-arabic [class*="qalqalah"] { color: #3b82f6 !important; }
-        .quran-arabic [class*="madd"] { color: #ef4444 !important; }
+        /* SURCHARGES DE SÉCURITÉ POUR FORCER LE RENDU DES COULEURS SI LE FICHIER EXTERNE EST BRIDÉ */
+        .quran-arabic .ghunnah, .quran-arabic [class*="ghunnah"] { color: #10b981 !important; font-weight: bold; }
+        .quran-arabic .qalqalah, .quran-arabic [class*="qalqalah"] { color: #3b82f6 !important; font-weight: bold; }
         .quran-arabic .ikhfa, .quran-arabic [class*="ikhfa"] { color: #f97316 !important; }
-        .quran-arabic .silent, .quran-arabic [class*="silent"] { color: #64748b !important; opacity: 0.6; }
+        .quran-arabic .iqlab, .quran-arabic [class*="iqlab"] { color: #8b5cf6 !important; }
+        .quran-arabic [class*="madd"] { color: #ef4444 !important; font-weight: bold; }
+        .quran-arabic .silent, .quran-arabic [class*="silent"], .quran-arabic .hamzat_wasl { color: #64748b !important; opacity: 0.5; }
 
         .glass-card { 
             background: rgba(15, 23, 42, 0.4); 
@@ -94,14 +94,13 @@
                 <svg class="w-16 h-16 text-emerald-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5s3.332.477 4.5 1.253v13C19.832 18.477 18.246 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"></path></svg>
             </div>
             <h2 class="text-4xl md:text-6xl font-bold tracking-tight">Méditez sur les Signes.</h2>
-            <p class="text-zinc-400 text-lg max-w-lg mx-auto font-light leading-relaxed">Mushaf Tajweed Couleurs Dynamiques</p>
+            <p class="text-zinc-400 text-lg max-w-lg mx-auto font-light leading-relaxed">Mushaf Tajweed Pro Connecté</p>
         </div>
     </main>
 
     <script>
         const mainContent = document.getElementById('main-content');
         const surahSelect = document.getElementById('surahSelect');
-        let currentVersesList = [];
 
         const imageBank = {
             espace: "https://images.unsplash.com/photo-1506318137071-a8e063b4bec0?auto=format&fit=crop&w=1200&q=80",    
@@ -175,32 +174,38 @@
         async function loadSurah() {
             const sid = surahSelect.value;
             const rid = document.getElementById('reciterSelect').value;
-            mainContent.innerHTML = `<div class="py-20 text-emerald-500 animate-bounce text-xl font-bold">CHARGEMENT DU MUSHAF...</div>`;
+            mainContent.innerHTML = `<div class="py-20 text-emerald-500 animate-bounce text-xl font-bold">CHARGEMENT DU MUSHAF TAJWEED...</div>`;
             
             try {
-                // On charge le texte Uthmani classique ET le Tajweed pour appliquer les styles proprement
-                const [vR, aR] = await Promise.all([
+                // Utilisation du endpoint natif de l'API v4 dédié exclusivement au texte Tajweed global par chapitre
+                const [tajweedResponse, versesResponse, audioResponse] = await Promise.all([
                     fetch(`https://api.quran.com/api/v4/quran/verses/uthmani_tajweed?chapter_number=${sid}`),
                     fetch(`https://api.quran.com/api/v4/verses/by_chapter/${sid}?language=fr&translations=31&per_page=300`),
                     fetch(`https://api.quran.com/api/v4/chapter_recitations/${rid}/${sid}`)
                 ]);
                 
-                const tD = await vR.json();
-                const vD = await (await fetch(`https://api.quran.com/api/v4/verses/by_chapter/${sid}?language=fr&translations=31&per_page=300`)).json();
-                const aD = await aR.json();
+                const tajweedData = await tajweedResponse.json();
+                const versesData = await versesResponse.json();
+                const audioData = await audioResponse.json();
                 
-                // Fusion des données de traduction et du texte Tajweed nettoyé
-                currentVersesList = vD.verses.map((verse, index) => {
+                // Nettoyage et fusion sécurisée des données
+                const processedVerses = versesData.verses.map((verse, index) => {
+                    let rawTajweed = tajweedData.verses[index] ? tajweedData.verses[index].text_uthmani_tajweed : verse.text_uthmani;
+                    
+                    // Nettoyage radical des métadonnées de positionnement d'API [h:1] ou [x:y] qui brisent l'affichage
+                    let cleanTajweed = rawTajweed.replace(/\[\w+:\d+\]/g, '');
+                    cleanTajweed = cleanTajweed.replace(/\[|\]/g, ''); 
+
                     return {
                         ...verse,
-                        text_tajweed: tD.verses[index] ? tD.verses[index].text_uthmani_tajweed : verse.text_uthmani
+                        text_tajweed_clean: cleanTajweed
                     };
                 });
 
-                renderSurah(currentVersesList, aD.audio_file.audio_url);
+                renderSurah(processedVerses, audioData.audio_file.audio_url);
             } catch (e) { 
                 console.error(e);
-                mainContent.innerHTML = "<div class='py-20 text-red-400'>Erreur de chargement. Réessayez.</div>"; 
+                mainContent.innerHTML = "<div class='py-20 text-red-400'>Erreur technique de synchronisation. Veuillez réessayer.</div>"; 
             }
         }
 
@@ -213,11 +218,6 @@
             verses.forEach((v) => {
                 const textFr = v.translations[0].text.replace(/<[^>]*>/g, '');
                 const dynamicImg = getThemeImage(textFr);
-                
-                // Nettoyage des codes d'identifiants de mots parasites type [h:1] générés par l'API v4
-                let cleanTajweedHtml = v.text_tajweed || "";
-                cleanTajweedHtml = cleanTajweedHtml.replace(/\[\w+:\d+\]/g, ''); 
-                cleanTajweedHtml = cleanTajweedHtml.replace(/\[|\]/g, ''); 
 
                 mainContent.innerHTML += `
                     <section id="v-${v.verse_key}" class="glass-card overflow-hidden mb-16 shadow-2xl">
@@ -228,7 +228,7 @@
                         </div>
                         <div class="p-8 md:p-12 space-y-8 -mt-20 relative z-10 bg-gradient-to-b from-transparent to-[#020617]/95">
                             <div class="quran-container">
-                                <p class="quran-arabic text-zinc-100" dir="rtl">${cleanTajweedHtml}</p>
+                                <p class="quran-arabic text-zinc-100" dir="rtl">${v.text_tajweed_clean}</p>
                             </div>
                             <div class="h-px w-24 bg-emerald-500/30 mx-auto"></div>
                             <p class="text-zinc-200 text-xl md:text-2xl font-light italic leading-relaxed max-w-2xl mx-auto">"${textFr}"</p>
