@@ -50,6 +50,16 @@
             box-shadow: 0 20px 40px rgba(0,0,0,0.8);
         }
         audio { height: 40px; width: 100%; outline: none; }
+
+        /* GRADIENTS PUR CSS - 100% SÉCURISÉS SANS VISAGE */
+        .bg-cosmos { background: linear-gradient(135deg, #0b132b 0%, #1c2541 100%); }
+        .bg-ocean { background: linear-gradient(135deg, #0a1128 0%, #001f54 100%); }
+        .bg-nature { background: linear-gradient(135deg, #051f20 0%, #0b5257 100%); }
+        .bg-montagne { background: linear-gradient(135deg, #1f2421 0%, #434a42 100%); }
+        .bg-desert { background: linear-gradient(135deg, #2c1a04 0%, #4a2c02 100%); }
+        .bg-lumiere { background: linear-gradient(135deg, #1a1c20 0%, #2d3748 100%); }
+        .bg-abstrait { background: linear-gradient(135deg, #111827 0%, #1f2937 100%); }
+        .bg-defaut { background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%); }
     </style>
 </head>
 <body class="overflow-x-hidden">
@@ -84,7 +94,7 @@
                 <svg class="w-16 h-16 text-emerald-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5s3.332.477 4.5 1.253v13C19.832 18.477 18.246 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"></path></svg>
             </div>
             <h2 class="text-4xl md:text-6xl font-bold tracking-tight">Méditez sur les Signes.</h2>
-            <p class="text-zinc-400 text-lg max-w-lg mx-auto font-light leading-relaxed">Mushaf Corrigé — Chargement Immédiat</p>
+            <p class="text-zinc-400 text-lg max-w-lg mx-auto font-light leading-relaxed">Interface Épurée — Zéro Image Externe</p>
         </div>
     </main>
 
@@ -92,37 +102,27 @@
         const mainContent = document.getElementById('main-content');
         const surahSelect = document.getElementById('surahSelect');
 
-        const imageBank = {
-            cosmos: "https://images.unsplash.com/photo-1462331940025-496dfbfc7564?auto=format&fit=crop&w=1200&q=80",
-            ocean: "https://images.unsplash.com/photo-1507525428034-b723cf961d3e?auto=format&fit=crop&w=1200&q=80",
-            nature: "https://images.unsplash.com/photo-1441974231531-c6227db76b6e?auto=format&fit=crop&w=1200&q=80",
-            montagne: "https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?auto=format&fit=crop&w=1200&q=80",
-            desert: "https://images.unsplash.com/photo-1530541930197-ff16ac917b0e?auto=format&fit=crop&w=1200&q=80",
-            lumiere: "https://images.unsplash.com/photo-1506318137071-a8e063b4bec0?auto=format&fit=crop&w=1200&q=80",
-            abstrait: "https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?auto=format&fit=crop&w=1200&q=80",
-            defaut: "https://images.unsplash.com/photo-1518156677180-95a2893f3e9f?auto=format&fit=crop&w=1200&q=80"
-        };
-
-        function getThemeImage(textFr) {
-            if (!textFr) return imageBank.defaut;
+        // RETOUR AUX CLASSES DE COULEURS POUR UN BLINDAGE TOTAL
+        function getThemeClass(textFr) {
+            if (!textFr) return 'bg-defaut';
             const clean = textFr.toLowerCase();
 
-            if (clean.match(/(ciel|cieux|étoile|lune|soleil|univers|galaxie|nuit|orbite|aurore)/)) return imageBank.cosmos;
-            if (clean.match(/(mer|eau|fleuve|pluie|océan|vague|source|torrent|ruisseau)/)) return imageBank.ocean;
-            if (clean.match(/(paradis|jardin|arbre|fruit|terre|plante|pâturage|verdure|graine|végétaux)/)) return imageBank.nature;
-            if (clean.match(/(montagne|rocher|pic|ancré|colline)/)) return imageBank.montagne;
-            if (clean.match(/(désert|sable|poussière|chameau|caravane|pierre)/)) return imageBank.desert;
-            if (clean.match(/(lumière|guidance|guide|clarté|vérité|livre|coran|évangile|thora|preuve|signe)/)) return imageBank.lumiere;
-            if (clean.match(/(justice|loi|ordonné|balance|équité|droit|pacte|alliance|témoin|châtiment|feu|punition)/)) return imageBank.abstrait;
+            if (clean.match(/(ciel|cieux|étoile|lune|soleil|univers|galaxie|nuit|orbite|aurore)/)) return 'bg-cosmos';
+            if (clean.match(/(mer|eau|fleuve|pluie|océan|vague|source|torrent|ruisseau)/)) return 'bg-ocean';
+            if (clean.match(/(paradis|jardin|arbre|fruit|terre|plante|pâturage|verdure|graine|végétaux)/)) return 'bg-nature';
+            if (clean.match(/(montagne|rocher|pic|ancré|colline)/)) return 'bg-montagne';
+            if (clean.match(/(désert|sable|poussière|chameau|caravane|pierre)/)) return 'bg-desert';
+            if (clean.match(/(lumière|guidance|guide|clarté|vérité|livre|coran|évangile|thora|preuve|signe)/)) return 'bg-lumiere';
+            if (clean.match(/(justice|loi|ordonné|balance|équité|droit|pacte|alliance|témoin|châtiment|feu|punition)/)) return 'bg-abstrait';
 
-            return imageBank.defaut;
+            return 'bg-defaut';
         }
 
         async function init() {
             try {
                 const res = await fetch('https://api.quran.com/api/v4/chapters?language=fr');
                 const data = await res.json();
-                surahSelect.innerHTML = ''; // Nettoyage de sécurité
+                surahSelect.innerHTML = '';
                 data.chapters.forEach(s => {
                     surahSelect.innerHTML += `<option value="${s.id}">${s.id}. ${s.name_simple}</option>`;
                 });
@@ -170,10 +170,9 @@
         async function loadSurah() {
             const sid = surahSelect.value;
             const rid = document.getElementById('reciterSelect').value;
-            mainContent.innerHTML = `<div class="py-20 text-emerald-500 animate-bounce text-xl font-bold">CHARGEMENT DIRECT...</div>`;
+            mainContent.innerHTML = `<div class="py-20 text-emerald-500 animate-bounce text-xl font-bold">CHARGEMENT...</div>`;
             
             try {
-                // UNE SEULE REQUÊTE GROUPÉE : Pas de conflit, pas de blocage serveur
                 const res = await fetch(`https://api.quran.com/api/v4/verses/by_chapter/${sid}?language=fr&translations=31&fields=text_uthmani&per_page=300`);
                 const data = await res.json();
                 
@@ -183,7 +182,7 @@
                 renderSurah(data.verses, audioData.audio_file.audio_url);
             } catch (e) { 
                 console.error(e);
-                mainContent.innerHTML = "<div class='py-20 text-red-400'>Erreur de connexion avec l'API. Réessayez.</div>"; 
+                mainContent.innerHTML = "<div class='py-20 text-red-400'>Erreur de connexion. Réessayez.</div>"; 
             }
         }
 
@@ -195,17 +194,16 @@
 
             verses.forEach((v) => {
                 const textFr = v.translations[0].text.replace(/<[^>]*>/g, '');
-                const dynamicImg = getThemeImage(textFr);
-                const verseHtml = v.text_uthmani; // Reçu proprement du premier coup
+                const themeClass = getThemeClass(textFr); // Récupération de la classe CSS
+                const verseHtml = v.text_uthmani;
 
                 mainContent.innerHTML += `
                     <section id="v-${v.verse_key}" class="glass-card overflow-hidden mb-16 shadow-2xl">
-                        <div class="relative h-64 w-full bg-zinc-950">
-                            <img src="${dynamicImg}" class="w-full h-full object-cover opacity-30 mix-blend-screen" loading="lazy">
-                            <div class="absolute inset-0 bg-gradient-to-t from-[#020617] via-transparent to-black/30"></div>
+                        <div class="relative h-48 w-full ${themeClass} opacity-80">
+                            <div class="absolute inset-0 bg-gradient-to-t from-[#020617] via-transparent to-black/10"></div>
                             <div class="absolute top-6 left-6 bg-black/60 backdrop-blur-md px-4 py-1 rounded-full text-xs font-bold border border-white/10 text-emerald-400">Verset ${v.verse_key}</div>
                         </div>
-                        <div class="p-8 md:p-12 space-y-8 -mt-20 relative z-10 bg-gradient-to-b from-transparent to-[#020617]/95">
+                        <div class="p-8 md:p-12 space-y-8 -mt-16 relative z-10 bg-gradient-to-b from-transparent to-[#020617]/95">
                             <div class="quran-container">
                                 <p class="quran-arabic text-zinc-100" dir="rtl">${verseHtml}</p>
                             </div>
