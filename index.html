@@ -21,15 +21,25 @@
             min-height: 100vh;
         }
         .quran-container { direction: rtl; text-align: right; }
+        
+        /* TAILLE AJUSTÉE : 1.8rem sur téléphone, 3rem sur ordinateur pour éviter les pavés */
         .quran-arabic { 
             font-family: 'Amiri', serif; 
-            font-size: 3rem; 
-            line-height: 2.5; 
+            font-size: 1.8rem; 
+            line-height: 2.2; 
             display: inline-block;
             width: 100%;
             text-align: center;
-            word-spacing: 4px;
+            word-spacing: 2px;
         }
+        @media (min-width: 768px) {
+            .quran-arabic {
+                font-size: 3rem;
+                line-height: 2.5;
+                word-spacing: 4px;
+            }
+        }
+
         .glass-card { 
             background: rgba(15, 23, 42, 0.4); 
             backdrop-filter: blur(20px);
@@ -164,7 +174,6 @@
             const file = event.target.files[0];
             if (!file) return;
             const targetLabel = event.target.parentElement;
-            const originalText = targetLabel.innerHTML;
             targetLabel.innerHTML = "⚡ Compression...";
             
             const reader = new FileReader();
@@ -227,7 +236,7 @@
                 mainContent.innerHTML += `
                     <div class="glass-card p-6 mb-4 bg-white/5 border-l-4 border-emerald-500 text-left">
                         <p class="text-zinc-400 text-xs mb-2">Verset ${r.verse_key}</p>
-                        <p class="text-zinc-200 ${isAr ? 'text-right font-serif text-2xl' : 'italic text-base'}">${r.text.replace(/<[^>]*>/g, '')}</p>
+                        <p class="text-zinc-200 ${isAr ? 'text-right font-serif text-xl' : 'italic text-base'}">${r.text.replace(/<[^>]*>/g, '')}</p>
                         <button onclick="goToVerse('${r.verse_key}')" class="text-emerald-500 text-xs font-bold mt-4 block hover:underline">OUVRIR →</button>
                     </div>`;
             });
@@ -284,7 +293,6 @@
             });
         }
 
-        // GENERATION ET TELECHARGEMENT DU NOUVEAU FICHIER (METHODE ENTIEREMENT HORS-LIGNE COUPEE DU PHP)
         function exportConfig() {
             if (!db) {
                 alert("La base de données locale n'est pas prête.");
@@ -308,7 +316,6 @@
                     
                     btn.innerHTML = "⏳ Nettoyage du code...";
                     
-                    // On ferme l'interface admin de manière isolée sur le fichier exporté
                     const parser = new DOMParser();
                     const doc = parser.parseFromString(document.documentElement.outerHTML, 'text/html');
                     
@@ -323,7 +330,6 @@
                     
                     let htmlContent = doc.documentElement.outerHTML;
                     
-                    // Remplacement de l'objet global avec les chaînes base64 compilées
                     const regex = /const globalPublishedImages = \{[\s\S]*?\};/;
                     const newDataString = `const globalPublishedImages = ${JSON.stringify(currentData, null, 4)};`;
                     htmlContent = "<!DOCTYPE html>\n" + htmlContent.replace(regex, newDataString);
@@ -339,7 +345,6 @@
                     document.body.appendChild(a);
                     a.click();
                     
-                    // Libération de la mémoire
                     setTimeout(() => {
                         document.body.removeChild(a);
                         URL.revokeObjectURL(url);
