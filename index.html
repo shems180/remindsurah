@@ -36,36 +36,12 @@
             filter: drop-shadow(0 2px 4px rgba(0,0,0,0.5));
         }
         
-        /* --- DESIGN DES COULEURS DU TAJWEED --- */
-        .tajweed-ghunnah, .tajweed-ikhfa, .tajweed-idgham { color: #10b981 !important; font-weight: 700; } /* Vert émeraude */
-        .tajweed-qalqalah { color: #3b82f6 !important; font-weight: 700; } /* Bleu de résonance */
-        .tajweed-mad-obligatoire, .tajweed-mad-necessaire { color: #ef4444 !important; font-weight: 700; } /* Rouge vif */
-        .tajweed-mad-permissible, .tajweed-mad-normal { color: #f97316 !important; } /* Orange */
-        .tajweed-muet, .tajweed-hamza-wasl, .tajweed-laam-shamsiyah { color: #64748b !important; opacity: 0.5; font-weight: 300; } /* Gris estompé */
-
-        .glass-card { 
-            background: rgba(255, 255, 255, 0.02); 
-            backdrop-filter: blur(15px);
-            border: 1px solid rgba(255, 255, 255, 0.08); 
-            border-radius: 2.5rem;
-            transition: all 0.4s ease;
-        }
-        .glass-card:hover { 
-            border-color: var(--emerald); 
-            transform: translateY(-3px); 
-        }
-        .search-input { 
-            background: rgba(0,0,0,0.4); 
-            border: 1px solid rgba(255,255,255,0.1); 
-        }
-        .search-input:focus { 
-            border-color: var(--emerald); 
-            outline: none; 
-        }
-        audio { 
-            border-radius: 50px; 
-            width: 100%;
-        }
+        /* --- STYLES DES COULEURS TAJWEED --- */
+        .tjweed-ghunnah, .tjweed-ikhfa, .tjweed-idgham { color: #10b981 !important; font-weight: 700; } /* Vert émeraude */
+        .tjweed-qalqalah { color: #3b82f6 !important; font-weight: 700; } /* Bleu */
+        .tjweed-mad-obligatoire, .tjweed-mad-necessaire { color: #ef4444 !important; font-weight: 700; } /* Rouge vif */
+        .tjweed-mad-permissible, .tjweed-mad-normal { color: #f97316 !important; } /* Orange */
+        .tjweed-muet, .tjweed-hamza-wasl, .tjweed-laam-shamsiyah { color: #64748b !important; opacity: 0.5; font-weight: 300; } /* Gris */
     </style>
 </head>
 <body class="overflow-x-hidden">
@@ -78,7 +54,7 @@
             
             <div class="flex flex-wrap justify-center items-center gap-3">
                 <div class="relative">
-                    <input type="text" id="searchInput" placeholder="Recherche (ex: Moise, Paix)..." class="search-input w-56 md:w-64 px-4 py-2 rounded-xl text-sm text-white">
+                    <input type="text" id="searchInput" placeholder="Recherche (ex: Moise, Paix)..." class="search-input w-56 md:w-64 px-4 py-2 rounded-xl text-sm text-white bg-black/40 border border-white/10 focus:border-emerald-500 focus:outline-none">
                     <button onclick="searchVerse()" class="absolute right-3 top-2 text-emerald-400 hover:text-white transition">
                         <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" stroke-width="2" stroke-linecap="round"></path></svg>
                     </button>
@@ -120,41 +96,72 @@
             defaut: "https://images.unsplash.com/photo-1518156677180-95a2893f3e9f?auto=format&fit=crop&w=1200&q=80"     
         };
 
-        // Parseur Tajweed adaptatif pour nettoyer les crochets de l'API Alquran.cloud
+        // Parseur basé sur une pile pour traiter les règles imbriquées d'Alquran.cloud
         function parseTajweedRules(text) {
             if (!text) return "";
             
             const rulesMap = {
-                'h': 'tajweed-hamza-wasl',
-                's': 'tajweed-muet',
-                'l': 'tajweed-laam-shamsiyah',
-                'n': 'tajweed-mad-normal',
-                'p': 'tajweed-mad-permissible',
-                'm': 'tajweed-mad-necessaire',
-                'q': 'tajweed-qalqalah',
-                'o': 'tajweed-mad-obligatoire',
-                'g': 'tajweed-ghunnah',
-                'f': 'tajweed-ikhfa',
-                'a': 'tajweed-idgham',
-                'u': 'tajweed-idgham',
-                'c': 'tajweed-ikhfa',
-                'i': 'tajweed-iqlab'
+                'h': 'tjweed-hamza-wasl',
+                's': 'tjweed-muet',
+                'l': 'tjweed-laam-shamsiyah',
+                'n': 'tjweed-mad-normal',
+                'p': 'tjweed-mad-permissible',
+                'm': 'tjweed-mad-necessaire',
+                'q': 'tjweed-qalqalah',
+                'o': 'tjweed-mad-obligatoire',
+                'g': 'tjweed-ghunnah',
+                'f': 'tjweed-ikhfa',
+                'a': 'tjweed-idgham',
+                'u': 'tjweed-idgham',
+                'c': 'tjweed-ikhfa',
+                'i': 'tjweed-iqlab'
             };
 
-            // RegEx pour intercepter la structure [regle:option[texte]] ou [regle[texte]]
-            let processed = text;
-            let regex = /\[([a-z])(?::[0-9]+)?\[([^\]]+)\]\]/g;
+            let result = "";
+            let stack = [];
+            let i = 0;
 
-            while (regex.test(processed)) {
-                processed = processed.replace(regex, (match, ruleCode, content) => {
-                    const className = rulesMap[ruleCode] || 'tajweed-default';
-                    return `<span class="${className}">${content}</span>`;
-                });
+            while (i < text.length) {
+                if (text[i] === '[' && text[i + 1] !== undefined) {
+                    let nextOpenIdx = text.indexOf('[', i + 1);
+                    let closeIdx = text.indexOf(']', i + 1);
+                    
+                    if (nextOpenIdx !== -1 && (closeIdx === -1 || nextOpenIdx < closeIdx)) {
+                        // C'est l'ouverture d'une règle, ex: [g:2[
+                        let segment = text.substring(i + 1, nextOpenIdx);
+                        let type = segment.split(':')[0];
+                        let className = rulesMap[type] || 'tjweed-default';
+                        
+                        result += `<span class="${className}">`;
+                        stack.push('</span>');
+                        i = nextOpenIdx + 1;
+                    } else {
+                        result += text[i];
+                        i++;
+                    }
+                } else if (text[i] === ']') {
+                    if (text[i + 1] === ']') {
+                        // Fin d'un bloc de règle
+                        if (stack.length > 0) {
+                            result += stack.pop();
+                        }
+                        i += 2;
+                    } else {
+                        result += text[i];
+                        i++;
+                    }
+                } else {
+                    result += text[i];
+                    i++;
+                }
             }
-            
-            // Secours au cas où il reste des crochets simples isolés restants
-            processed = processed.replace(/\[[a-z](?::\d+)?\[/g, '').replace(/\]\]/g, '');
-            return processed;
+
+            // Sécurité pour fermer les balises restantes si le flux de l'API est corrompu
+            while (stack.length > 0) {
+                result += stack.pop();
+            }
+
+            return result;
         }
 
         function getThemeImage(textFr) {
@@ -236,7 +243,7 @@
                 }
 
                 mainContent.innerHTML += `
-                    <div class="glass-card p-6 mb-4 border-l-4 border-emerald-500">
+                    <div class="glass-card p-6 mb-4 border-l-4 border-emerald-500 bg-white/5 border-l-4 border-emerald-500 rounded-[2.5rem] backdrop-blur-xl">
                         <p class="text-zinc-400 text-xs mb-3 text-left uppercase font-bold tracking-wider">Référence : Verset ${r.verse_key}</p>
                         <p class="${alignClass} mb-5" ${textDirection}>${blockMarkup}</p>
                         <div class="text-left">
@@ -282,7 +289,6 @@
                 
                 if(tD.data && tD.data.ayahs) {
                     currentVersesList.forEach((verse, idx) => {
-                        // On nettoie le texte brut cryptique reçu en injectant du HTML propre et stylisé
                         verse.text_tajweed_clean = parseTajweedRules(tD.data.ayahs[idx].text);
                     });
                 }
