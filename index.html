@@ -78,7 +78,7 @@
             
             <div class="flex flex-wrap justify-center items-center gap-3">
                 <div class="relative">
-                    <input type="text" id="searchInput" placeholder="Recherche (ex: Moise, Ciel)..." class="w-56 md:w-64 px-4 py-2 rounded-xl text-sm text-white bg-black/40 border border-white/10 focus:border-emerald-500 focus:outline-none">
+                    <input type="text" id="searchInput" placeholder="Recherche (ex: Moise, Paradis)..." class="w-56 md:w-64 px-4 py-2 rounded-xl text-sm text-white bg-black/40 border border-white/10 focus:border-emerald-500 focus:outline-none">
                     <button onclick="searchVerse()" class="absolute right-3 top-2 text-emerald-400 hover:text-white transition">
                         <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" stroke-width="2" stroke-linecap="round"></path></svg>
                     </button>
@@ -217,70 +217,76 @@
             } catch (e) { console.error(e); }
         }
 
-        // CORRECTIF RADICAL : Extraction multicouches de la pagination de recherche native de l'API
+        // SOLUTION ABSOLUE : Téléchargement direct du dictionnaire de traduction pour contourner le bridage de l'API
         async function searchVerse() {
             let userQuery = document.getElementById('searchInput').value.trim();
             if (!userQuery) return;
             
-            mainContent.innerHTML = `<div class="py-20 text-emerald-500 animate-pulse text-xl">Recherche complète dans tout l'index du Coran...</div>`;
+            mainContent.innerHTML = `<div class="py-20 text-emerald-500 animate-pulse text-xl">Recherche intégrale et instantanée dans les 6236 versets...</div>`;
             
-            let cleanQuery = userQuery.toLowerCase()
-                .replace(/\bmoise\b/g, "Moïse")
-                .replace(/\bjesus\b/g, "Jésus")
-                .replace(/\bnoe\b/g, "Noé")
-                .replace(/\bchati\b/g, "châtiment");
-
-            if (cleanQuery === userQuery.toLowerCase()) {
-                cleanQuery = userQuery.charAt(0).toUpperCase() + userQuery.slice(1);
-            }
+            // On normalise sans accents pour matcher toutes les graphies (Moïse, moise, paradis, Paradis)
+            let normalizedQuery = userQuery.toLowerCase()
+                .normalize("NFD").replace(/[\u0300-\u036f]/g, "");
 
             try {
-                let collectedResults = [];
-                let page = 1;
-                let fetchMore = true;
+                // On appelle le fichier complet de la traduction française (ID 31 : Muhammad Hamidullah)
+                const url = `https://api.quran.com/api/v4/quran/translations/31`;
+                const res = await fetch(url);
+                const data = await res.json();
                 
-                // On boucle sur l'API de recherche native pour assembler tous les paquets de 20 résultats bridés par Quran.com
-                while (fetchMore && page <= 8) { 
-                    const url = `https://api.quran.com/api/v4/search?q=${encodeURIComponent(cleanQuery)}&size=20&page=${page}&language=fr`;
-                    const res = await fetch(url);
-                    const data = await res.json();
-                    
-                    if (data.search && data.search.results && data.search.results.length > 0) {
-                        collectedResults = collectedResults.concat(data.search.results);
+                let foundResults = [];
+
+                if (data && data.translations) {
+                    data.translations.forEach(v => {
+                        let textRaw = v.text.replace(/<[^>]*>/g, ''); // Supprime les balises HTML de note de bas de page
+                        let textNormalized = textRaw.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
                         
-                        // Si on reçoit moins de 20 résultats, c'est qu'on est arrivés au bout de l'index
-                        if (data.search.results.length < 20) {
-                            fetchMore = false;
-                        } else {
-                            page++;
+                        if (textNormalized.includes(normalizedQuery)) {
+                            // On retrouve la clé du verset (ex: "1:5") depuis l'ID absolu de l'API si nécessaire
+                            // Mais on peut utiliser l'identifiant direct de l'API pour générer la clé de lecture
+                            foundResults.push({
+                                resource_id: v.resource_id,
+                                verse_id: v.id, 
+                                verse_key: v.verse_key || guessVerseKey(v.id), // Fonction de secours pour la clé de structure
+                                text: textRaw
+                            });
                         }
-                    } else {
-                        fetchMore = false;
-                    }
+                    });
                 }
 
-                if (collectedResults.length > 0) {
-                    mainContent.innerHTML = `<h2 class="text-2xl font-bold mb-8 text-emerald-500">${collectedResults.length} occurrence(s) trouvée(s) pour "${cleanQuery}"</h2>`;
+                if (foundResults.length > 0) {
+                    mainContent.innerHTML = `<h2 class="text-2xl font-bold mb-8 text-emerald-500">${foundResults.length} occurrence(s) trouvée(s) pour "${userQuery}"</h2>`;
                     
-                    collectedResults.forEach(r => {
-                        // Nettoyage des balises d'aperçu de l'API
-                        let textClean = r.text.replace(/<[^>]*>/g, '');
-                        
+                    foundResults.forEach(r => {
                         mainContent.innerHTML += `
                             <div class="glass-card p-6 md:p-8 mb-6 bg-white/5 border-l-4 border-emerald-500 text-left space-y-4">
                                 <div class="flex justify-between items-center text-zinc-400 text-xs">
                                     <span>Verset ${r.verse_key}</span>
                                 </div>
-                                <p class="text-zinc-200 font-light italic text-sm md:text-base">"${textClean}"</p>
+                                <p class="text-zinc-200 font-light italic text-sm md:text-base">"${r.text}"</p>
                                 <button onclick="goToVerse('${r.verse_key}')" class="text-emerald-500 text-xs font-bold pt-2 block hover:underline">LIRE LE VERSET EN IMAGE →</button>
                             </div>`;
                     });
                 } else {
-                    mainContent.innerHTML = `<p class='py-20 text-zinc-400'>Aucun résultat trouvé pour "${userQuery}". Essayez une orthographe alternative.</p>`;
+                    mainContent.innerHTML = `<p class='py-20 text-zinc-400'>Aucun résultat trouvé pour "${userQuery}". Essayez un autre mot-clé.</p>`;
                 }
             } catch (e) {
-                mainContent.innerHTML = "<p class='py-20 text-red-400'>Erreur lors de la synchronisation des données de recherche.</p>";
+                mainContent.innerHTML = "<p class='py-20 text-red-400'>Erreur lors de l'indexation locale des versets.</p>";
             }
+        }
+
+        // Fonction utilitaire pour recalculer instantanément le numéro de Sourate:Verset à partir de l'index global (1 à 6236)
+        function guessVerseKey(id) {
+            // Liste cumulative des versets par sourate dans le Coran pour retrouver la clé "Sourate:Verset"
+            const structuralMap = [7,286,200,176,120,165,206,75,129,109,123,111,43,52,99,128,111,110,98,135,112,78,118,64,77,227,93,88,69,60,34,30,73,54,45,83,182,88,75,85,54,53,89,59,37,35,38,29,18,45,60,49,62,55,78,96,29,22,24,13,14,11,11,18,12,12,30,52,52,44,28,28,20,56,40,31,50,40,46,42,29,19,36,25,22,17,19,26,30,20,15,21,11,8,8,19,5,8,8,11,11,8,3,9,5,4,7,3,6,3,5,4,5,6];
+            let currentId = id;
+            for (let i = 0; i < structuralMap.length; i++) {
+                if (currentId <= structuralMap[i]) {
+                    return `${i + 1}:${currentId}`;
+                }
+                currentId -= structuralMap[i];
+            }
+            return "1:1";
         }
 
         async function goToVerse(vk) {
