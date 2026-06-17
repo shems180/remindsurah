@@ -3,10 +3,10 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>QuranVision - Immersion Spirituelle</title>
+    <title>QuranVision - Mushaf Tajweed</title>
     
     <script src="https://cdn.tailwindcss.com"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Amiri:wght@400;700&family=Inter:wght@300;500;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;500;700&display=swap" rel="stylesheet">
     
     <style>
         body { 
@@ -17,33 +17,29 @@
         }
         .quran-container {
             direction: rtl;
-            text-align: right;
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 12px;
+            row-gap: 24px;
+            padding: 20px 0;
         }
-        /* Style pour intégrer les polices et couleurs Tajweed natives de l'API Quran.com */
-        .quran-arabic { 
-            font-family: 'Amiri', serif; 
-            font-size: 2.8rem; 
-            line-height: 2.2; 
-            display: inline-block;
-            letter-spacing: 0px;
+        /* Style pour forcer les images de mots Tajweed à être grandes, blanches et claires */
+        .quran-word-svg {
+            height: 75px;
+            max-width: 150px;
+            filter: drop-shadow(0 2px 4px rgba(0,0,0,0.5));
+            transition: transform 0.2s;
         }
-        
-        /* Classes de couleurs globales utilisées par l'API V4 de Quran.com pour le Tajweed */
-        .quran-arabic [class*="tajweed"], .quran-arabic span[style*="color"] {
-            display: inline !important;
+        .quran-word-svg:hover {
+            transform: scale(1.08);
         }
-
         .glass-card { 
             background: rgba(255, 255, 255, 0.01); 
             backdrop-filter: blur(20px);
             border: 1px solid rgba(255, 255, 255, 0.06); 
             border-radius: 2.5rem;
-            transition: all 0.3s ease;
         }
-        .glass-card:hover { 
-            border-color: rgba(16, 185, 129, 0.3); 
-        }
-
         .audio-player-container {
             background: rgba(15, 23, 42, 0.9);
             border: 1px solid rgba(255, 255, 255, 0.15);
@@ -78,8 +74,8 @@
 
     <main id="main-content" class="max-w-4xl mx-auto p-4 md:p-8 mt-6 space-y-12 text-center">
         <div id="welcome-screen" class="py-24 space-y-4">
-            <h2 class="text-3xl md:text-5xl font-bold text-emerald-500">Mushaf Tajweed Interactif</h2>
-            <p class="text-zinc-400 text-sm">Sélectionnez une sourate pour afficher le texte arabe coloré sans aucun bug.</p>
+            <h2 class="text-3xl md:text-5xl font-bold text-emerald-500">Mushaf Tajweed Vectoriel</h2>
+            <p class="text-zinc-400 text-sm">Génération stable et haute définition. Sans texte corrompu.</p>
         </div>
     </main>
 
@@ -87,7 +83,7 @@
         const mainContent = document.getElementById('main-content');
         const surahSelect = document.getElementById('surahSelect');
 
-        // Initialisation des sourates
+        // Charger la liste des Sourates au démarrage
         async function init() {
             try {
                 const res = await fetch('https://api.quran.com/api/v4/chapters?language=fr');
@@ -98,16 +94,16 @@
             } catch (e) { console.error(e); }
         }
 
-        // Chargement unifié depuis une seule et unique API (Quran.com V4)
+        // Charger la sourate sélectionnée
         async function loadSurah() {
             const sid = surahSelect.value;
             const rid = document.getElementById('reciterSelect').value;
-            mainContent.innerHTML = `<div class="py-20 text-emerald-500 animate-pulse text-lg">Chargement du Mushaf Tajweed...</div>`;
+            mainContent.innerHTML = `<div class="py-20 text-emerald-500 animate-pulse text-lg font-medium">Génération des glyphes Tajweed HD...</div>`;
             
             try {
-                // On demande le format 'text_tajweed' officiel de Quran.com qui contient du HTML propre (sans crochets !)
+                // Version V4 stable demandant directement le rendu des mots sous forme d'images Tajweed (SVG)
                 const [versesRes, audioRes] = await Promise.all([
-                    fetch(`https://api.quran.com/api/v4/verses/by_chapter/${sid}?language=fr&words=false&translations=31&fields=text_tajweed&per_page=300`),
+                    fetch(`https://api.quran.com/api/v4/verses/by_chapter/${sid}?language=fr&translations=31&words=true&word_fields=v2_page,code_v1,code_v2,text_uthmani&per_page=300`),
                     fetch(`https://api.quran.com/api/v4/chapter_recitations/${rid}/${sid}`)
                 ]);
                 
@@ -117,7 +113,7 @@
                 renderSurah(versesData.verses, audioData.audio_file.audio_url);
             } catch (e) { 
                 console.error(e);
-                mainContent.innerHTML = "<div class='py-20 text-red-400'>Erreur de connexion aux serveurs. Réessayez.</div>"; 
+                mainContent.innerHTML = "<div class='py-20 text-red-400'>Erreur de connexion aux serveurs de rendu. Réessayez.</div>"; 
             }
         }
 
@@ -132,21 +128,35 @@
             verses.forEach((v) => {
                 const textFr = v.translations[0].text.replace(/<[^>]*>/g, '');
                 
-                // Sécurité : Si le format Tajweed officiel n'est pas chargé, on applique un filtre de nettoyage strict
-                let textAr = v.text_tajweed || "";
+                // Construction de la ligne de verset mot par mot à l'aide des images SVG officielles du Tajweed
+                let wordsHtml = `<div class="quran-container" dir="rtl">`;
                 
-                // On supprime définitivement tous les résidus de crochets s'il y en a
-                textAr = textAr.replace(/[\[\]]/g, '');
+                if (v.words && v.words.length > 0) {
+                    v.words.forEach(word => {
+                        // Utilisation du dépôt de glyphes SVG de Quran.com (Spécifique au Tajweed de la page correspondante)
+                        const pageNum = String(word.v2_page).padStart(3, '0');
+                        // Chaque mot possède son image SVG dynamique avec le Tajweed natif coloré appliqué en usine
+                        if(word.char_type_name !== "end") {
+                            wordsHtml += `<img src="https://images.quran.com/images/words/tajweed/${word.text_uthmani ? encodeURIComponent(word.text_uthmani) : word.id}.svg" 
+                                               onerror="this.style.display='none'; this.after('${word.text_uthmani || ''} ')" 
+                                               class="quran-word-svg" alt="mot">`;
+                        } else {
+                            // Symbole de fin de verset (Ayah)
+                            wordsHtml += `<span class="text-emerald-500 font-bold text-2xl self-center mx-2">﴿${v.verse_number}﴾</span>`;
+                        }
+                    });
+                }
+                wordsHtml += `</div>`;
 
                 mainContent.innerHTML += `
-                    <section class="glass-card p-8 md:p-12 mb-8 bg-white/[0.02] text-center space-y-6">
+                    <section class="glass-card p-8 md:p-12 mb-8 bg-white/[0.01] text-center space-y-6">
                         <div class="text-left text-xs font-bold text-emerald-500/70 tracking-wider">VERSET ${v.verse_key}</div>
                         
-                        <div class="quran-container my-6">
-                            <p class="quran-arabic text-zinc-100" dir="rtl">${textAr}</p>
+                        <div class="my-4">
+                            ${wordsHtml}
                         </div>
                         
-                        <div class="h-px浏览 w-16 bg-emerald-500/20 mx-auto"></div>
+                        <div class="h-px w-16 bg-emerald-500/20 mx-auto"></div>
                         
                         <p class="text-zinc-300 text-lg md:text-xl font-light italic">"${textFr}"</p>
                     </section>`;
