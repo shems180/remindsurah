@@ -35,16 +35,46 @@
             filter: drop-shadow(0 2px 4px rgba(0,0,0,0.6));
         }
         
-        /* --- DESIGN ET COULEURS DU TAJWEED --- */
-        .tajweed-ghunnah { color: #10b981 !important; font-weight: 700; } /* Vert Émeraude */
-        .tajweed-ikhfa { color: #059669 !important; font-weight: 700; }    /* Vert Foncé */
-        .tajweed-idgham { color: #34d399 !important; font-weight: 700; }   /* Vert Clair */
-        .tajweed-qalqalah { color: #3b82f6 !important; font-weight: 700; } /* Bleu */
-        .tajweed-madd-obl { color: #ef4444 !important; font-weight: 700; } /* Rouge */
-        .tajweed-madd-perm { color: #f97316 !important; }                 /* Orange */
-        .tajweed-madd-norm { color: #fbbf24 !important; }                 /* Jaune/Or */
-        .tajweed-silent, .tajweed-hamza { color: #64748b !important; opacity: 0.4; font-weight: 300; } /* Gris Estompé */
+        /* ==========================================================================
+           CORRECTION INLINE TAJWEED - CIBLAGE DIRECT DES CLASSES DE QURAN.COM
+           ========================================================================== */
+        .quran-arabic span, .quran-arabic font {
+            font-family: 'Amiri', serif !important;
+        }
 
+        /* Vert : Ghunnah / Ikhfa / Idgham */
+        .quran-arabic .ghunnah, .quran-arabic [class*="ghunnah"],
+        .quran-arabic .ikhfa, .quran-arabic [class*="ikhfa"],
+        .quran-arabic .idgham, .quran-arabic [class*="idgham"] { 
+            color: #10b981 !important; 
+            font-weight: 700 !important; 
+        }
+
+        /* Bleu : Qalqalah */
+        .quran-arabic .qalqalah, .quran-arabic [class*="qalqalah"] { 
+            color: #3b82f6 !important; 
+            font-weight: 700 !important; 
+        }
+
+        /* Rouge : Prolongations longues (Mandatory / Obligatoire) */
+        .quran-arabic .madd_mandatory, .quran-arabic .madd_6, .quran-arabic [class*="mandatory"], .quran-arabic [class*="madd_6"] { 
+            color: #ef4444 !important; 
+            font-weight: 700 !important; 
+        }
+
+        /* Orange / Jaune : Prolongations moyennes (Permissible / Normal) */
+        .quran-arabic .madd_permissible, .quran-arabic .madd_4, .quran-arabic .madd_2, 
+        .quran-arabic [class*="permissible"], .quran-arabic [class*="madd_4"] { 
+            color: #f97316 !important; 
+        }
+
+        /* Gris : Lettres muettes ou liaisons */
+        .quran-arabic .hamzat_wasl, .quran-arabic .silent, .quran-arabic [class*="wasl"], .quran-arabic [class*="silent"] { 
+            color: #64748b !important; 
+            opacity: 0.5 !important;
+        }
+
+        /* --- STYLES INTERFACE --- */
         .glass-card { 
             background: rgba(255, 255, 255, 0.01); 
             backdrop-filter: blur(20px);
@@ -57,18 +87,18 @@
             transform: translateY(-2px); 
         }
 
-        /* --- STYLISATION DU LECTEUR AUDIO --- */
         .audio-player-container {
-            background: rgba(15, 23, 42, 0.8);
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            backdrop-filter: blur(12px);
+            background: rgba(15, 23, 42, 0.9);
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            backdrop-filter: blur(20px);
             border-radius: 100px;
-            max-w: 500px;
+            max-w: 450px;
             margin: 0 auto;
-            padding: 6px 12px;
+            padding: 8px 16px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.7);
         }
         audio {
-            height: 36px;
+            height: 40px;
             width: 100%;
             outline: none;
         }
@@ -107,7 +137,7 @@
                 <svg class="w-16 h-16 text-emerald-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5s3.332.477 4.5 1.253v13C19.832 18.477 18.246 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"></path></svg>
             </div>
             <h2 class="text-4xl md:text-6xl font-bold tracking-tight">Méditez sur les Signes.</h2>
-            <p class="text-zinc-400 text-lg max-w-lg mx-auto font-light leading-relaxed">Mushaf Tajweed Interactif • Couleurs Actives & Design Corrigé</p>
+            <p class="text-zinc-400 text-lg max-w-lg mx-auto font-light leading-relaxed">Mushaf Tajweed Interactif • Rendu natif stabilisé</p>
         </div>
     </main>
 
@@ -125,55 +155,6 @@
             desert: "https://images.unsplash.com/photo-1509316975850-ff9c5deb0cd9?auto=format&fit=crop&w=1200&q=80",    
             defaut: "https://images.unsplash.com/photo-1518156677180-95a2893f3e9f?auto=format&fit=crop&w=1200&q=80"     
         };
-
-        // Parseur ultra-robuste qui convertit les codes d'Alquran.cloud en balises HTML stylisées
-        function parseTajweedRules(text) {
-            if (!text) return "";
-
-            const rulesMap = {
-                'h': 'tajweed-hamza',
-                's': 'tajweed-silent',
-                'l': 'tajweed-silent',
-                'n': 'tajweed-madd-norm',
-                'p': 'tajweed-madd-perm',
-                'm': 'tajweed-madd-obl',
-                'o': 'tajweed-madd-obl',
-                'q': 'tajweed-qalqalah',
-                'g': 'tajweed-ghunnah',
-                'f': 'tajweed-ikhfa',
-                'c': 'tajweed-ikhfa',
-                'a': 'tajweed-idgham',
-                'u': 'tajweed-idgham',
-                'i': 'tajweed-idgham'
-            };
-
-            let output = "";
-            let i = 0;
-
-            while (i < text.length) {
-                if (text[i] === '[' && text[i+1] !== '[') {
-                    let endTagContent = text.indexOf('[', i + 1);
-                    if (endTagContent !== -1) {
-                        let tagContent = text.substring(i + 1, endTagContent);
-                        let ruleCode = tagContent.split(':')[0];
-                        let className = rulesMap[ruleCode] || '';
-
-                        let closeIdx = text.indexOf(']]', endTagContent);
-                        if (closeIdx !== -1) {
-                            let insideText = text.substring(endTagContent + 1, closeIdx);
-                            let processedInside = parseTajweedRules(insideText);
-                            
-                            output += className ? `<span class="${className}">${processedInside}</span>` : processedInside;
-                            i = closeIdx + 2;
-                            continue;
-                        }
-                    }
-                }
-                output += text[i];
-                i++;
-            }
-            return output.replace(/\[[a-z_0-9:]+\[/gi, '').replace(/\]\]/g, '').replace(/[\[\]]/g, '');
-        }
 
         function getThemeImage(textFr) {
             const clean = textFr.toLowerCase();
@@ -282,37 +263,39 @@
         async function loadSurah() {
             const sid = surahSelect.value;
             const rid = document.getElementById('reciterSelect').value;
-            mainContent.innerHTML = `<div class="py-20 text-emerald-500 animate-bounce text-xl font-bold uppercase">Génération du flux Tajweed...</div>`;
+            mainContent.innerHTML = `<div class="py-20 text-emerald-500 animate-bounce text-xl font-bold uppercase">Génération du flux unifié...</div>`;
             
             try {
-                // On récupère le texte français et l'audio depuis Quran.com, et le flux Tajweed crypté depuis Alquran
-                const [vR, tajweedR, aR] = await Promise.all([
+                // SOLUTION RADICALE : Utilisation de la v4 avec 'quran_tajweed' directement indexé nativement sur Quran.com
+                const [vR, aR] = await Promise.all([
+                    fetch(`https://api.quran.com/api/v4/quran/verses/quran_tajweed?chapter_number=${sid}`),
                     fetch(`https://api.quran.com/api/v4/verses/by_chapter/${sid}?language=fr&translations=31&per_page=300`),
-                    fetch(`https://api.alquran.cloud/v1/surah/${sid}/quran-tajweed`),
                     fetch(`https://api.quran.com/api/v4/chapter_recitations/${rid}/${sid}`)
                 ]);
                 
-                const vD = await vR.json();
-                const tD = await tajweedR.json();
-                const aD = await aR.json();
+                const tajweedData = await vR.json();
+                const translationData = await aR[0] ? await aR[0].json() : await (await fetch(`https://api.quran.com/api/v4/verses/by_chapter/${sid}?language=fr&translations=31&per_page=300`)).json();
+                const audioData = await aR[1] ? await aR[1].json() : await (await fetch(`https://api.quran.com/api/v4/chapter_recitations/${rid}/${sid}`)).json();
                 
-                currentVersesList = vD.verses;
+                // On fusionne l'arabe Tajweed natif de Quran.com avec les traductions françaises sans risque de décalage
+                currentVersesList = translationData.verses.map((verse, index) => {
+                    if(tajweedData.verses && tajweedData.verses[index]) {
+                        verse.text_tajweed_direct = tajweedData.verses[index].text_tajweed;
+                    } else {
+                        verse.text_tajweed_direct = verse.text_uthmani;
+                    }
+                    return verse;
+                });
                 
-                if (tD.data && tD.data.ayahs) {
-                    currentVersesList.forEach((verse, idx) => {
-                        // Traitement par notre parseur pour intégrer les classes CSS de couleur natives
-                        verse.text_tajweed_clean = parseTajweedRules(tD.data.ayahs[idx].text);
-                    });
-                }
-                
-                renderSurah(currentVersesList, aD.audio_file.audio_url);
+                renderSurah(currentVersesList, audioData.audio_file.audio_url);
             } catch (e) { 
                 console.error(e);
-                mainContent.innerHTML = "<div class='py-20 text-red-400'>Erreur de chargement. Veuillez réessayer.</div>"; 
+                mainContent.innerHTML = "<div class='py-20 text-red-400'>Erreur lors du chargement des serveurs sacrés. Veuillez réessayer.</div>"; 
             }
         }
 
         function renderSurah(verses, audio) {
+            // Rendu de la barre audio flottante et minimaliste
             mainContent.innerHTML = `
                 <div class="sticky top-24 z-40 w-full mb-12 px-4">
                     <div class="audio-player-container shadow-2xl">
@@ -322,7 +305,7 @@
 
             verses.forEach((v, i) => {
                 const textFr = v.translations[0].text.replace(/<[^>]*>/g, '');
-                const textArTajweed = v.text_tajweed_clean || "Texte indisponible"; 
+                const textArTajweed = v.text_tajweed_direct || "Texte indisponible"; 
                 const dynamicImg = getThemeImage(textFr);
 
                 mainContent.innerHTML += `
