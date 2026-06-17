@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>QuranVision - Panel Admin Sécurisé</title>
+    <title>QuranVision - Panel Admin</title>
     
     <link rel="manifest" href="manifest.json">
     <meta name="apple-mobile-web-app-capable" content="yes">
@@ -62,7 +62,7 @@
                     Connexion Admin
                 </button>
                 <button onclick="exportConfig()" id="exportBtn" class="hidden text-[10px] bg-emerald-900/50 text-emerald-400 px-2 py-0.5 rounded border border-emerald-700/50 hover:bg-emerald-500 hover:text-black transition">
-                    💾 Sauvegarder les modifs pour le public
+                    📦 Télécharger le HTML mis à jour pour GitHub
                 </button>
             </div>
             
@@ -100,48 +100,32 @@
         
         let isAdminActive = false; 
         let db;
-        let globalPublishedImages = {};
 
-        // Fonction de vérification simplifiée et ultra-fiable
+        // METTEZ VOS IMAGES ICI (Elles s'injecteront toutes seules lors du téléchargement)
+        const globalPublishedImages = {};
+
         function checkAdminPassword() {
-            if (isAdminActive) {
-                location.reload();
-                return;
-            }
-
+            if (isAdminActive) { location.reload(); return; }
             const input = prompt("Entrez le mot de passe Administrateur :");
-            if (!input) return;
-
             if (input === "admin123") {
                 isAdminActive = true;
                 activateAdminFeatures();
-            } else {
-                alert("Mot de passe incorrect. Accès refusé.");
-            }
+            } else if (input) { alert("Mot de passe incorrect."); }
         }
 
         function activateAdminFeatures() {
             document.getElementById('adminBadge').innerHTML = "⚡ Déconnexion Admin";
             document.getElementById('adminBadge').className = "text-[10px] bg-red-600 text-white font-bold px-2 py-0.5 rounded";
             document.getElementById('exportBtn').style.display = "inline-block";
-            
-            document.querySelectorAll('.admin-upload-btn').forEach(btn => {
-                btn.style.display = 'block';
-            });
+            document.querySelectorAll('.admin-upload-btn').forEach(btn => btn.style.display = 'block');
         }
 
-        // Base de données locale IndexedDB
         const dbRequest = indexedDB.open("QuranVisionDB", 1);
         dbRequest.onupgradeneeded = function(e) {
             db = e.target.result;
-            if (!db.objectStoreNames.contains("images")) {
-                db.createObjectStore("images", { keyPath: "verseKey" });
-            }
+            if (!db.objectStoreNames.contains("images")) db.createObjectStore("images", { keyPath: "verseKey" });
         };
-        dbRequest.onsuccess = function(e) { 
-            db = e.target.result; 
-            init(); 
-        };
+        dbRequest.onsuccess = function(e) { db = e.target.result; init(); };
 
         const imageBank = {
             univers: "https://images.unsplash.com/photo-1451187580459-43490279c0fa?auto=format&fit=crop&w=1200&q=80",
@@ -162,49 +146,42 @@
         }
 
         function getCustomImage(verseKey, fallbackUrl, callback) {
-            if (!db) { 
-                if (globalPublishedImages[verseKey]) callback(globalPublishedImages[verseKey]);
-                else callback(fallbackUrl);
-                return; 
+            if (!db) {
+                callback(globalPublishedImages[verseKey] || fallbackUrl);
+                return;
             }
             const transaction = db.transaction(["images"], "readonly");
             const store = transaction.objectStore("images");
             const request = store.get(verseKey);
             request.onsuccess = function() {
                 if (request.result) callback(request.result.data);
-                else if (globalPublishedImages[verseKey]) callback(globalPublishedImages[verseKey]);
-                else callback(fallbackUrl);
+                else callback(globalPublishedImages[verseKey] || fallbackUrl);
             };
-            request.onerror = function() { callback(fallbackUrl); };
+            request.onerror = function() { callback(globalPublishedImages[verseKey] || fallbackUrl); };
         }
 
         function handleImageUpload(event, verseKey) {
             const file = event.target.files[0];
             if (!file) return;
-
             const targetBtn = event.target.parentElement;
             targetBtn.innerHTML = "⚡ Traitement...";
-
             const reader = new FileReader();
             reader.onload = function(e) {
                 const img = new Image();
                 img.onload = function() {
                     const canvas = document.createElement('canvas');
                     const ctx = canvas.getContext('2d');
-                    const maxDim = 900;
+                    const maxDim = 600; 
                     let w = img.width, h = img.height;
-
                     if (w > h && w > maxDim) { h = Math.round((h * maxDim) / w); w = maxDim; }
                     else if (h > maxDim) { w = Math.round((w * maxDim) / h); h = maxDim; }
-                    
                     canvas.width = w; canvas.height = h;
                     ctx.drawImage(img, 0, 0, w, h);
-                    const optimizedDataUrl = canvas.toDataURL('image/jpeg', 0.70);
+                    const optimizedDataUrl = canvas.toDataURL('image/jpeg', 0.50);
 
                     const transaction = db.transaction(["images"], "readwrite");
                     const store = transaction.objectStore("images");
                     store.put({ verseKey: verseKey, data: optimizedDataUrl });
-
                     transaction.oncomplete = function() {
                         document.getElementById(`img-view-${verseKey}`).src = optimizedDataUrl;
                         targetBtn.innerHTML = "📷 Modifier la photo";
@@ -216,7 +193,6 @@
         }
 
         async function init() {
-            // 1. Chargement des sourates
             try {
                 const res = await fetch('https://api.quran.com/api/v4/chapters?language=fr');
                 const data = await res.json();
@@ -225,14 +201,6 @@
                     surahSelect.innerHTML += `<option value="${s.id}">${s.id}. ${s.name_simple}</option>`;
                 });
             } catch (e) { console.error(e); }
-
-            // 2. Chargement automatique des images enregistrées sur le serveur pour le public
-            try {
-                const resImages = await fetch('sauvegarder.php');
-                if (resImages.ok) {
-                    globalPublishedImages = await resImages.json();
-                }
-            } catch (e) { console.error("Pas encore d'images configurées sur le serveur."); }
         }
 
         function isArabic(text) { return /[\u0600-\u06FF]/.test(text); }
@@ -294,12 +262,10 @@
                         <div class="relative h-64 w-full bg-zinc-950 flex items-center justify-center">
                             <img id="img-view-${v.verse_key}" src="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" class="w-full h-full object-cover opacity-25 mix-blend-screen" loading="lazy">
                             <div class="absolute inset-0 bg-gradient-to-t from-[#020617] via-transparent to-black/30"></div>
-                            
                             <label class="admin-upload-btn absolute top-6 right-6 bg-emerald-500/20 hover:bg-emerald-500/50 text-emerald-300 text-xs font-medium px-3 py-1.5 rounded-xl cursor-pointer transition border border-emerald-500/30 backdrop-blur-sm z-20" style="display: ${isAdminActive ? 'block' : 'none'};">
                                 📷 Importer ma photo (Admin)
                                 <input type="file" accept="image/*" class="hidden" onchange="handleImageUpload(event, '${v.verse_key}')">
                             </label>
-
                             <div class="absolute top-6 left-6 bg-black/60 backdrop-blur-md px-4 py-1 rounded-full text-xs font-bold border border-white/10 text-emerald-400">Verset ${v.verse_key}</div>
                         </div>
                         <div class="p-8 md:p-12 space-y-8 -mt-20 relative z-10 bg-gradient-to-b from-transparent to-[#020617]/95">
@@ -315,39 +281,32 @@
             });
         }
 
-        // Le bouton sauvegarde tout directement sur le serveur en arrière-plan
-        async function exportConfig() {
+        // GENERE UN NOUVEAU FICHIER INDEX.HTML AVEC VOS PHOTOS INTEGREES
+        function exportConfig() {
             if (!db) return;
-            
-            const btn = document.getElementById('exportBtn');
-            btn.innerHTML = "⏳ Enregistrement en cours...";
-            
             const transaction = db.transaction(["images"], "readonly");
             const store = transaction.objectStore("images");
             const request = store.getAll();
             
-            request.onsuccess = async function() {
+            request.onsuccess = function() {
                 const currentData = {};
                 request.result.forEach(item => { currentData[item.verseKey] = item.data; });
                 
-                try {
-                    const response = await fetch('sauvegarder.php', {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify(currentData)
-                    });
-                    
-                    if (response.ok) {
-                        alert("✨ Succès ! Les modifications sont instantanément visibles par le public !");
-                        globalPublishedImages = currentData;
-                    } else {
-                        alert("Erreur lors de la sauvegarde sur le serveur.");
-                    }
-                } catch (error) {
-                    alert("Erreur réseau : impossible de joindre le serveur.");
-                } finally {
-                    btn.innerHTML = "💾 Sauvegarder les modifs pour le public";
-                }
+                // On récupère tout le code HTML de la page actuelle
+                let htmlContent = document.documentElement.outerHTML;
+                
+                // On remplace l'ancienne déclaration de globalPublishedImages par la nouvelle contenant vos données
+                const regex = /const globalPublishedImages = \{[\s\S]*?\};/;
+                const newDataString = `const globalPublishedImages = ${JSON.stringify(currentData, null, 4)};`;
+                htmlContent = "<!DOCTYPE html>\n" + htmlContent.replace(regex, newDataString);
+                
+                // Téléchargement du fichier mis à jour
+                const blob = new Blob([htmlContent], {type: "text/html"});
+                const a = document.createElement("a");
+                a.href = URL.createObjectURL(blob);
+                a.download = "index.html";
+                a.click();
+                alert("Fichier 'index.html' mis à jour et téléchargé ! Glissez-le simplement dans votre dépôt GitHub pour mettre à jour le site public.");
             };
         }
     </script>
