@@ -217,69 +217,69 @@
             } catch (e) { console.error(e); }
         }
 
-        // CORRECTIF SUR LA PAGINATION RECURSIVE POUR CHERCHER ABSOLUMENT PARTOUT
+        // CORRECTIF RADICAL : Extraction multicouches de la pagination de recherche native de l'API
         async function searchVerse() {
             let userQuery = document.getElementById('searchInput').value.trim();
             if (!userQuery) return;
             
-            mainContent.innerHTML = `<div class="py-20 text-emerald-500 animate-pulse text-xl">Analyse complète des 6236 versets en cours...</div>`;
+            mainContent.innerHTML = `<div class="py-20 text-emerald-500 animate-pulse text-xl">Recherche complète dans tout l'index du Coran...</div>`;
             
             let cleanQuery = userQuery.toLowerCase()
-                .normalize("NFD").replace(/[\u0300-\u036f]/g, "")
-                .replace(/\bmoise\b/g, "moise")
-                .replace(/\bjesus\b/g, "jesus")
-                .replace(/\bnoe\b/g, "noe");
+                .replace(/\bmoise\b/g, "Moïse")
+                .replace(/\bjesus\b/g, "Jésus")
+                .replace(/\bnoe\b/g, "Noé")
+                .replace(/\bchati\b/g, "châtiment");
+
+            if (cleanQuery === userQuery.toLowerCase()) {
+                cleanQuery = userQuery.charAt(0).toUpperCase() + userQuery.slice(1);
+            }
 
             try {
-                let allResults = [];
-                let currentPage = 1;
-                let hasMoreData = true;
-
-                // On boucle dynamiquement tant que l'API renvoie des pages de versets (permet d'obtenir les 130+ occurrences)
-                while (hasMoreData && currentPage <= 25) { // Sécurité à 25 pages max
-                    const url = `https://api.quran.com/api/v4/verses/by_translations/31?per_page=300&page=${currentPage}&fields=text_uthmani,verse_key`;
+                let collectedResults = [];
+                let page = 1;
+                let fetchMore = true;
+                
+                // On boucle sur l'API de recherche native pour assembler tous les paquets de 20 résultats bridés par Quran.com
+                while (fetchMore && page <= 8) { 
+                    const url = `https://api.quran.com/api/v4/search?q=${encodeURIComponent(cleanQuery)}&size=20&page=${page}&language=fr`;
                     const res = await fetch(url);
                     const data = await res.json();
                     
-                    if (data.verses && data.verses.length > 0) {
-                        data.verses.forEach(v => {
-                            if(v.translations && v.translations[0]) {
-                                let textFr = v.translations[0].text.replace(/<[^>]*>/g, '');
-                                let textFrClean = textFr.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
-                                
-                                if (textFrClean.includes(cleanQuery)) {
-                                    allResults.push({
-                                        verse_key: v.verse_key,
-                                        text_fr: textFr,
-                                        text_arabic: v.text_uthmani || ''
-                                    });
-                                }
-                            }
-                        });
-                        currentPage++;
+                    if (data.search && data.search.results && data.search.results.length > 0) {
+                        collectedResults = collectedResults.concat(data.search.results);
+                        
+                        // Si on reçoit moins de 20 résultats, c'est qu'on est arrivés au bout de l'index
+                        if (data.search.results.length < 20) {
+                            fetchMore = false;
+                        } else {
+                            page++;
+                        }
                     } else {
-                        hasMoreData = false;
+                        fetchMore = false;
                     }
                 }
 
-                if (allResults.length > 0) {
-                    mainContent.innerHTML = `<h2 class="text-2xl font-bold mb-8 text-emerald-500">${allResults.length} occurrence(s) trouvée(s) pour "${userQuery}"</h2>`;
-                    allResults.forEach(r => {
+                if (collectedResults.length > 0) {
+                    mainContent.innerHTML = `<h2 class="text-2xl font-bold mb-8 text-emerald-500">${collectedResults.length} occurrence(s) trouvée(s) pour "${cleanQuery}"</h2>`;
+                    
+                    collectedResults.forEach(r => {
+                        // Nettoyage des balises d'aperçu de l'API
+                        let textClean = r.text.replace(/<[^>]*>/g, '');
+                        
                         mainContent.innerHTML += `
                             <div class="glass-card p-6 md:p-8 mb-6 bg-white/5 border-l-4 border-emerald-500 text-left space-y-4">
                                 <div class="flex justify-between items-center text-zinc-400 text-xs">
                                     <span>Verset ${r.verse_key}</span>
                                 </div>
-                                ${r.text_arabic ? `<p class="quran-container text-right text-zinc-200 font-serif text-lg tracking-wide" dir="rtl">${r.text_arabic}</p>` : ''}
-                                <p class="text-zinc-300 font-light italic text-sm md:text-base">"${r.text_fr}"</p>
+                                <p class="text-zinc-200 font-light italic text-sm md:text-base">"${textClean}"</p>
                                 <button onclick="goToVerse('${r.verse_key}')" class="text-emerald-500 text-xs font-bold pt-2 block hover:underline">LIRE LE VERSET EN IMAGE →</button>
                             </div>`;
                     });
                 } else {
-                    mainContent.innerHTML = `<p class='py-20 text-zinc-400'>Aucun résultat trouvé pour "${userQuery}". Essayez un mot simple comme "Ciel" ou "Terre".</p>`;
+                    mainContent.innerHTML = `<p class='py-20 text-zinc-400'>Aucun résultat trouvé pour "${userQuery}". Essayez une orthographe alternative.</p>`;
                 }
             } catch (e) {
-                mainContent.innerHTML = "<p class='py-20 text-red-400'>Erreur lors du traitement de la recherche à grande échelle.</p>";
+                mainContent.innerHTML = "<p class='py-20 text-red-400'>Erreur lors de la synchronisation des données de recherche.</p>";
             }
         }
 
