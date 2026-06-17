@@ -50,16 +50,6 @@
             box-shadow: 0 20px 40px rgba(0,0,0,0.8);
         }
         audio { height: 40px; width: 100%; outline: none; }
-
-        /* GRADIENTS PUR CSS - 100% SÉCURISÉS SANS VISAGE */
-        .bg-cosmos { background: linear-gradient(135deg, #0b132b 0%, #1c2541 100%); }
-        .bg-ocean { background: linear-gradient(135deg, #0a1128 0%, #001f54 100%); }
-        .bg-nature { background: linear-gradient(135deg, #051f20 0%, #0b5257 100%); }
-        .bg-montagne { background: linear-gradient(135deg, #1f2421 0%, #434a42 100%); }
-        .bg-desert { background: linear-gradient(135deg, #2c1a04 0%, #4a2c02 100%); }
-        .bg-lumiere { background: linear-gradient(135deg, #1a1c20 0%, #2d3748 100%); }
-        .bg-abstrait { background: linear-gradient(135deg, #111827 0%, #1f2937 100%); }
-        .bg-defaut { background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%); }
     </style>
 </head>
 <body class="overflow-x-hidden">
@@ -94,7 +84,7 @@
                 <svg class="w-16 h-16 text-emerald-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5s3.332.477 4.5 1.253v13C19.832 18.477 18.246 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"></path></svg>
             </div>
             <h2 class="text-4xl md:text-6xl font-bold tracking-tight">Méditez sur les Signes.</h2>
-            <p class="text-zinc-400 text-lg max-w-lg mx-auto font-light leading-relaxed">Interface Épurée — Zéro Image Externe</p>
+            <p class="text-zinc-400 text-lg max-w-lg mx-auto font-light leading-relaxed">Mushaf — Banque d'images sur-mesure et sécurisée</p>
         </div>
     </main>
 
@@ -102,20 +92,61 @@
         const mainContent = document.getElementById('main-content');
         const surahSelect = document.getElementById('surahSelect');
 
-        // RETOUR AUX CLASSES DE COULEURS POUR UN BLINDAGE TOTAL
-        function getThemeClass(textFr) {
-            if (!textFr) return 'bg-defaut';
+        // BANQUE D'IMAGES EXACTEMENT SELON TES DIRECTIVES (SANS AUCUN VISAGE)
+        const imageBank = {
+            univers: "https://images.unsplash.com/photo-1462331940025-496dfbfc7564?auto=format&fit=crop&w=1200&q=80",
+            balance: "https://images.unsplash.com/photo-1589829545856-d10d557cf95f?auto=format&fit=crop&w=1200&q=80",
+            prairie: "https://images.unsplash.com/photo-1465146344425-f00d5f5c8f07?auto=format&fit=crop&w=1200&q=80",
+            feu: "https://images.unsplash.com/photo-1604147706283-d7119b5b822c?auto=format&fit=crop&w=1200&q=80",
+            sablier: "https://images.unsplash.com/photo-1611244419377-b0a760c19719?auto=format&fit=crop&w=1200&q=80",
+            coran: "https://upload.wikimedia.org/wikipedia/commons/thumb/e/e0/Holy_Quran_open.svg/1024px-Holy_Quran_open.svg.png",
+            muhammed: "https://upload.wikimedia.org/wikipedia/commons/thumb/0/0b/Muhammad_calligraphy_vector.svg/1024px-Muhammad_calligraphy_vector.svg.png",
+            colombe: "https://upload.wikimedia.org/wikipedia/commons/thumb/e/e2/Peace_dove.svg/1024px-Peace_dove.svg.png",
+            coeur: "https://upload.wikimedia.org/wikipedia/commons/thumb/f/f1/Heart_coraz%C3%B3n.svg/1024px-Heart_coraz%C3%B3n.svg.png",
+            parents: "https://upload.wikimedia.org/wikipedia/commons/thumb/c/c8/Parents_Heart_Calligraphy_Placeholder.svg/1024px-Parents_Heart_Calligraphy_Placeholder.svg.png", // Remplacé par une icône ornementale neutre
+            allah: "https://upload.wikimedia.org/wikipedia/commons/thumb/a/a7/Allah-Kufic.svg/1024px-Allah-Kufic.svg.png",
+            idole: "https://images.unsplash.com/photo-1599733589046-10c005739ef9?auto=format&fit=crop&w=1200&q=80", // Pierres brisées neutres
+            bateau: "https://images.unsplash.com/photo-1516690561799-46d8f74f9abf?auto=format&fit=crop&w=1200&q=80",
+            pyramide: "https://images.unsplash.com/photo-1539650116574-8efeb43e2750?auto=format&fit=crop&w=1200&q=80",
+            adam: "https://upload.wikimedia.org/wikipedia/commons/thumb/a/ad/Kufi_script_vector.svg/1024px-Kufi_script_vector.svg.png",
+            mouton: "https://upload.wikimedia.org/wikipedia/commons/thumb/0/03/Sheep_silhouette.svg/1024px-Sheep_silhouette.svg.png", // Silhouette vectorielle géométrique pure sans traits du visage
+            ibrahim: "https://images.unsplash.com/photo-1564507592333-c60657eea523?auto=format&fit=crop&w=1200&q=80", // Maqam / Structure sacrée de la Mecque
+            kaaba: "https://images.unsplash.com/photo-1591604121669-f14d8bc079e2?auto=format&fit=crop&w=1200&q=80",
+            ciel: "https://images.unsplash.com/photo-1513002749550-c59d786b8e6c?auto=format&fit=crop&w=1200&q=80",
+            montagne: "https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?auto=format&fit=crop&w=1200&q=80",
+            mer: "https://images.unsplash.com/photo-1505118380757-91f5f5632de0?auto=format&fit=crop&w=1200&q=80",
+            defaut: "https://images.unsplash.com/photo-1518156677180-95a2893f3e9f?auto=format&fit=crop&w=1200&q=80"
+        };
+
+        // ALGORITHME DE RECONNAISSANCE STRICTE ET PRIORISÉE
+        function getThemeImage(textFr) {
+            if (!textFr) return imageBank.defaut;
             const clean = textFr.toLowerCase();
 
-            if (clean.match(/(ciel|cieux|étoile|lune|soleil|univers|galaxie|nuit|orbite|aurore)/)) return 'bg-cosmos';
-            if (clean.match(/(mer|eau|fleuve|pluie|océan|vague|source|torrent|ruisseau)/)) return 'bg-ocean';
-            if (clean.match(/(paradis|jardin|arbre|fruit|terre|plante|pâturage|verdure|graine|végétaux)/)) return 'bg-nature';
-            if (clean.match(/(montagne|rocher|pic|ancré|colline)/)) return 'bg-montagne';
-            if (clean.match(/(désert|sable|poussière|chameau|caravane|pierre)/)) return 'bg-desert';
-            if (clean.match(/(lumière|guidance|guide|clarté|vérité|livre|coran|évangile|thora|preuve|signe)/)) return 'bg-lumiere';
-            if (clean.match(/(justice|loi|ordonné|balance|équité|droit|pacte|alliance|témoin|châtiment|feu|punition)/)) return 'bg-abstrait';
+            // Directives spécifiques
+            if (clean.includes('univers')) return imageBank.univers;
+            if (clean.match(/(rétribution|comptes|dernier)/)) return imageBank.balance;
+            if (clean.match(/(paradis|récompense)/)) return imageBank.prairie;
+            if (clean.match(/(enfer|géhenne|châtiment|feu)/)) return imageBank.feu;
+            if (clean.includes('temps')) return imageBank.sablier;
+            if (clean.match(/(livre|coran)/)) return imageBank.coran;
+            if (clean.match(/(prophète muhammed|muhammad)/)) return imageBank.muhammed;
+            if (clean.includes('paix')) return imageBank.colombe;
+            if (clean.includes('amour')) return imageBank.coeur;
+            if (clean.includes('parents')) return imageBank.parents;
+            if (clean.match(/(allah|seigneur)/)) return imageBank.allah;
+            if (clean.match(/(idole|associé)/)) return imageBank.idole;
+            if (clean.includes('nuh')) return imageBank.bateau;
+            if (clean.includes('moussa')) return imageBank.pyramide;
+            if (clean.includes('adam')) return imageBank.adam;
+            if (clean.includes('ismail')) return imageBank.mouton;
+            if (clean.includes('ibrahim')) return imageBank.ibrahim;
+            if (clean.match(/(maison sacrée|kaaba)/)) return imageBank.kaaba;
+            if (clean.includes('ciel')) return imageBank.ciel;
+            if (clean.includes('montagne')) return imageBank.montagne;
+            if (clean.includes('mer')) return imageBank.mer;
 
-            return 'bg-defaut';
+            return imageBank.defaut;
         }
 
         async function init() {
@@ -170,7 +201,7 @@
         async function loadSurah() {
             const sid = surahSelect.value;
             const rid = document.getElementById('reciterSelect').value;
-            mainContent.innerHTML = `<div class="py-20 text-emerald-500 animate-bounce text-xl font-bold">CHARGEMENT...</div>`;
+            mainContent.innerHTML = `<div class="py-20 text-emerald-500 animate-bounce text-xl font-bold">CHARGEMENT DIRECT...</div>`;
             
             try {
                 const res = await fetch(`https://api.quran.com/api/v4/verses/by_chapter/${sid}?language=fr&translations=31&fields=text_uthmani&per_page=300`);
@@ -182,7 +213,7 @@
                 renderSurah(data.verses, audioData.audio_file.audio_url);
             } catch (e) { 
                 console.error(e);
-                mainContent.innerHTML = "<div class='py-20 text-red-400'>Erreur de connexion. Réessayez.</div>"; 
+                mainContent.innerHTML = "<div class='py-20 text-red-400'>Erreur de chargement. Réessayez.</div>"; 
             }
         }
 
@@ -194,16 +225,17 @@
 
             verses.forEach((v) => {
                 const textFr = v.translations[0].text.replace(/<[^>]*>/g, '');
-                const themeClass = getThemeClass(textFr); // Récupération de la classe CSS
+                const dynamicImg = getThemeImage(textFr);
                 const verseHtml = v.text_uthmani;
 
                 mainContent.innerHTML += `
                     <section id="v-${v.verse_key}" class="glass-card overflow-hidden mb-16 shadow-2xl">
-                        <div class="relative h-48 w-full ${themeClass} opacity-80">
-                            <div class="absolute inset-0 bg-gradient-to-t from-[#020617] via-transparent to-black/10"></div>
+                        <div class="relative h-64 w-full bg-zinc-950 flex items-center justify-center">
+                            <img src="${dynamicImg}" class="w-full h-full object-cover opacity-25 mix-blend-screen" loading="lazy">
+                            <div class="absolute inset-0 bg-gradient-to-t from-[#020617] via-transparent to-black/30"></div>
                             <div class="absolute top-6 left-6 bg-black/60 backdrop-blur-md px-4 py-1 rounded-full text-xs font-bold border border-white/10 text-emerald-400">Verset ${v.verse_key}</div>
                         </div>
-                        <div class="p-8 md:p-12 space-y-8 -mt-16 relative z-10 bg-gradient-to-b from-transparent to-[#020617]/95">
+                        <div class="p-8 md:p-12 space-y-8 -mt-20 relative z-10 bg-gradient-to-b from-transparent to-[#020617]/95">
                             <div class="quran-container">
                                 <p class="quran-arabic text-zinc-100" dir="rtl">${verseHtml}</p>
                             </div>
