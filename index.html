@@ -36,27 +36,22 @@
             filter: drop-shadow(0 2px 4px rgba(0,0,0,0.5));
         }
         
-        /* --- RÈGLES DE COULEURS TAJWEED (OPTIMISÉES) --- */
-        /* Ghunnah / Ikhfa / Idgham (Variations de Vert / Teal) */
+        /* --- RÈGLES DE COULEURS TAJWEED --- */
         .quran-arabic [class*="tajweed-ghunnah"], 
         .quran-arabic [style*="color:#00A859"], 
         .quran-arabic [style*="color:green"] { color: #10b981 !important; font-weight: 700; }
         
-        /* Qalqalah (Bleu de résonance) */
         .quran-arabic [class*="tajweed-qalqalah"], 
         .quran-arabic [style*="color:#00AEEF"], 
         .quran-arabic [style*="color:blue"] { color: #3b82f6 !important; font-weight: 700; }
         
-        /* Extensions obligatoires / Mad Long (Rouge) */
         .quran-arabic [class*="tajweed-mad"], 
         .quran-arabic [style*="color:#FF0000"], 
         .quran-arabic [style*="color:red"] { color: #ef4444 !important; font-weight: 700; }
         
-        /* Extensions optionnelles (Orange) */
         .quran-arabic [style*="color:#F26522"], 
         .quran-arabic [style*="color:orange"] { color: #f97316 !important; }
         
-        /* Lettres muettes / Non prononcées (Gris estompé) */
         .quran-arabic [class*="tajweed-hamzat-wasl"], 
         .quran-arabic [style*="color:#939598"], 
         .quran-arabic [style*="color:gray"] { color: #64748b !important; opacity: 0.4; font-weight: 300; }
@@ -249,7 +244,6 @@
             mainContent.innerHTML = `<div class="py-20 text-emerald-500 animate-bounce text-xl font-bold uppercase">Génération du flux...</div>`;
             
             try {
-                // Utilisation croisée de deux API pour garantir le rendu Tajweed optimal
                 const [vR, tajweedR, aR] = await Promise.all([
                     fetch(`https://api.quran.com/api/v4/verses/by_chapter/${sid}?language=fr&translations=31&per_page=300`),
                     fetch(`https://api.alquran.cloud/v1/surah/${sid}/quran-tajweed`),
@@ -262,7 +256,6 @@
                 
                 currentVersesList = vD.verses;
                 
-                // On associe le texte Tajweed reçu d'Alquran Cloud à notre liste principale
                 if(tD.data && tD.data.ayahs) {
                     currentVersesList.forEach((verse, idx) => {
                         verse.text_tajweed_clean = tD.data.ayahs[idx].text;
@@ -285,8 +278,6 @@
 
             verses.forEach((v, i) => {
                 const textFr = v.translations[0].text.replace(/<[^>]*>/g, '');
-                
-                // Remplacement global du texte brut par le flux HTML dynamique coloré
                 const textArTajweed = v.text_tajweed_clean || "Texte indisponible"; 
                 const dynamicImg = getThemeImage(textFr);
 
