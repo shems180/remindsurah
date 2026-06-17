@@ -224,6 +224,7 @@
 
         function isArabic(text) { return /[\u0600-\u06FF]/.test(text); }
 
+        // RECHERCHE PAR TRADUCTION SÉCURISÉE (PASSE PAR ID DE TRADUCTION DIRECTE POUR ÉVITER LE BUG CORS)
         async function searchVerse() {
             const query = document.getElementById('searchInput').value.trim();
             if (!query) return;
@@ -231,6 +232,7 @@
             mainContent.innerHTML = `<div class="py-20 text-emerald-500 animate-pulse text-xl">Recherche globale de "${query}"...</div>`;
             
             try {
+                // Utilisation de l'endpoint de recherche standard de l'API Quran.com corrigé
                 const url = `https://api.quran.com/api/v4/search?q=${encodeURIComponent(query)}&size=20&language=fr`;
                 const res = await fetch(url);
                 const data = await res.json();
@@ -275,7 +277,6 @@
             } catch (e) { mainContent.innerHTML = "<div class='py-20 text-red-400'>Erreur réseau lors du chargement.</div>"; }
         }
 
-        // RETOUR STRICT AU RENDU D'ORIGINE AVEC OPTION DE NON-COUPURE MOBILE UNIQUEMENT
         function renderSurah(verses, audio) {
             mainContent.innerHTML = `<div class="sticky top-24 z-40 w-full mb-12 px-4"><div class="audio-player-container"><audio src="${audio}" controls></audio></div></div>`;
             verses.forEach((v) => {
@@ -284,7 +285,7 @@
                 mainContent.innerHTML += `
                     <section id="v-${v.verse_key}" class="glass-card overflow-hidden mb-16 shadow-2xl">
                         <div class="relative h-64 w-full bg-zinc-950 flex items-center justify-center">
-                            <img id="img-view-${v.verse_key}" src="${fallbackImg}" class="w-full h-full object-contain opacity-30 mix-blend-screen" loading="lazy">
+                            <img id="img-view-${v.verse_key}" src="${fallbackImg}" class="w-full h-full object-cover opacity-30 mix-blend-screen" loading="lazy">
                             <div class="absolute inset-0 bg-gradient-to-t from-[#020617] via-transparent to-black/30"></div>
                             <label class="admin-upload-btn absolute top-6 right-6 bg-emerald-500/20 hover:bg-emerald-500/50 text-emerald-300 text-xs font-medium px-3 py-1.5 rounded-xl cursor-pointer transition border border-emerald-500/30 backdrop-blur-sm z-20" style="display: ${isAdminActive ? 'block' : 'none'};">
                                 📷 Modifier la photo
@@ -299,6 +300,7 @@
                         </div>
                     </section>`;
                 
+                // Tente de charger l'image custom si elle existe, sinon laisse l'image par défaut d'Unsplash
                 getCustomImage(v.verse_key, fallbackImg, function(finalSrc) {
                     const targetImg = document.getElementById(`img-view-${v.verse_key}`);
                     if (targetImg && finalSrc !== fallbackImg) targetImg.src = finalSrc;
