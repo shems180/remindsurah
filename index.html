@@ -100,7 +100,7 @@
                 <svg class="w-16 h-16 text-emerald-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5s3.332.477 4.5 1.253v13C19.832 18.477 18.246 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"></path></svg>
             </div>
             <h2 class="text-4xl md:text-6xl font-bold tracking-tight">Accès QuranVision</h2>
-            <p id="loading-status" class="text-zinc-400 text-lg max-w-lg mx-auto font-light leading-relaxed">Préparation du moteur de recherche...</p>
+            <p class="text-zinc-400 text-lg max-w-lg mx-auto font-light leading-relaxed">Recherchez un mot-clé ou sélectionnez directement une sourate ci-dessus pour débuter.</p>
         </div>
     </main>
 
@@ -110,7 +110,6 @@
         
         let isAdminActive = false; 
         let db;
-        let quranCache = []; // Contiendra l'intégralité des 6236 versets traduits pour une recherche locale instantanée
 
         const globalPublishedImages = {};
 
@@ -207,7 +206,6 @@
             reader.readAsDataURL(file);
         }
 
-        // Chargement initial des chapitres ET pré-chargement en tâche de fond du Coran entier
         async function init() {
             try {
                 const res = await fetch('https://api.quran.com/api/v4/chapters?language=fr');
@@ -216,87 +214,69 @@
                 data.chapters.forEach(s => {
                     surahSelect.innerHTML += `<option value="${s.id}">${s.id}. ${s.name_simple}</option>`;
                 });
-                
-                // Lancement de l'indexation locale en tâche de fond
-                preloadQuranData();
             } catch (e) { console.error(e); }
         }
 
-        // Télécharge l'index complet par blocs de 100 pour contourner définitivement toutes les limites réseau
-        async function preloadQuranData() {
-            const statusEl = document.getElementById('loading-status');
-            try {
-                let page = 1;
-                let totalPages = 63; // 6236 versets / 100 par page
-                
-                if(statusEl) statusEl.innerText = "Synchronisation de l'index du Coran (0%)...";
-                
-                while(page <= totalPages) {
-                    const res = await fetch(`https://api.quran.com/api/v4/verses/by_translation/31?per_page=100&page=${page}`);
-                    const data = await res.json();
-                    
-                    if(data && data.verses) {
-                        quranCache = quranCache.concat(data.verses);
-                    }
-                    if(statusEl && page % 10 === 0) {
-                        statusEl.innerText = `Synchronisation de l'index du Coran (${Math.round((page/totalPages)*100)}%)...`;
-                    }
-                    page++;
-                }
-                
-                if(statusEl) statusEl.innerText = "Recherchez un mot-clé ou sélectionnez directement une sourate ci-dessus pour débuter.";
-                console.log("Indexation locale terminée. Nombre de versets chargés :", quranCache.length);
-            } catch(err) {
-                if(statusEl) statusEl.innerText = "Recherche active disponible. Entrez un mot-clé ci-dessus.";
-                console.error("Erreur de préchargement", err);
-            }
-        }
-
-        // MOTEUR DE RECHERCHE LOCAL : Sans aucune API intermédiaire, scanne directement la mémoire vive
+        // RECONSTRUCTION ET RE-CONCEPTION DU MOTEUR VIA PAGINATION SECURISEE DE L'API DE RECHERCHE
         async function searchVerse() {
             let userQuery = document.getElementById('searchInput').value.trim();
             if (!userQuery) return;
             
-            mainContent.innerHTML = `<div class="py-20 text-emerald-500 animate-pulse text-xl">Recherche de "${userQuery}" dans les 6236 versets...</div>`;
+            mainContent.innerHTML = `<div class="py-20 text-emerald-500 animate-pulse text-xl">Recherche approfondie en cours...</div>`;
             
-            let normalizedQuery = userQuery.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+            // Formatage des mots clés principaux pour l'API
+            let cleanQuery = userQuery.toLowerCase()
+                .replace(/\bmoise\b/g, "Moïse")
+                .replace(/\bparadis\b/g, "Paradis")
+                .replace(/\bjesus\b/g, "Jésus");
 
-            // Si le cache en arrière-plan n'a pas fini de charger, on fait une extraction d'urgence sur les premières pages
-            if (quranCache.length < 5000) {
-                mainContent.innerHTML = `<div class="py-20 text-emerald-500 animate-pulse text-xl">Initialisation de la base de données requise, veuillez patienter quelques secondes...</div>`;
-                await preloadQuranData();
-            }
-
-            let matches = [];
-            quranCache.forEach(v => {
-                if(v.translations && v.translations[0]) {
-                    let textRaw = v.translations[0].text.replace(/<[^>]*>/g, '');
-                    let textNormalized = textRaw.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+            try {
+                let allResults = [];
+                let currentPage = 1;
+                let totalPages = 1;
+                
+                // Première requête pour récupérer la structure et le nombre réel de pages
+                const firstUrl = `https://api.quran.com/api/v4/search?q=${encodeURIComponent(cleanQuery)}&size=20&page=1&language=fr`;
+                const firstRes = await fetch(firstUrl);
+                const firstData = await firstRes.json();
+                
+                if (firstData && firstData.search && firstData.search.results) {
+                    allResults = allResults.concat(firstData.search.results);
+                    // On extrait le nombre total de pages calculé par le serveur
+                    totalPages = firstData.search.total_pages || 1;
                     
-                    if (textNormalized.includes(normalizedQuery)) {
-                        matches.push({
-                            verse_key: v.verse_key,
-                            text: textRaw
-                        });
+                    // On boucle pour forcer le téléchargement des pages suivantes s'il y en a
+                    while (currentPage < totalPages) {
+                        currentPage++;
+                        const nextUrl = `https://api.quran.com/api/v4/search?q=${encodeURIComponent(cleanQuery)}&size=20&page=${currentPage}&language=fr`;
+                        const nextRes = await fetch(nextUrl);
+                        const nextData = await nextRes.json();
+                        if (nextData && nextData.search && nextData.search.results) {
+                            allResults = allResults.concat(nextData.search.results);
+                        }
                     }
                 }
-            });
 
-            if (matches.length > 0) {
-                mainContent.innerHTML = `<h2 class="text-2xl font-bold mb-8 text-emerald-500">${matches.length} occurrence(s) trouvée(s) pour "${userQuery}"</h2>`;
-                
-                matches.forEach(r => {
-                    mainContent.innerHTML += `
-                        <div class="glass-card p-6 md:p-8 mb-6 bg-white/5 border-l-4 border-emerald-500 text-left space-y-4">
-                            <div class="flex justify-between items-center text-zinc-400 text-xs">
-                                <span>Verset ${r.verse_key}</span>
-                            </div>
-                            <p class="text-zinc-200 font-light italic text-sm md:text-base">"${r.text}"</p>
-                            <button onclick="goToVerse('${r.verse_key}')" class="text-emerald-500 text-xs font-bold pt-2 block hover:underline">LIRE LE VERSET EN IMAGE →</button>
-                        </div>`;
-                });
-            } else {
-                mainContent.innerHTML = `<p class='py-20 text-zinc-400'>Aucun résultat trouvé pour "${userQuery}". Essayez un autre mot-clé (ex: Ciel, Terre, Coeur).</p>`;
+                if (allResults.length > 0) {
+                    mainContent.innerHTML = `<h2 class="text-2xl font-bold mb-8 text-emerald-500">${allResults.length} occurrence(s) trouvée(s) pour "${userQuery}"</h2>`;
+                    
+                    allResults.forEach(r => {
+                        let textClean = r.text.replace(/<[^>]*>/g, '');
+                        mainContent.innerHTML += `
+                            <div class="glass-card p-6 md:p-8 mb-6 bg-white/5 border-l-4 border-emerald-500 text-left space-y-4">
+                                <div class="flex justify-between items-center text-zinc-400 text-xs">
+                                    <span>Verset ${r.verse_key}</span>
+                                </div>
+                                <p class="text-zinc-200 font-light italic text-sm md:text-base">"${textClean}"</p>
+                                <button onclick="goToVerse('${r.verse_key}')" class="text-emerald-500 text-xs font-bold pt-2 block hover:underline">LIRE LE VERSET EN IMAGE →</button>
+                            </div>`;
+                    });
+                } else {
+                    mainContent.innerHTML = `<p class='py-20 text-zinc-400'>Aucun résultat trouvé pour "${userQuery}". Essayez une autre orthographe.</p>`;
+                }
+            } catch (e) {
+                mainContent.innerHTML = "<p class='py-20 text-red-400'>Erreur de communication avec le serveur.</p>";
+                console.error(e);
             }
         }
 
