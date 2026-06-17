@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>QuranVision</title>
     
-    <link rel="manifest" href="manifest.json">
+    <link rel="manifest" href="manifest.json?v=2">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <link class="apple-touch-icon" href="icon-192.png">
@@ -22,7 +22,7 @@
         }
         .quran-container { direction: rtl; text-align: right; }
         
-        /* TAILLE DU TEXTE ARABE : Petit sur mobile, grand sur PC */
+        /* TAILLE STRICTE ET REDUITE POUR MOBILE (IMPORTANT) */
         .quran-arabic { 
             font-family: 'Amiri', serif !important; 
             font-size: 1.5rem !important; 
@@ -33,6 +33,7 @@
             word-spacing: 2px;
         }
         
+        /* TAILLE GRAND ECRAN / PC */
         @media (min-width: 768px) {
             .quran-arabic {
                 font-size: 2.8rem !important;
@@ -112,7 +113,7 @@
         let isAdminActive = false; 
         let db;
 
-        // BANQUE D'IMAGES SAUVEGARDÉES (Sert de stockage pour le mode public)
+        // BANQUE D'IMAGES COMPILÉES LORS DE L'EXPORT (S'injecte ici automatiquement)
         const globalPublishedImages = {};
 
         function checkAdminPassword() {
@@ -128,9 +129,9 @@
             document.getElementById('adminBadge').innerHTML = "⚡ Déconnexion Admin";
             document.getElementById('adminBadge').className = "text-[10px] bg-red-600 text-white font-bold px-2 py-0.5 rounded";
             document.getElementById('exportBtn').style.display = "inline-block";
-            document.querySelectorAll('.admin-upload-btn').forEach(btn => btn.style.display = 'block');
         }
 
+        // IndexedDB securisé
         const dbRequest = indexedDB.open("QuranVisionDB", 1);
         dbRequest.onupgradeneeded = function(e) {
             db = e.target.result;
@@ -162,10 +163,7 @@
                 callback(globalPublishedImages[verseKey]);
                 return;
             }
-            if (!db) {
-                callback(fallbackUrl);
-                return;
-            }
+            if (!db) { callback(fallbackUrl); return; }
             try {
                 const transaction = db.transaction(["images"], "readonly");
                 const store = transaction.objectStore("images");
@@ -225,40 +223,44 @@
 
         function isArabic(text) { return /[\u0600-\u06FF]/.test(text); }
 
-        // RECHERCHE AMÉLIORÉE AVEC TRADUCTIONS FRANÇAISES ET ARABES EN PARALLÈLE
+        // CORRECTION RECHERCHE CROISÉE REBÂTIE DE ZÉRO
         async function searchVerse() {
-            let query = document.getElementById('searchInput').value.trim().toLowerCase();
-            if (!query) return;
-            mainContent.innerHTML = `<div class="py-20 text-emerald-500 animate-pulse text-xl">Recherche de "${query}"...</div>`;
+            let originalQuery = document.getElementById('searchInput').value.trim();
+            if (!originalQuery) return;
             
-            // Dictionnaires de secours pour pallier les faiblesses de l'API en français
-            if(query === "moise") query = "moses";
-            if(query === "jesus") query = "jesus";
-            if(query === "marie") query = "mary";
-            if(query === "ciel" || query === "cieux") query = "heaven";
+            mainContent.innerHTML = `<div class="py-20 text-emerald-500 animate-pulse text-xl">Recherche de "${originalQuery}"...</div>`;
+            
+            let cleanQuery = originalQuery.toLowerCase();
+            // Fallbacks anglais requis par l'API
+            if (cleanQuery === "moise" || cleanQuery === "moïse") cleanQuery = "moses";
+            if (cleanQuery === "jesus" || cleanQuery === "jésus") cleanQuery = "jesus";
+            if (cleanQuery === "marie") cleanQuery = "mary";
+            if (cleanQuery === "ciel" || cleanQuery === "cieux" || cleanQuery === "univers") cleanQuery = "heaven";
+            if (cleanQuery === "terre") cleanQuery = "earth";
 
             try {
-                const lang = isArabic(query) ? 'ar' : 'en';
-                const res = await fetch(`https://api.quran.com/api/v4/search?q=${encodeURIComponent(query)}&size=20&language=${lang}`);
+                const lang = isArabic(originalQuery) ? 'ar' : 'en';
+                const res = await fetch(`https://api.quran.com/api/v4/search?q=${encodeURIComponent(cleanQuery)}&size=20&language=${lang}`);
                 const data = await res.json();
+                
                 if (data.search && data.search.results && data.search.results.length > 0) {
-                    renderSearchResults(data.search.results, isArabic(query));
-                } else { 
-                    mainContent.innerHTML = "<p class='py-20 text-zinc-400'>Aucun résultat trouvé. Essayez un autre mot-clé ou un synonyme.</p>"; 
+                    renderSearchResults(data.search.results, isArabic(originalQuery));
+                } else {
+                    mainContent.innerHTML = `<div class='py-20 text-zinc-400'><p class="text-lg font-bold mb-2">Aucun résultat trouvé pour "${originalQuery}"</p><p class="text-sm text-zinc-500">Conseil : tentez d'écrire le mot au singulier ou cherchez une sourate directement.</p></div>`;
                 }
-            } catch (e) { 
-                mainContent.innerHTML = "<p class='py-20 text-red-400'>Erreur lors de la recherche. Vérifiez votre connexion internet.</p>"; 
+            } catch (e) {
+                mainContent.innerHTML = "<p class='py-20 text-red-400'>Erreur réseau. L'API du Coran est temporairement inaccessible.</p>";
             }
         }
 
         function renderSearchResults(results, isAr) {
-            mainContent.innerHTML = `<h2 class="text-2xl font-bold mb-8 text-emerald-500">${results.length} résultat(s)</h2>`;
+            mainContent.innerHTML = `<h2 class="text-2xl font-bold mb-8 text-emerald-500">${results.length} résultat(s) trouvé(s)</h2>`;
             results.forEach(r => {
                 mainContent.innerHTML += `
                     <div class="glass-card p-6 mb-4 bg-white/5 border-l-4 border-emerald-500 text-left">
                         <p class="text-zinc-400 text-xs mb-2">Verset ${r.verse_key}</p>
                         <p class="text-zinc-200 ${isAr ? 'text-right font-serif text-xl' : 'italic text-base'}">${r.text.replace(/<[^>]*>/g, '')}</p>
-                        <button onclick="goToVerse('${r.verse_key}')" class="text-emerald-500 text-xs font-bold mt-4 block hover:underline">OUVRIR CE VERSET →</button>
+                        <button onclick="goToVerse('${r.verse_key}')" class="text-emerald-500 text-xs font-bold mt-4 block hover:underline">LIRE DANS LA SOURATE →</button>
                     </div>`;
             });
         }
@@ -275,14 +277,14 @@
         async function loadSurah() {
             const sid = surahSelect.value;
             const rid = document.getElementById('reciterSelect').value;
-            mainContent.innerHTML = `<div class="py-20 text-emerald-500 animate-bounce text-xl font-bold">CHARGEMENT...</div>`;
+            mainContent.innerHTML = `<div class="py-20 text-emerald-500 animate-bounce text-xl font-bold">CHARGEMENT DES VERSETS...</div>`;
             try {
                 const res = await fetch(`https://api.quran.com/api/v4/verses/by_chapter/${sid}?language=fr&translations=31&fields=text_uthmani&per_page=300`);
                 const data = await res.json();
                 const audioRes = await fetch(`https://api.quran.com/api/v4/chapter_recitations/${rid}/${sid}`);
                 const audioData = await audioRes.json();
                 renderSurah(data.verses, audioData.audio_file.audio_url);
-            } catch (e) { mainContent.innerHTML = "<div class='py-20 text-red-400'>Erreur réseau lors du chargement de la sourate.</div>"; }
+            } catch (e) { mainContent.innerHTML = "<div class='py-20 text-red-400'>Erreur de connexion lors de la récupération de la sourate.</div>"; }
         }
 
         function renderSurah(verses, audio) {
@@ -315,7 +317,7 @@
         }
 
         function exportConfig() {
-            if (!db) { alert("Base de données indisponible."); return; }
+            if (!db) { alert("Le stockage local n'est pas prêt."); return; }
             
             const btn = document.getElementById('exportBtn');
             btn.innerHTML = "⏳ Compilation en cours...";
@@ -359,7 +361,7 @@
                         URL.revokeObjectURL(url);
                         btn.innerHTML = "📦 Télécharger le HTML mis à jour pour GitHub";
                         btn.disabled = false;
-                        alert("✨ Fichier généré ! Glisse-le sur ton dépôt GitHub.");
+                        alert("✨ Code exporté avec succès ! Glisse ce nouveau fichier index.html sur GitHub.");
                     }, 500);
                 } catch (error) {
                     btn.innerHTML = "📦 Télécharger le HTML mis à jour pour GitHub";
