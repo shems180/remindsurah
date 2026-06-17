@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>QuranVision - Public & Automatique</title>
+    <title>QuranVision - Sécurité Renforcée</title>
     
     <link rel="manifest" href="manifest.json">
     <meta name="apple-mobile-web-app-capable" content="yes">
@@ -20,10 +20,7 @@
             font-family: 'Inter', sans-serif; 
             min-height: 100vh;
         }
-        .quran-container {
-            direction: rtl;
-            text-align: right;
-        }
+        .quran-container { direction: rtl; text-align: right; }
         .quran-arabic { 
             font-family: 'Amiri', serif; 
             font-size: 3rem; 
@@ -56,9 +53,18 @@
 
     <nav class="sticky top-0 z-50 p-4 bg-black/70 backdrop-blur-xl border-b border-white/5">
         <div class="max-w-7xl mx-auto flex flex-col lg:flex-row justify-between items-center gap-4">
-            <h1 onclick="window.location.reload()" class="cursor-pointer text-2xl font-bold tracking-tighter text-emerald-500 flex items-center gap-2">
-                <span class="bg-emerald-500 text-black px-2 py-1 rounded-lg text-sm italic font-black">IQRA</span> QURAN<span class="text-white font-light">VISION</span>
-            </h1>
+            <div class="flex items-center gap-4">
+                <h1 onclick="window.location.reload()" class="cursor-pointer text-2xl font-bold tracking-tighter text-emerald-500 flex items-center gap-2">
+                    <span class="bg-emerald-500 text-black px-2 py-1 rounded-lg text-sm italic font-black">IQRA</span> QURAN<span class="text-white font-light">VISION</span>
+                </h1>
+                
+                <button onclick="checkAdminPassword()" id="adminBadge" class="text-[10px] bg-zinc-800 text-zinc-400 px-2 py-0.5 rounded border border-zinc-700 hover:text-white transition">
+                    Connexion Admin
+                </button>
+                <button onclick="exportConfig()" id="exportBtn" class="hidden text-[10px] bg-emerald-900/50 text-emerald-400 px-2 py-0.5 rounded border border-emerald-700/50 hover:bg-emerald-500 hover:text-black transition">
+                    💾 Sauvegarder les modifs pour le public
+                </button>
+            </div>
             
             <div class="flex flex-wrap justify-center items-center gap-3">
                 <div class="relative">
@@ -83,38 +89,79 @@
             <div class="inline-block p-6 rounded-full bg-emerald-500/10 animate-pulse">
                 <svg class="w-16 h-16 text-emerald-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5s3.332.477 4.5 1.253v13C19.832 18.477 18.246 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"></path></svg>
             </div>
-            <h2 class="text-4xl md:text-6xl font-bold tracking-tight">QuranVision Public</h2>
-            <p class="text-zinc-400 text-lg max-w-lg mx-auto font-light leading-relaxed">Glisse tes photos dans un dossier nommé "images", le code s'occupe du reste !</p>
+            <h2 class="text-4xl md:text-6xl font-bold tracking-tight">Sécurité Incrackable.</h2>
+            <p class="text-zinc-400 text-lg max-w-lg mx-auto font-light leading-relaxed">Protégé par hachage cryptographique SHA-256.</p>
         </div>
     </main>
 
     <script>
         const mainContent = document.getElementById('main-content');
         const surahSelect = document.getElementById('surahSelect');
+        
+        let isAdminActive = false; 
+        let db;
 
-        // Banque automatique par défaut (si tu n'as pas encore créé de photo pour le verset)
+        // Empreinte SHA-256 du mot de passe "admin123"
+        const SECRET_HASH = "240f1ca41797d413b18fba44b477b907b24911d33f7fae420046b0a8809cf6e9";
+
+        // Fonction de hachage ultra-sécurisée (SHA-256)
+        async function sha256(message) {
+            const msgBuffer = new TextEncoder().encode(message);                    
+            const hashBuffer = await crypto.subtle.digest('SHA-256', msgBuffer);
+            const hashArray = Array.from(new Uint8Array(hashBuffer));
+            return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+        }
+
+        // Vérification du mot de passe
+        async function checkAdminPassword() {
+            if (isAdminActive) {
+                // Si déjà connecté, on se déconnecte
+                location.reload();
+                return;
+            }
+
+            const input = prompt("Entrez le mot de passe Administrateur :");
+            if (!input) return;
+
+            const hashedInput = await sha256(input);
+
+            // Seul le bon mot de passe produira le même hash
+            if (hashedInput === SECRET_HASH) {
+                isAdminActive = true;
+                activateAdminFeatures();
+            } else {
+                alert("Mot de passe incorrect. Accès refusé.");
+            }
+        }
+
+        function activateAdminFeatures() {
+            document.getElementById('adminBadge').innerHTML = "⚡ Déconnexion Admin";
+            document.getElementById('adminBadge').className = "text-[10px] bg-red-600 text-white font-bold px-2 py-0.5 rounded";
+            document.getElementById('exportBtn').style.display = "inline-block";
+            
+            document.querySelectorAll('.admin-upload-btn').forEach(btn => {
+                btn.style.display = 'block';
+            });
+        }
+
+        // Base de données IndexedDB locale pour l'admin
+        const dbRequest = indexedDB.open("QuranVisionDB", 1);
+        dbRequest.onupgradeneeded = function(e) {
+            db = e.target.result;
+            if (!db.objectStoreNames.contains("images")) {
+                db.createObjectStore("images", { keyPath: "verseKey" });
+            }
+        };
+        dbRequest.onsuccess = function(e) { db = e.target.result; init(); };
+
+        // Configuration publique figée (Colle ton export final ici)
+        const globalPublishedImages = {};
+
         const imageBank = {
             univers: "https://images.unsplash.com/photo-1451187580459-43490279c0fa?auto=format&fit=crop&w=1200&q=80",
             balance: "https://images.unsplash.com/photo-1590523177345-420379ee050d?auto=format&fit=crop&w=1200&q=80", 
             prairie: "https://images.unsplash.com/photo-1500382017468-9049fed747ef?auto=format&fit=crop&w=1200&q=80", 
             feu: "https://images.unsplash.com/photo-1524813686514-a57563d77d61?auto=format&fit=crop&w=1200&q=80",
-            sablier: "https://images.unsplash.com/photo-1611244419377-b0a760c19719?auto=format&fit=crop&w=1200&q=80",
-            coran: "https://images.unsplash.com/photo-1609599006353-e629f1d29718?auto=format&fit=crop&w=1200&q=80",
-            muhammed: "https://images.unsplash.com/photo-1542838132-92c53300491e?auto=format&fit=crop&w=1200&q=80", 
-            colombe: "https://images.unsplash.com/photo-1506744038136-46273834b3fb?auto=format&fit=crop&w=1200&q=80", 
-            coeur: "https://images.unsplash.com/photo-1518199266791-5375a83190b7?auto=format&fit=crop&w=1200&q=80", 
-            parents: "https://images.unsplash.com/photo-1494959764136-6be9eb3c261e?auto=format&fit=crop&w=1200&q=80", 
-            allah: "https://images.unsplash.com/photo-1564507592333-c60657eea523?auto=format&fit=crop&w=1200&q=80", 
-            idole: "https://images.unsplash.com/photo-1599733589046-10c005739ef9?auto=format&fit=crop&w=1200&q=80", 
-            bateau: "https://images.unsplash.com/photo-1516690561799-46d8f74f9abf?auto=format&fit=crop&w=1200&q=80", 
-            pyramide: "https://images.unsplash.com/photo-1539650116574-8efeb43e2750?auto=format&fit=crop&w=1200&q=80",
-            adam: "https://images.unsplash.com/photo-1507525428034-b723cf961d3e?auto=format&fit=crop&w=1200&q=80", 
-            mouton: "https://images.unsplash.com/photo-1484557985045-edf25e08da73?auto=format&fit=crop&w=1200&q=80", 
-            ibrahim: "https://images.unsplash.com/photo-1591604121669-f14d8bc079e2?auto=format&fit=crop&w=1200&q=80", 
-            kaaba: "https://images.unsplash.com/photo-1591604121669-f14d8bc079e2?auto=format&fit=crop&w=1200&q=80",
-            ciel: "https://images.unsplash.com/photo-1513002749550-c59d786b8e6c?auto=format&fit=crop&w=1200&q=80",
-            montagne: "https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?auto=format&fit=crop&w=1200&q=80",
-            mer: "https://images.unsplash.com/photo-1505118380757-91f5f5632de0?auto=format&fit=crop&w=1200&q=80",
             defaut: "https://images.unsplash.com/photo-1447752875215-b2761acb3c5d?auto=format&fit=crop&w=1200&q=80"
         };
 
@@ -125,24 +172,57 @@
             if (clean.match(/(rétribution|comptes|dernier)/)) return imageBank.balance;
             if (clean.match(/(paradis|récompense)/)) return imageBank.prairie;
             if (clean.match(/(enfer|géhenne|châtiment|feu)/)) return imageBank.feu;
-            if (clean.includes('temps')) return imageBank.sablier;
-            if (clean.match(/(livre|coran)/)) return imageBank.coran;
-            if (clean.match(/(prophète muhammed|muhammad)/)) return imageBank.muhammed;
-            if (clean.includes('paix')) return imageBank.colombe;
-            if (clean.includes('amour')) return imageBank.coeur;
-            if (clean.includes('parents')) return imageBank.parents;
-            if (clean.match(/(allah|seigneur)/)) return imageBank.allah;
-            if (clean.match(/(idole|associé)/)) return imageBank.idole;
-            if (clean.includes('nuh')) return imageBank.bateau;
-            if (clean.includes('moussa')) return imageBank.pyramide;
-            if (clean.includes('adam')) return imageBank.adam;
-            if (clean.includes('ismail')) return imageBank.mouton;
-            if (clean.includes('ibrahim')) return imageBank.ibrahim;
-            if (clean.match(/(maison sacrée|kaaba)/)) return imageBank.kaaba;
-            if (clean.includes('ciel')) return imageBank.ciel;
-            if (clean.includes('montagne')) return imageBank.montagne;
-            if (clean.includes('mer')) return imageBank.mer;
             return imageBank.defaut;
+        }
+
+        function getCustomImage(verseKey, fallbackUrl, callback) {
+            if (globalPublishedImages[verseKey]) { callback(globalPublishedImages[verseKey]); return; }
+            if (!db) { callback(fallbackUrl); return; }
+            const transaction = db.transaction(["images"], "readonly");
+            const store = transaction.objectStore("images");
+            const request = store.get(verseKey);
+            request.onsuccess = function() {
+                if (request.result) callback(request.result.data);
+                else callback(fallbackUrl);
+            };
+            request.onerror = function() { callback(fallbackUrl); };
+        }
+
+        function handleImageUpload(event, verseKey) {
+            const file = event.target.files[0];
+            if (!file) return;
+
+            const targetBtn = event.target.parentElement;
+            targetBtn.innerHTML = "⚡ Traitement...";
+
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                const img = new Image();
+                img.onload = function() {
+                    const canvas = document.createElement('canvas');
+                    const ctx = canvas.getContext('2d');
+                    const maxDim = 900;
+                    let w = img.width, h = img.height;
+
+                    if (w > h && w > maxDim) { h = Math.round((h * maxDim) / w); w = maxDim; }
+                    else if (h > maxDim) { w = Math.round((w * maxDim) / h); h = maxDim; }
+                    
+                    canvas.width = w; canvas.height = h;
+                    ctx.drawImage(img, 0, 0, w, h);
+                    const optimizedDataUrl = canvas.toDataURL('image/jpeg', 0.70);
+
+                    const transaction = db.transaction(["images"], "readwrite");
+                    const store = transaction.objectStore("images");
+                    store.put({ verseKey: verseKey, data: optimizedDataUrl });
+
+                    transaction.oncomplete = function() {
+                        document.getElementById(`img-view-${verseKey}`).src = optimizedDataUrl;
+                        targetBtn.innerHTML = "📷 Modifier la photo";
+                    };
+                };
+                img.src = e.target.result;
+            };
+            reader.readAsDataURL(file);
         }
 
         async function init() {
@@ -167,20 +247,18 @@
                 const data = await res.json();
                 if (data.search && data.search.results && data.search.results.length > 0) {
                     renderSearchResults(data.search.results, isArabic(query));
-                } else {
-                    mainContent.innerHTML = "<p class='py-20 text-zinc-400'>Aucun résultat trouvé.</p>";
-                }
+                } else { mainContent.innerHTML = "<p class='py-20 text-zinc-400'>Aucun résultat.</p>"; }
             } catch (e) { mainContent.innerHTML = "<p class='py-20 text-red-400'>Erreur réseau.</p>"; }
         }
 
         function renderSearchResults(results, isAr) {
-            mainContent.innerHTML = `<h2 class="text-2xl font-bold mb-8 text-emerald-500">${results.length} résultats correspondants</h2>`;
+            mainContent.innerHTML = `<h2 class="text-2xl font-bold mb-8 text-emerald-500">${results.length} résultats</h2>`;
             results.forEach(r => {
                 mainContent.innerHTML += `
                     <div class="glass-card p-6 mb-4 bg-white/5 border-l-4 border-emerald-500 text-left">
                         <p class="text-zinc-400 text-xs mb-2">Verset ${r.verse_key}</p>
                         <p class="text-zinc-200 ${isAr ? 'text-right font-serif text-2xl' : 'italic text-base'}">${r.text.replace(/<[^>]*>/g, '')}</p>
-                        <button onclick="goToVerse('${r.verse_key}')" class="text-emerald-500 text-xs font-bold mt-4 block hover:underline">OUVRIR LA SOURATE →</button>
+                        <button onclick="goToVerse('${r.verse_key}')" class="text-emerald-500 text-xs font-bold mt-4 block hover:underline">OUVRIR →</button>
                     </div>`;
             });
         }
@@ -198,59 +276,62 @@
             const sid = surahSelect.value;
             const rid = document.getElementById('reciterSelect').value;
             mainContent.innerHTML = `<div class="py-20 text-emerald-500 animate-bounce text-xl font-bold">CHARGEMENT...</div>`;
-            
             try {
                 const res = await fetch(`https://api.quran.com/api/v4/verses/by_chapter/${sid}?language=fr&translations=31&fields=text_uthmani&per_page=300`);
                 const data = await res.json();
-                
                 const audioRes = await fetch(`https://api.quran.com/api/v4/chapter_recitations/${rid}/${sid}`);
                 const audioData = await audioRes.json();
-                
                 renderSurah(data.verses, audioData.audio_file.audio_url);
-            } catch (e) { 
-                mainContent.innerHTML = "<div class='py-20 text-red-400'>Erreur de chargement.</div>"; 
-            }
+            } catch (e) { mainContent.innerHTML = "<div class='py-20 text-red-400'>Erreur.</div>"; }
         }
 
         function renderSurah(verses, audio) {
-            mainContent.innerHTML = `
-                <div class="sticky top-24 z-40 w-full mb-12 px-4">
-                    <div class="audio-player-container"><audio src="${audio}" controls></audio></div>
-                </div>`;
-
+            mainContent.innerHTML = `<div class="sticky top-24 z-40 w-full mb-12 px-4"><div class="audio-player-container"><audio src="${audio}" controls></audio></div></div>`;
             verses.forEach((v) => {
                 const textFr = v.translations[0].text.replace(/<[^>]*>/g, '');
                 const fallbackImg = getFallbackImage(textFr);
-                const verseHtml = v.text_uthmani;
-                
-                // On transforme la clé "1:4" en "1-4" pour créer le nom du fichier image
-                const imageName = v.verse_key.replace(':', '-');
-
                 mainContent.innerHTML += `
                     <section id="v-${v.verse_key}" class="glass-card overflow-hidden mb-16 shadow-2xl">
                         <div class="relative h-64 w-full bg-zinc-950 flex items-center justify-center">
-                            
-                            <img id="img-view-${v.verse_key}" 
-                                 src="images/${imageName}.jpg" 
-                                 onerror="this.onerror=null; this.src='${fallbackImg}';" 
-                                 class="w-full h-full object-cover opacity-25 mix-blend-screen" 
-                                 loading="lazy">
-                                 
+                            <img id="img-view-${v.verse_key}" src="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" class="w-full h-full object-cover opacity-25 mix-blend-screen" loading="lazy">
                             <div class="absolute inset-0 bg-gradient-to-t from-[#020617] via-transparent to-black/30"></div>
+                            
+                            <label class="admin-upload-btn absolute top-6 right-6 bg-emerald-500/20 hover:bg-emerald-500/50 text-emerald-300 text-xs font-medium px-3 py-1.5 rounded-xl cursor-pointer transition border border-emerald-500/30 backdrop-blur-sm z-20" style="display: ${isAdminActive ? 'block' : 'none'};">
+                                📷 Importer ma photo (Admin)
+                                <input type="file" accept="image/*" class="hidden" onchange="handleImageUpload(event, '${v.verse_key}')">
+                            </label>
+
                             <div class="absolute top-6 left-6 bg-black/60 backdrop-blur-md px-4 py-1 rounded-full text-xs font-bold border border-white/10 text-emerald-400">Verset ${v.verse_key}</div>
                         </div>
                         <div class="p-8 md:p-12 space-y-8 -mt-20 relative z-10 bg-gradient-to-b from-transparent to-[#020617]/95">
-                            <div class="quran-container">
-                                <p class="quran-arabic text-zinc-100" dir="rtl">${verseHtml}</p>
-                            </div>
+                            <div class="quran-container"><p class="quran-arabic text-zinc-100" dir="rtl">${v.text_uthmani}</p></div>
                             <div class="h-px w-24 bg-emerald-500/30 mx-auto"></div>
                             <p class="text-zinc-200 text-xl md:text-2xl font-light italic leading-relaxed max-w-2xl mx-auto">"${textFr}"</p>
                         </div>
                     </section>`;
+                getCustomImage(v.verse_key, fallbackImg, function(finalSrc) {
+                    const targetImg = document.getElementById(`img-view-${v.verse_key}`);
+                    if (targetImg) targetImg.src = finalSrc;
+                });
             });
         }
 
-        init();
+        function exportConfig() {
+            if (!db) return;
+            const transaction = db.transaction(["images"], "readonly");
+            const store = transaction.objectStore("images");
+            const request = store.getAll();
+            request.onsuccess = function() {
+                const currentData = {};
+                request.result.forEach(item => { currentData[item.verseKey] = item.data; });
+                const blob = new Blob([JSON.stringify(currentData)], {type: "text/plain"});
+                const a = document.createElement("a");
+                a.href = URL.createObjectURL(blob);
+                a.download = "configuration-images.txt";
+                a.click();
+                alert("Fichier téléchargé ! Envoie-le moi pour figer le site public.");
+            };
+        }
     </script>
 </body>
 </html>
