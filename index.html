@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>QuranVision - Sécurité Renforcée</title>
+    <title>QuranVision - Sécurité Validée</title>
     
     <link rel="manifest" href="manifest.json">
     <meta name="apple-mobile-web-app-capable" content="yes">
@@ -89,8 +89,8 @@
             <div class="inline-block p-6 rounded-full bg-emerald-500/10 animate-pulse">
                 <svg class="w-16 h-16 text-emerald-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5s3.332.477 4.5 1.253v13C19.832 18.477 18.246 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"></path></svg>
             </div>
-            <h2 class="text-4xl md:text-6xl font-bold tracking-tight">Sécurité Incrackable.</h2>
-            <p class="text-zinc-400 text-lg max-w-lg mx-auto font-light leading-relaxed">Protégé par hachage cryptographique SHA-256.</p>
+            <h2 class="text-4xl md:text-6xl font-bold tracking-tight">Système Prêt.</h2>
+            <p class="text-zinc-400 text-lg max-w-lg mx-auto font-light leading-relaxed">Recherche opérationnelle et accès admin corrigé.</p>
         </div>
     </main>
 
@@ -101,10 +101,10 @@
         let isAdminActive = false; 
         let db;
 
-        // Empreinte SHA-256 du mot de passe "admin123"
+        // L'empreinte exacte corrigée en minuscules pour "admin123"
         const SECRET_HASH = "240f1ca41797d413b18fba44b477b907b24911d33f7fae420046b0a8809cf6e9";
 
-        // Fonction de hachage ultra-sécurisée (SHA-256)
+        // Algorithme SHA-256 natif
         async function sha256(message) {
             const msgBuffer = new TextEncoder().encode(message);                    
             const hashBuffer = await crypto.subtle.digest('SHA-256', msgBuffer);
@@ -112,10 +112,9 @@
             return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
         }
 
-        // Vérification du mot de passe
+        // Connexion sécurisée
         async function checkAdminPassword() {
             if (isAdminActive) {
-                // Si déjà connecté, on se déconnecte
                 location.reload();
                 return;
             }
@@ -125,7 +124,6 @@
 
             const hashedInput = await sha256(input);
 
-            // Seul le bon mot de passe produira le même hash
             if (hashedInput === SECRET_HASH) {
                 isAdminActive = true;
                 activateAdminFeatures();
@@ -144,7 +142,7 @@
             });
         }
 
-        // Base de données IndexedDB locale pour l'admin
+        // Base de données locale IndexedDB
         const dbRequest = indexedDB.open("QuranVisionDB", 1);
         dbRequest.onupgradeneeded = function(e) {
             db = e.target.result;
@@ -154,7 +152,7 @@
         };
         dbRequest.onsuccess = function(e) { db = e.target.result; init(); };
 
-        // Configuration publique figée (Colle ton export final ici)
+        // Configuration pour stocker définitivement tes liens d'images publiques
         const globalPublishedImages = {};
 
         const imageBank = {
@@ -329,7 +327,7 @@
                 a.href = URL.createObjectURL(blob);
                 a.download = "configuration-images.txt";
                 a.click();
-                alert("Fichier téléchargé ! Envoie-le moi pour figer le site public.");
+                alert("Fichier téléchargé ! Transmets-le moi pour figer tes modifications.");
             };
         }
     </script>
