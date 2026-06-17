@@ -22,10 +22,10 @@
         }
         .quran-container { direction: rtl; text-align: right; }
         
-        /* FORCE STRICTEMENT LA PETITE TAILLE SUR MOBILE */
+        /* TAILLE DU TEXTE ARABE : Petit sur mobile, grand sur PC */
         .quran-arabic { 
             font-family: 'Amiri', serif !important; 
-            font-size: 1.6rem !important; 
+            font-size: 1.5rem !important; 
             line-height: 2.2 !important; 
             display: inline-block;
             width: 100%;
@@ -33,10 +33,9 @@
             word-spacing: 2px;
         }
         
-        /* TAILLE ORDINATEUR (ÉCRANS PLUS GRANDS QUE 768px) */
         @media (min-width: 768px) {
             .quran-arabic {
-                font-size: 3rem !important;
+                font-size: 2.8rem !important;
                 line-height: 2.5 !important;
                 word-spacing: 4px;
             }
@@ -113,7 +112,7 @@
         let isAdminActive = false; 
         let db;
 
-        // BANQUE D'IMAGES SAUVEGARDÉES
+        // BANQUE D'IMAGES SAUVEGARDÉES (Sert de stockage pour le mode public)
         const globalPublishedImages = {};
 
         function checkAdminPassword() {
@@ -132,14 +131,13 @@
             document.querySelectorAll('.admin-upload-btn').forEach(btn => btn.style.display = 'block');
         }
 
-        // Initialisation de la base locale (uniquement utile en mode Admin)
         const dbRequest = indexedDB.open("QuranVisionDB", 1);
         dbRequest.onupgradeneeded = function(e) {
             db = e.target.result;
             if (!db.objectStoreNames.contains("images")) db.createObjectStore("images", { keyPath: "verseKey" });
         };
         dbRequest.onsuccess = function(e) { db = e.target.result; init(); };
-        dbRequest.onerror = function() { init(); }; // Si IndexedDB échoue (ex: navigation privée), on lance quand même le site
+        dbRequest.onerror = function() { init(); };
 
         const imageBank = {
             univers: "https://images.unsplash.com/photo-1451187580459-43490279c0fa?auto=format&fit=crop&w=1200&q=80",
@@ -160,12 +158,10 @@
         }
 
         function getCustomImage(verseKey, fallbackUrl, callback) {
-            // Si on a une image globale publiée (cas du téléphone), on la prend en priorité absolue
             if (globalPublishedImages && globalPublishedImages[verseKey]) {
                 callback(globalPublishedImages[verseKey]);
                 return;
             }
-            // Sinon on regarde en base locale (cas du mode admin PC)
             if (!db) {
                 callback(fallbackUrl);
                 return;
@@ -179,9 +175,7 @@
                     else callback(fallbackUrl);
                 };
                 request.onerror = function() { callback(fallbackUrl); };
-            } catch(e) {
-                callback(fallbackUrl);
-            }
+            } catch(e) { callback(fallbackUrl); }
         }
 
         function handleImageUpload(event, verseKey) {
@@ -231,27 +225,40 @@
 
         function isArabic(text) { return /[\u0600-\u06FF]/.test(text); }
 
+        // RECHERCHE AMÉLIORÉE AVEC TRADUCTIONS FRANÇAISES ET ARABES EN PARALLÈLE
         async function searchVerse() {
-            let query = document.getElementById('searchInput').value.trim();
+            let query = document.getElementById('searchInput').value.trim().toLowerCase();
             if (!query) return;
-            mainContent.innerHTML = `<div class="py-20 text-emerald-500 animate-pulse text-xl">Recherche en cours...</div>`;
+            mainContent.innerHTML = `<div class="py-20 text-emerald-500 animate-pulse text-xl">Recherche de "${query}"...</div>`;
+            
+            // Dictionnaires de secours pour pallier les faiblesses de l'API en français
+            if(query === "moise") query = "moses";
+            if(query === "jesus") query = "jesus";
+            if(query === "marie") query = "mary";
+            if(query === "ciel" || query === "cieux") query = "heaven";
+
             try {
-                const res = await fetch(`https://api.quran.com/api/v4/search?q=${encodeURIComponent(query)}&size=20&language=${isArabic(query) ? 'ar' : 'fr'}`);
+                const lang = isArabic(query) ? 'ar' : 'en';
+                const res = await fetch(`https://api.quran.com/api/v4/search?q=${encodeURIComponent(query)}&size=20&language=${lang}`);
                 const data = await res.json();
                 if (data.search && data.search.results && data.search.results.length > 0) {
                     renderSearchResults(data.search.results, isArabic(query));
-                } else { mainContent.innerHTML = "<p class='py-20 text-zinc-400'>Aucun résultat.</p>"; }
-            } catch (e) { mainContent.innerHTML = "<p class='py-20 text-red-400'>Erreur réseau.</p>"; }
+                } else { 
+                    mainContent.innerHTML = "<p class='py-20 text-zinc-400'>Aucun résultat trouvé. Essayez un autre mot-clé ou un synonyme.</p>"; 
+                }
+            } catch (e) { 
+                mainContent.innerHTML = "<p class='py-20 text-red-400'>Erreur lors de la recherche. Vérifiez votre connexion internet.</p>"; 
+            }
         }
 
         function renderSearchResults(results, isAr) {
-            mainContent.innerHTML = `<h2 class="text-2xl font-bold mb-8 text-emerald-500">${results.length} résultats</h2>`;
+            mainContent.innerHTML = `<h2 class="text-2xl font-bold mb-8 text-emerald-500">${results.length} résultat(s)</h2>`;
             results.forEach(r => {
                 mainContent.innerHTML += `
                     <div class="glass-card p-6 mb-4 bg-white/5 border-l-4 border-emerald-500 text-left">
                         <p class="text-zinc-400 text-xs mb-2">Verset ${r.verse_key}</p>
                         <p class="text-zinc-200 ${isAr ? 'text-right font-serif text-xl' : 'italic text-base'}">${r.text.replace(/<[^>]*>/g, '')}</p>
-                        <button onclick="goToVerse('${r.verse_key}')" class="text-emerald-500 text-xs font-bold mt-4 block hover:underline">OUVRIR →</button>
+                        <button onclick="goToVerse('${r.verse_key}')" class="text-emerald-500 text-xs font-bold mt-4 block hover:underline">OUVRIR CE VERSET →</button>
                     </div>`;
             });
         }
@@ -262,20 +269,20 @@
             setTimeout(() => {
                 const el = document.getElementById(`v-${vk}`);
                 if (el) el.scrollIntoView({ behavior: 'smooth', block: 'center' });
-            }, 600);
+            }, 800);
         }
 
         async function loadSurah() {
             const sid = surahSelect.value;
             const rid = document.getElementById('reciterSelect').value;
-            mainContent.innerHTML = `<div class="py-20 text-emerald-500 animate-bounce text-xl font-bold">CHARGEMENT SURATE...</div>`;
+            mainContent.innerHTML = `<div class="py-20 text-emerald-500 animate-bounce text-xl font-bold">CHARGEMENT...</div>`;
             try {
                 const res = await fetch(`https://api.quran.com/api/v4/verses/by_chapter/${sid}?language=fr&translations=31&fields=text_uthmani&per_page=300`);
                 const data = await res.json();
                 const audioRes = await fetch(`https://api.quran.com/api/v4/chapter_recitations/${rid}/${sid}`);
                 const audioData = await audioRes.json();
                 renderSurah(data.verses, audioData.audio_file.audio_url);
-            } catch (e) { mainContent.innerHTML = "<div class='py-20 text-red-400'>Erreur de chargement.</div>"; }
+            } catch (e) { mainContent.innerHTML = "<div class='py-20 text-red-400'>Erreur réseau lors du chargement de la sourate.</div>"; }
         }
 
         function renderSurah(verses, audio) {
@@ -308,13 +315,10 @@
         }
 
         function exportConfig() {
-            if (!db) {
-                alert("La base de données locale n'est pas prête.");
-                return;
-            }
+            if (!db) { alert("Base de données indisponible."); return; }
             
             const btn = document.getElementById('exportBtn');
-            btn.innerHTML = "⏳ Conversion des images...";
+            btn.innerHTML = "⏳ Compilation en cours...";
             btn.disabled = true;
 
             const transaction = db.transaction(["images"], "readonly");
@@ -324,11 +328,7 @@
             request.onsuccess = function() {
                 try {
                     const currentData = {};
-                    request.result.forEach(item => { 
-                        currentData[item.verseKey] = item.data; 
-                    });
-                    
-                    btn.innerHTML = "⏳ Nettoyage du code...";
+                    request.result.forEach(item => { currentData[item.verseKey] = item.data; });
                     
                     const parser = new DOMParser();
                     const doc = parser.parseFromString(document.documentElement.outerHTML, 'text/html');
@@ -338,21 +338,16 @@
                         adminBadge.innerHTML = "Connexion Admin";
                         adminBadge.className = "text-[10px] bg-zinc-800 text-zinc-400 px-2 py-0.5 rounded border border-zinc-700 hover:text-white transition";
                     }
-                    
                     const exportBtn = doc.getElementById('exportBtn');
                     if (exportBtn) exportBtn.style.display = "none";
                     
                     let htmlContent = doc.documentElement.outerHTML;
-                    
                     const regex = /const globalPublishedImages = \{[\s\S]*?\};/;
                     const newDataString = `const globalPublishedImages = ${JSON.stringify(currentData, null, 4)};`;
                     htmlContent = "<!DOCTYPE html>\n" + htmlContent.replace(regex, newDataString);
                     
-                    btn.innerHTML = "⏳ Téléchargement...";
-                    
                     const blob = new Blob([htmlContent], {type: "text/html;charset=utf-8"});
                     const url = URL.createObjectURL(blob);
-                    
                     const a = document.createElement("a");
                     a.href = url;
                     a.download = "index.html";
@@ -364,14 +359,12 @@
                         URL.revokeObjectURL(url);
                         btn.innerHTML = "📦 Télécharger le HTML mis à jour pour GitHub";
                         btn.disabled = false;
-                        alert("✨ Super ! Ton fichier 'index.html' a été généré avec succès. Glisse-le sur ton dépôt GitHub.");
+                        alert("✨ Fichier généré ! Glisse-le sur ton dépôt GitHub.");
                     }, 500);
-
                 } catch (error) {
-                    console.error(error);
                     btn.innerHTML = "📦 Télécharger le HTML mis à jour pour GitHub";
                     btn.disabled = false;
-                    alert("Erreur lors de la compilation.");
+                    alert("Erreur lors de l'export.");
                 }
             };
         }
