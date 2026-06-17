@@ -210,7 +210,6 @@
                 const img = new Image();
                 img.onload = function() {
                     const canvas = document.createElement('canvas');
-                    const ctx = canvas.createElement('canvas').getContext('2d');
                     let w = img.width, h = img.height;
                     if (w > 800) { h = Math.round((h * 800) / w); w = 800; }
                     canvas.width = w; canvas.height = h;
@@ -222,7 +221,10 @@
                         const store = transaction.objectStore("images");
                         store.put({ verseKey: verseKey, data: optimizedDataUrl });
                         transaction.oncomplete = function() {
-                            document.getElementById(`img-view-${verseKey}`).src = optimizedDataUrl;
+                            const imgView = document.getElementById(`img-view-${verseKey}`);
+                            if (imgView) {
+                                imgView.src = optimizedDataUrl;
+                            }
                             targetLabel.innerHTML = "📷 Modifier la photo";
                         };
                     } catch(err) { targetLabel.innerHTML = "❌ Erreur"; }
