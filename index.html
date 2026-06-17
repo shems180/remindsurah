@@ -27,8 +27,6 @@
             direction: rtl;
             text-align: right;
         }
-        
-        /* --- ARABE TAJWEED PARFAIT (SANS CROCHETS ET LIÉ) --- */
         .quran-arabic { 
             font-family: 'Amiri', serif; 
             font-size: 3.2rem; 
@@ -37,17 +35,49 @@
             filter: drop-shadow(0 2px 4px rgba(0,0,0,0.6));
         }
         
-        /* Classes de rendu automatique injectées par l'API v4 de Quran.com */
-        .quran-arabic .ghunnah { color: #10b981 !important; font-weight: 700; } 
-        .quran-arabic .ikhfa { color: #059669 !important; font-weight: 700; }    
-        .quran-arabic .idgham { color: #34d399 !important; font-weight: 700; }   
-        .quran-arabic .qalqalah { color: #3b82f6 !important; font-weight: 700; } 
-        .quran-arabic .madd_6, .quran-arabic .madd_mandatory { color: #ef4444 !important; font-weight: 700; } 
-        .quran-arabic .madd_4, .quran-arabic .madd_permissible { color: #f97316 !important; }                 
-        .quran-arabic .madd_2 { color: #fbbf24 !important; }                 
-        .quran-arabic .hamzat_wasl, .quran-arabic .silent { color: #64748b !important; opacity: 0.4; } 
+        /* ==========================================================================
+           FONCTIONS DE COLORATION TAJWEED ABSOLUE (TOUTES VERSIONS D'API FUSIONNÉES)
+           ========================================================================== */
+        
+        /* 1. VERT EMERAUDE : Ghunnah, Ikhfa, Idgham */
+        .quran-arabic .ghunnah, .quran-arabic .tajweed-ghunnah,
+        .quran-arabic .ikhfa, .quran-arabic .tajweed-ikhfa,
+        .quran-arabic .idgham, .quran-arabic .tajweed-idgham,
+        .quran-arabic [class*="ghunnah"], .quran-arabic [class*="ikhfa"], .quran-arabic [class*="idgham"] { 
+            color: #10b981 !important; 
+            font-weight: 700; 
+        }
 
-        /* --- GLASSMORPHISM --- */
+        /* 2. BLEU : Qalqalah */
+        .quran-arabic .qalqalah, .quran-arabic .tajweed-qalqalah,
+        .quran-arabic [class*="qalqalah"] { 
+            color: #3b82f6 !important; 
+            font-weight: 700; 
+        }
+
+        /* 3. ROUGE VIF : Prolongations Obligatoires (Madd 6, Mandatory) */
+        .quran-arabic .madd_6, .quran-arabic .madd_mandatory, .quran-arabic .tajweed-madd-obl,
+        .quran-arabic [class*="madd_6"], .quran-arabic [class*="mandatory"], .quran-arabic [class*="madd-obl"] { 
+            color: #ef4444 !important; 
+            font-weight: 700; 
+        }
+
+        /* 4. ORANGE / JAUNE : Prolongations Permises (Madd 4, 2, Permissible, Normal) */
+        .quran-arabic .madd_4, .quran-arabic .madd_permissible, .quran-arabic .tajweed-madd-perm,
+        .quran-arabic .madd_2, .quran-arabic .tajweed-madd-norm,
+        .quran-arabic [class*="madd_4"], .quran-arabic [class*="madd_2"], .quran-arabic [class*="permissible"] { 
+            color: #f97316 !important; 
+        }
+
+        /* 5. GRIS : Lettres muettes et liaisons (Silent, Hamzat wasl) */
+        .quran-arabic .hamzat_wasl, .quran-arabic .silent, .quran-arabic .tajweed-silent, .quran-arabic .tajweed-hamza,
+        .quran-arabic [class*="silent"], .quran-arabic [class*="wasl"], .quran-arabic [class*="hamza"] { 
+            color: #64748b !important; 
+            opacity: 0.4; 
+            font-weight: 300; 
+        }
+
+        /* --- STYLES INTERFACE --- */
         .glass-card { 
             background: rgba(255, 255, 255, 0.01); 
             backdrop-filter: blur(20px);
@@ -60,7 +90,6 @@
             transform: translateY(-2px); 
         }
 
-        /* --- DESIGN DU LECTEUR AUDIO DESIGN FLOTTANT --- */
         .audio-player-container {
             background: rgba(15, 23, 42, 0.9);
             border: 1px solid rgba(255, 255, 255, 0.15);
@@ -111,7 +140,7 @@
                 <svg class="w-16 h-16 text-emerald-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5s3.332.477 4.5 1.253v13C19.832 18.477 18.246 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"></path></svg>
             </div>
             <h2 class="text-4xl md:text-6xl font-bold tracking-tight">Méditez sur les Signes.</h2>
-            <p class="text-zinc-400 text-lg max-w-lg mx-auto font-light leading-relaxed">Mushaf Tajweed Unifié • Rendu Natif sans faille</p>
+            <p class="text-zinc-400 text-lg max-w-lg mx-auto font-light leading-relaxed">Mushaf Tajweed Unifié • Rendu Parfait & Audio Fixé</p>
         </div>
     </main>
 
@@ -237,10 +266,10 @@
         async function loadSurah() {
             const sid = surahSelect.value;
             const rid = document.getElementById('reciterSelect').value;
-            mainContent.innerHTML = `<div class="py-20 text-emerald-500 animate-bounce text-xl font-bold uppercase">Génération du flux unifié...</div>`;
+            mainContent.innerHTML = `<div class="py-20 text-emerald-500 animate-bounce text-xl font-bold uppercase">Génération du flux Tajweed...</div>`;
             
             try {
-                // Requête unifiée vers Quran.com v4 demandant explicitement le rendu 'text_tajweed' pré-calculé
+                // IMPORTANT : On force l'API v4 à nous cracher le format text_tajweed natif pré-généré
                 const [vR, aR] = await Promise.all([
                     fetch(`https://api.quran.com/api/v4/verses/by_chapter/${sid}?language=fr&translations=31&fields=text_tajweed&per_page=300`),
                     fetch(`https://api.quran.com/api/v4/chapter_recitations/${rid}/${sid}`)
@@ -253,12 +282,12 @@
                 renderSurah(currentVersesList, aD.audio_file.audio_url);
             } catch (e) { 
                 console.error(e);
-                mainContent.innerHTML = "<div class='py-20 text-red-400'>Erreur de chargement. Veuillez réessayer.</div>"; 
+                mainContent.innerHTML = "<div class='py-20 text-red-400'>Erreur de synchronisation des serveurs.</div>"; 
             }
         }
 
         function renderSurah(verses, audio) {
-            // Rendu du lecteur audio épuré sous forme de pilule flottante et isolée
+            // Rendu de la barre audio flottante et minimaliste (le gros carré noir a disparu !)
             mainContent.innerHTML = `
                 <div class="sticky top-24 z-40 w-full mb-12 px-4">
                     <div class="audio-player-container">
@@ -268,8 +297,8 @@
 
             verses.forEach((v, i) => {
                 const textFr = v.translations[0].text.replace(/<[^>]*>/g, '');
-                // Récupération directe du texte Tajweed natif de l'API v4
-                const textArTajweed = v.text_tajweed; 
+                // Injection propre du conteneur HTML Tajweed de Quran.com
+                const textArTajweed = v.text_tajweed || "Format indisponible"; 
                 const dynamicImg = getThemeImage(textFr);
 
                 mainContent.innerHTML += `
