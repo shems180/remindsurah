@@ -36,25 +36,12 @@
             filter: drop-shadow(0 2px 4px rgba(0,0,0,0.5));
         }
         
-        /* --- RÈGLES DE COULEURS TAJWEED --- */
-        .quran-arabic [class*="tajweed-ghunnah"], 
-        .quran-arabic [style*="color:#00A859"], 
-        .quran-arabic [style*="color:green"] { color: #10b981 !important; font-weight: 700; }
-        
-        .quran-arabic [class*="tajweed-qalqalah"], 
-        .quran-arabic [style*="color:#00AEEF"], 
-        .quran-arabic [style*="color:blue"] { color: #3b82f6 !important; font-weight: 700; }
-        
-        .quran-arabic [class*="tajweed-mad"], 
-        .quran-arabic [style*="color:#FF0000"], 
-        .quran-arabic [style*="color:red"] { color: #ef4444 !important; font-weight: 700; }
-        
-        .quran-arabic [style*="color:#F26522"], 
-        .quran-arabic [style*="color:orange"] { color: #f97316 !important; }
-        
-        .quran-arabic [class*="tajweed-hamzat-wasl"], 
-        .quran-arabic [style*="color:#939598"], 
-        .quran-arabic [style*="color:gray"] { color: #64748b !important; opacity: 0.4; font-weight: 300; }
+        /* --- DESIGN DES COULEURS DU TAJWEED --- */
+        .tajweed-ghunnah, .tajweed-ikhfa, .tajweed-idgham { color: #10b981 !important; font-weight: 700; } /* Vert émeraude */
+        .tajweed-qalqalah { color: #3b82f6 !important; font-weight: 700; } /* Bleu de résonance */
+        .tajweed-mad-obligatoire, .tajweed-mad-necessaire { color: #ef4444 !important; font-weight: 700; } /* Rouge vif */
+        .tajweed-mad-permissible, .tajweed-mad-normal { color: #f97316 !important; } /* Orange */
+        .tajweed-muet, .tajweed-hamza-wasl, .tajweed-laam-shamsiyah { color: #64748b !important; opacity: 0.5; font-weight: 300; } /* Gris estompé */
 
         .glass-card { 
             background: rgba(255, 255, 255, 0.02); 
@@ -132,6 +119,43 @@
             desert: "https://images.unsplash.com/photo-1509316975850-ff9c5deb0cd9?auto=format&fit=crop&w=1200&q=80",    
             defaut: "https://images.unsplash.com/photo-1518156677180-95a2893f3e9f?auto=format&fit=crop&w=1200&q=80"     
         };
+
+        // Parseur Tajweed adaptatif pour nettoyer les crochets de l'API Alquran.cloud
+        function parseTajweedRules(text) {
+            if (!text) return "";
+            
+            const rulesMap = {
+                'h': 'tajweed-hamza-wasl',
+                's': 'tajweed-muet',
+                'l': 'tajweed-laam-shamsiyah',
+                'n': 'tajweed-mad-normal',
+                'p': 'tajweed-mad-permissible',
+                'm': 'tajweed-mad-necessaire',
+                'q': 'tajweed-qalqalah',
+                'o': 'tajweed-mad-obligatoire',
+                'g': 'tajweed-ghunnah',
+                'f': 'tajweed-ikhfa',
+                'a': 'tajweed-idgham',
+                'u': 'tajweed-idgham',
+                'c': 'tajweed-ikhfa',
+                'i': 'tajweed-iqlab'
+            };
+
+            // RegEx pour intercepter la structure [regle:option[texte]] ou [regle[texte]]
+            let processed = text;
+            let regex = /\[([a-z])(?::[0-9]+)?\[([^\]]+)\]\]/g;
+
+            while (regex.test(processed)) {
+                processed = processed.replace(regex, (match, ruleCode, content) => {
+                    const className = rulesMap[ruleCode] || 'tajweed-default';
+                    return `<span class="${className}">${content}</span>`;
+                });
+            }
+            
+            // Secours au cas où il reste des crochets simples isolés restants
+            processed = processed.replace(/\[[a-z](?::\d+)?\[/g, '').replace(/\]\]/g, '');
+            return processed;
+        }
 
         function getThemeImage(textFr) {
             const clean = textFr.toLowerCase();
@@ -258,7 +282,8 @@
                 
                 if(tD.data && tD.data.ayahs) {
                     currentVersesList.forEach((verse, idx) => {
-                        verse.text_tajweed_clean = tD.data.ayahs[idx].text;
+                        // On nettoie le texte brut cryptique reçu en injectant du HTML propre et stylisé
+                        verse.text_tajweed_clean = parseTajweedRules(tD.data.ayahs[idx].text);
                     });
                 }
                 
