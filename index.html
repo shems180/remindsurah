@@ -84,7 +84,7 @@
                 <svg class="w-16 h-16 text-emerald-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5s3.332.477 4.5 1.253v13C19.832 18.477 18.246 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"></path></svg>
             </div>
             <h2 class="text-4xl md:text-6xl font-bold tracking-tight">Méditez sur les Signes.</h2>
-            <p class="text-zinc-400 text-lg max-w-lg mx-auto font-light leading-relaxed">Mushaf — Images Unsplash Stables & Sans Visage</p>
+            <p class="text-zinc-400 text-lg max-w-lg mx-auto font-light leading-relaxed">Mushaf — Visuels Sublimés & 100% Sécurisés</p>
         </div>
     </main>
 
@@ -92,25 +92,25 @@
         const mainContent = document.getElementById('main-content');
         const surahSelect = document.getElementById('surahSelect');
 
-        // BANQUE D'IMAGES COMPLÈTE — UNIQUEMENT DES LIENS UN SPLASH DIRECTS ET SÉCURISÉS
+        // BANQUE D'IMAGES COMPLÈTE AVEC LES DEUX NOUVEAUX LIENS SUBLIMÉS SANS HUMAINS
         const imageBank = {
             univers: "https://images.unsplash.com/photo-1451187580459-43490279c0fa?auto=format&fit=crop&w=1200&q=80",
-            balance: "https://images.unsplash.com/photo-1589829545856-d10d557cf95f?auto=format&fit=crop&w=1200&q=80",
-            prairie: "https://images.unsplash.com/photo-1465146344425-f00d5f5c8f07?auto=format&fit=crop&w=1200&q=80",
+            balance: "https://images.unsplash.com/photo-1607604276583-eef5d076aa5f?auto=format&fit=crop&w=1200&q=80", // Balance de justice en laiton pur isolée sur fond sombre
+            prairie: "https://images.unsplash.com/photo-1500382017468-9049fed747ef?auto=format&fit=crop&w=1200&q=80", // Magnifique prairie verdoyante et fleurie à perte de vue sous un ciel radieux
             feu: "https://images.unsplash.com/photo-1524813686514-a57563d77d61?auto=format&fit=crop&w=1200&q=80",
             sablier: "https://images.unsplash.com/photo-1611244419377-b0a760c19719?auto=format&fit=crop&w=1200&q=80",
             coran: "https://images.unsplash.com/photo-1609599006353-e629f1d29718?auto=format&fit=crop&w=1200&q=80",
-            muhammed: "https://images.unsplash.com/photo-1542838132-92c53300491e?auto=format&fit=crop&w=1200&q=80", // Splendide mosquée prophétique illuminée
-            colombe: "https://images.unsplash.com/photo-1506744038136-46273834b3fb?auto=format&fit=crop&w=1200&q=80", // Paysage de paix pure (brume matinale)
-            coeur: "https://images.unsplash.com/photo-1518199266791-5375a83190b7?auto=format&fit=crop&w=1200&q=80", // Texture de bois en forme de cœur
-            parents: "https://images.unsplash.com/photo-1494959764136-6be9eb3c261e?auto=format&fit=crop&w=1200&q=80", // Lumière chaude à travers des arbres centenaires symbole de bienveillance
-            allah: "https://images.unsplash.com/photo-1564507592333-c60657eea523?auto=format&fit=crop&w=1200&q=80", // Calligraphie islamique murale gravée dans la pierre
-            idole: "https://images.unsplash.com/photo-1599733589046-10c005739ef9?auto=format&fit=crop&w=1200&q=80", // Ruines et pierres brisées antiques
-            bateau: "https://images.unsplash.com/photo-1516690561799-46d8f74f9abf?auto=format&fit=crop&w=1200&q=80", // Arche en bois brut sur l'eau
+            muhammed: "https://images.unsplash.com/photo-1542838132-92c53300491e?auto=format&fit=crop&w=1200&q=80", 
+            colombe: "https://images.unsplash.com/photo-1506744038136-46273834b3fb?auto=format&fit=crop&w=1200&q=80", 
+            coeur: "https://images.unsplash.com/photo-1518199266791-5375a83190b7?auto=format&fit=crop&w=1200&q=80", 
+            parents: "https://images.unsplash.com/photo-1494959764136-6be9eb3c261e?auto=format&fit=crop&w=1200&q=80", 
+            allah: "https://images.unsplash.com/photo-1564507592333-c60657eea523?auto=format&fit=crop&w=1200&q=80", 
+            idole: "https://images.unsplash.com/photo-1599733589046-10c005739ef9?auto=format&fit=crop&w=1200&q=80", 
+            bateau: "https://images.unsplash.com/photo-1516690561799-46d8f74f9abf?auto=format&fit=crop&w=1200&q=80", 
             pyramide: "https://images.unsplash.com/photo-1539650116574-8efeb43e2750?auto=format&fit=crop&w=1200&q=80",
-            adam: "https://images.unsplash.com/photo-1507525428034-b723cf961d3e?auto=format&fit=crop&w=1200&q=80", // Éléments premiers purs
-            mouton: "https://images.unsplash.com/photo-1484557985045-edf25e08da73?auto=format&fit=crop&w=1200&q=80", // Troupeau de moutons au loin dans la brume (sans traits)
-            ibrahim: "https://images.unsplash.com/photo-1591604121669-f14d8bc079e2?auto=format&fit=crop&w=1200&q=80", // Vue architecturale de la Mosquée Sacrée
+            adam: "https://images.unsplash.com/photo-1507525428034-b723cf961d3e?auto=format&fit=crop&w=1200&q=80", 
+            mouton: "https://images.unsplash.com/photo-1484557985045-edf25e08da73?auto=format&fit=crop&w=1200&q=80", 
+            ibrahim: "https://images.unsplash.com/photo-1591604121669-f14d8bc079e2?auto=format&fit=crop&w=1200&q=80", 
             kaaba: "https://images.unsplash.com/photo-1591604121669-f14d8bc079e2?auto=format&fit=crop&w=1200&q=80",
             ciel: "https://images.unsplash.com/photo-1513002749550-c59d786b8e6c?auto=format&fit=crop&w=1200&q=80",
             montagne: "https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?auto=format&fit=crop&w=1200&q=80",
@@ -118,7 +118,6 @@
             defaut: "https://images.unsplash.com/photo-1447752875215-b2761acb3c5d?auto=format&fit=crop&w=1200&q=80"
         };
 
-        // ALGORITHME DE CORRESPONDANCE TEXTUELLE STRICTE
         function getThemeImage(textFr) {
             if (!textFr) return imageBank.defaut;
             const clean = textFr.toLowerCase();
