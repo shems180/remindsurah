@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>QuranVision</title>
     
-    <link rel="manifest" href="manifest.json?v=2">
+    <link rel="manifest" href="manifest.json?v=3">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <link class="apple-touch-icon" href="icon-192.png">
@@ -22,22 +22,22 @@
         }
         .quran-container { direction: rtl; text-align: right; }
         
-        /* TAILLE STRICTE ET REDUITE POUR MOBILE (IMPORTANT) */
+        /* TAILLE STRICTE ET SÉCURISÉE POUR SMARTPHONE */
         .quran-arabic { 
             font-family: 'Amiri', serif !important; 
-            font-size: 1.5rem !important; 
-            line-height: 2.2 !important; 
+            font-size: 1.6rem !important; 
+            line-height: 2.3 !important; 
             display: inline-block;
             width: 100%;
             text-align: center;
             word-spacing: 2px;
         }
         
-        /* TAILLE GRAND ECRAN / PC */
+        /* TAILLE ORDINATEUR */
         @media (min-width: 768px) {
             .quran-arabic {
                 font-size: 2.8rem !important;
-                line-height: 2.5 !important;
+                line-height: 2.6 !important;
                 word-spacing: 4px;
             }
         }
@@ -59,6 +59,12 @@
             box-shadow: 0 20px 40px rgba(0,0,0,0.8);
         }
         audio { height: 40px; width: 100%; outline: none; }
+        
+        .highlight {
+            background-color: rgba(16, 185, 129, 0.3);
+            border-bottom: 2px solid #10b981;
+            padding: 0 2px;
+        }
     </style>
 </head>
 <body class="overflow-x-hidden">
@@ -80,8 +86,8 @@
             
             <div class="flex flex-wrap justify-center items-center gap-3">
                 <div class="relative">
-                    <input type="text" id="searchInput" placeholder="Recherche (ex: Moise, Ciel)..." class="w-56 md:w-64 px-4 py-2 rounded-xl text-sm text-white bg-black/40 border border-white/10 focus:border-emerald-500 focus:outline-none">
-                    <button onclick="searchVerse()" class="absolute right-3 top-2 text-emerald-400 hover:text-white transition">
+                    <input type="text" id="searchInput" placeholder="Filtrer les versets chargés..." class="w-56 md:w-64 px-4 py-2 rounded-xl text-sm text-white bg-black/40 border border-white/10 focus:border-emerald-500 focus:outline-none">
+                    <button onclick="searchLocal()" class="absolute right-3 top-2 text-emerald-400 hover:text-white transition">
                         <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" stroke-width="2" stroke-linecap="round"></path></svg>
                     </button>
                 </div>
@@ -102,7 +108,7 @@
                 <svg class="w-16 h-16 text-emerald-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5s3.332.477 4.5 1.253v13C19.832 18.477 18.246 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"></path></svg>
             </div>
             <h2 class="text-4xl md:text-6xl font-bold tracking-tight">Accès QuranVision</h2>
-            <p class="text-zinc-400 text-lg max-w-lg mx-auto font-light leading-relaxed">Recherchez un mot-clé ou sélectionnez directement une sourate ci-dessus pour commencer l'exploration.</p>
+            <p class="text-zinc-400 text-lg max-w-lg mx-auto font-light leading-relaxed">Sélectionnez une sourate ci-dessus pour charger les versets, puis utilisez la barre de recherche pour filtrer instantanément.</p>
         </div>
     </main>
 
@@ -112,8 +118,9 @@
         
         let isAdminActive = false; 
         let db;
+        let currentSurahVerses = []; // Sauvegarde locale pour la recherche instantanée
 
-        // BANQUE D'IMAGES COMPILÉES LORS DE L'EXPORT (S'injecte ici automatiquement)
+        // LA ZONE OÙ S'INJECTENT TES IMAGES LORS DE L'EXPORT (indispensable pour mobile)
         const globalPublishedImages = {};
 
         function checkAdminPassword() {
@@ -129,9 +136,9 @@
             document.getElementById('adminBadge').innerHTML = "⚡ Déconnexion Admin";
             document.getElementById('adminBadge').className = "text-[10px] bg-red-600 text-white font-bold px-2 py-0.5 rounded";
             document.getElementById('exportBtn').style.display = "inline-block";
+            document.querySelectorAll('.admin-upload-btn').forEach(btn => btn.style.display = 'block');
         }
 
-        // IndexedDB securisé
         const dbRequest = indexedDB.open("QuranVisionDB", 1);
         dbRequest.onupgradeneeded = function(e) {
             db = e.target.result;
@@ -219,96 +226,80 @@
                     surahSelect.innerHTML += `<option value="${s.id}">${s.id}. ${s.name_simple}</option>`;
                 });
             } catch (e) { console.error(e); }
-        }
-
-        function isArabic(text) { return /[\u0600-\u06FF]/.test(text); }
-
-        // CORRECTION RECHERCHE CROISÉE REBÂTIE DE ZÉRO
-        async function searchVerse() {
-            let originalQuery = document.getElementById('searchInput').value.trim();
-            if (!originalQuery) return;
             
-            mainContent.innerHTML = `<div class="py-20 text-emerald-500 animate-pulse text-xl">Recherche de "${originalQuery}"...</div>`;
-            
-            let cleanQuery = originalQuery.toLowerCase();
-            // Fallbacks anglais requis par l'API
-            if (cleanQuery === "moise" || cleanQuery === "moïse") cleanQuery = "moses";
-            if (cleanQuery === "jesus" || cleanQuery === "jésus") cleanQuery = "jesus";
-            if (cleanQuery === "marie") cleanQuery = "mary";
-            if (cleanQuery === "ciel" || cleanQuery === "cieux" || cleanQuery === "univers") cleanQuery = "heaven";
-            if (cleanQuery === "terre") cleanQuery = "earth";
-
-            try {
-                const lang = isArabic(originalQuery) ? 'ar' : 'en';
-                const res = await fetch(`https://api.quran.com/api/v4/search?q=${encodeURIComponent(cleanQuery)}&size=20&language=${lang}`);
-                const data = await res.json();
-                
-                if (data.search && data.search.results && data.search.results.length > 0) {
-                    renderSearchResults(data.search.results, isArabic(originalQuery));
-                } else {
-                    mainContent.innerHTML = `<div class='py-20 text-zinc-400'><p class="text-lg font-bold mb-2">Aucun résultat trouvé pour "${originalQuery}"</p><p class="text-sm text-zinc-500">Conseil : tentez d'écrire le mot au singulier ou cherchez une sourate directement.</p></div>`;
-                }
-            } catch (e) {
-                mainContent.innerHTML = "<p class='py-20 text-red-400'>Erreur réseau. L'API du Coran est temporairement inaccessible.</p>";
-            }
-        }
-
-        function renderSearchResults(results, isAr) {
-            mainContent.innerHTML = `<h2 class="text-2xl font-bold mb-8 text-emerald-500">${results.length} résultat(s) trouvé(s)</h2>`;
-            results.forEach(r => {
-                mainContent.innerHTML += `
-                    <div class="glass-card p-6 mb-4 bg-white/5 border-l-4 border-emerald-500 text-left">
-                        <p class="text-zinc-400 text-xs mb-2">Verset ${r.verse_key}</p>
-                        <p class="text-zinc-200 ${isAr ? 'text-right font-serif text-xl' : 'italic text-base'}">${r.text.replace(/<[^>]*>/g, '')}</p>
-                        <button onclick="goToVerse('${r.verse_key}')" class="text-emerald-500 text-xs font-bold mt-4 block hover:underline">LIRE DANS LA SOURATE →</button>
-                    </div>`;
-            });
-        }
-
-        async function goToVerse(vk) {
-            surahSelect.value = vk.split(':')[0];
-            await loadSurah();
-            setTimeout(() => {
-                const el = document.getElementById(`v-${vk}`);
-                if (el) el.scrollIntoView({ behavior: 'smooth', block: 'center' });
-            }, 800);
+            // Écouteur pour la recherche en temps réel lors de la saisie
+            document.getElementById('searchInput').addEventListener('input', searchLocal);
         }
 
         async function loadSurah() {
             const sid = surahSelect.value;
             const rid = document.getElementById('reciterSelect').value;
-            mainContent.innerHTML = `<div class="py-20 text-emerald-500 animate-bounce text-xl font-bold">CHARGEMENT DES VERSETS...</div>`;
+            mainContent.innerHTML = `<div class="py-20 text-emerald-500 animate-bounce text-xl font-bold">CHARGEMENT DE LA SOURATE...</div>`;
             try {
                 const res = await fetch(`https://api.quran.com/api/v4/verses/by_chapter/${sid}?language=fr&translations=31&fields=text_uthmani&per_page=300`);
                 const data = await res.json();
                 const audioRes = await fetch(`https://api.quran.com/api/v4/chapter_recitations/${rid}/${sid}`);
                 const audioData = await audioRes.json();
-                renderSurah(data.verses, audioData.audio_file.audio_url);
-            } catch (e) { mainContent.innerHTML = "<div class='py-20 text-red-400'>Erreur de connexion lors de la récupération de la sourate.</div>"; }
+                
+                currentSurahVerses = data.verses; // On mémorise la sourate
+                renderSurah(currentSurahVerses, audioData.audio_file.audio_url);
+            } catch (e) { mainContent.innerHTML = "<div class='py-20 text-red-400'>Erreur de connexion.</div>"; }
         }
 
-        function renderSurah(verses, audio) {
-            mainContent.innerHTML = `<div class="sticky top-24 z-40 w-full mb-12 px-4"><div class="audio-player-container"><audio src="${audio}" controls></audio></div></div>`;
+        function renderSurah(verses, audioUrl = null) {
+            let audioHtml = "";
+            if (audioUrl) {
+                audioHtml = `<div class="sticky top-24 z-40 w-full mb-12 px-4"><div class="audio-player-container"><audio src="${audioUrl}" controls></audio></div></div>`;
+            } else if (document.querySelector('audio')) {
+                // Conserver le lecteur existant si on filtre juste le texte
+                audioHtml = `<div class="sticky top-24 z-40 w-full mb-12 px-4"><div class="audio-player-container"><audio src="${document.querySelector('audio').src}" controls></audio></div></div>`;
+            }
+            
+            let html = audioHtml;
+            
+            if (verses.length === 0) {
+                html += `<p class="py-12 text-zinc-500">Aucun verset ne correspond à ce filtre.</p>`;
+                mainContent.innerHTML = html;
+                return;
+            }
+
             verses.forEach((v) => {
                 const textFr = v.translations[0].text.replace(/<[^>]*>/g, '');
                 const fallbackImg = getFallbackImage(textFr);
-                mainContent.innerHTML += `
+                
+                // Gestion de la surbrillance si un mot est cherché
+                const query = document.getElementById('searchInput').value.trim().toLowerCase();
+                let displayedFr = textFr;
+                if (query && displayedFr.toLowerCase().includes(query)) {
+                    const regex = new RegExp(`(${query})`, 'gi');
+                    displayedFr = displayedFr.replace(regex, `<span class="highlight">$1</span>`);
+                }
+
+                html += `
                     <section id="v-${v.verse_key}" class="glass-card overflow-hidden mb-16 shadow-2xl">
                         <div class="relative h-64 w-full bg-zinc-950 flex items-center justify-center">
                             <img id="img-view-${v.verse_key}" src="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" class="w-full h-full object-cover opacity-25 mix-blend-screen" loading="lazy">
                             <div class="absolute inset-0 bg-gradient-to-t from-[#020617] via-transparent to-black/30"></div>
                             <label class="admin-upload-btn absolute top-6 right-6 bg-emerald-500/20 hover:bg-emerald-500/50 text-emerald-300 text-xs font-medium px-3 py-1.5 rounded-xl cursor-pointer transition border border-emerald-500/30 backdrop-blur-sm z-20" style="display: ${isAdminActive ? 'block' : 'none'};">
-                                📷 Importer ma photo (Admin)
+                                📷 Modifier la photo
                                 <input type="file" accept="image/*" class="hidden" onchange="handleImageUpload(event, '${v.verse_key}')">
                             </label>
                             <div class="absolute top-6 left-6 bg-black/60 backdrop-blur-md px-4 py-1 rounded-full text-xs font-bold border border-white/10 text-emerald-400">Verset ${v.verse_key}</div>
                         </div>
-                        <div class="p-8 md:p-12 space-y-8 -mt-20 relative z-10 bg-gradient-to-b from-transparent to-[#020617]/95">
+                        <div class="p-6 md:p-12 space-y-6 -mt-20 relative z-10 bg-gradient-to-b from-transparent to-[#020617]/95">
                             <div class="quran-container"><p class="quran-arabic text-zinc-100" dir="rtl">${v.text_uthmani}</p></div>
                             <div class="h-px w-24 bg-emerald-500/30 mx-auto"></div>
-                            <p class="text-zinc-200 text-xl md:text-2xl font-light italic leading-relaxed max-w-2xl mx-auto">"${textFr}"</p>
+                            <p class="text-zinc-200 text-lg md:text-xl font-light italic leading-relaxed max-w-2xl mx-auto">"${displayedFr}"</p>
                         </div>
                     </section>`;
+            });
+            
+            mainContent.innerHTML = html;
+
+            // Chargement asynchrone des photos
+            verses.forEach((v) => {
+                const textFr = v.translations[0].text.replace(/<[^>]*>/g, '');
+                const fallbackImg = getFallbackImage(textFr);
                 getCustomImage(v.verse_key, fallbackImg, function(finalSrc) {
                     const targetImg = document.getElementById(`img-view-${v.verse_key}`);
                     if (targetImg) targetImg.src = finalSrc;
@@ -316,11 +307,29 @@
             });
         }
 
+        // SYSTÈME DE RECHERCHE LOCAL ULTRA RAPIDE (SANS BUG D'API)
+        function searchLocal() {
+            const query = document.getElementById('searchInput').value.trim().toLowerCase();
+            if (!currentSurahVerses || currentSurahVerses.length === 0) return;
+            
+            if (!query) {
+                renderSurah(currentSurahVerses);
+                return;
+            }
+
+            const filtered = currentSurahVerses.filter(v => {
+                const textFr = v.translations[0].text.toLowerCase();
+                const textAr = v.text_uthmani;
+                return textFr.includes(query) || textAr.includes(query);
+            });
+
+            renderSurah(filtered);
+        }
+
         function exportConfig() {
             if (!db) { alert("Le stockage local n'est pas prêt."); return; }
-            
             const btn = document.getElementById('exportBtn');
-            btn.innerHTML = "⏳ Compilation en cours...";
+            btn.innerHTML = "⏳ Compilation des images...";
             btn.disabled = true;
 
             const transaction = db.transaction(["images"], "readonly");
@@ -361,7 +370,7 @@
                         URL.revokeObjectURL(url);
                         btn.innerHTML = "📦 Télécharger le HTML mis à jour pour GitHub";
                         btn.disabled = false;
-                        alert("✨ Code exporté avec succès ! Glisse ce nouveau fichier index.html sur GitHub.");
+                        alert("✨ Code exporté ! Remplace ton fichier sur GitHub pour appliquer les images sur ton téléphone.");
                     }, 500);
                 } catch (error) {
                     btn.innerHTML = "📦 Télécharger le HTML mis à jour pour GitHub";
