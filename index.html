@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>QuranVision - Immersion Spirituelle</title>
+    <title>QuranVision - Immersion Personnalisée</title>
     
     <link rel="manifest" href="manifest.json">
     <meta name="apple-mobile-web-app-capable" content="yes">
@@ -83,8 +83,8 @@
             <div class="inline-block p-6 rounded-full bg-emerald-500/10 animate-pulse">
                 <svg class="w-16 h-16 text-emerald-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5s3.332.477 4.5 1.253v13C19.832 18.477 18.246 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"></path></svg>
             </div>
-            <h2 class="text-4xl md:text-6xl font-bold tracking-tight">Méditez sur les Signes.</h2>
-            <p class="text-zinc-400 text-lg max-w-lg mx-auto font-light leading-relaxed">Mushaf — Zéro silhouette, zéro visage</p>
+            <h2 class="text-4xl md:text-6xl font-bold tracking-tight">Votre Éditeur de Signes.</h2>
+            <p class="text-zinc-400 text-lg max-w-lg mx-auto font-light leading-relaxed">Importez vos propres photos de galerie verset par verset</p>
         </div>
     </main>
 
@@ -92,10 +92,10 @@
         const mainContent = document.getElementById('main-content');
         const surahSelect = document.getElementById('surahSelect');
 
-        // BANQUE D'IMAGES MISE À JOUR — SÉCURISÉE SANS STATUE NI TRACE HUMAINE
+        // Banque par défaut automatique (si aucune image personnalisée n'est enregistrée)
         const imageBank = {
             univers: "https://images.unsplash.com/photo-1451187580459-43490279c0fa?auto=format&fit=crop&w=1200&q=80",
-            balance: "https://images.unsplash.com/photo-1590523177345-420379ee050d?auto=format&fit=crop&w=1200&q=80", // Vraie balance en laiton mécanique sur bois, sans aucune statue
+            balance: "https://images.unsplash.com/photo-1590523177345-420379ee050d?auto=format&fit=crop&w=1200&q=80", 
             prairie: "https://images.unsplash.com/photo-1500382017468-9049fed747ef?auto=format&fit=crop&w=1200&q=80", 
             feu: "https://images.unsplash.com/photo-1524813686514-a57563d77d61?auto=format&fit=crop&w=1200&q=80",
             sablier: "https://images.unsplash.com/photo-1611244419377-b0a760c19719?auto=format&fit=crop&w=1200&q=80",
@@ -118,7 +118,12 @@
             defaut: "https://images.unsplash.com/photo-1447752875215-b2761acb3c5d?auto=format&fit=crop&w=1200&q=80"
         };
 
-        function getThemeImage(textFr) {
+        function getThemeImage(textFr, verseKey) {
+            // ÉTAPE 1 : Vérifier si l'utilisateur a enregistré une image personnalisée pour ce verset
+            const localImg = localStorage.getItem(`custom-img-${verseKey}`);
+            if (localImg) return localImg;
+
+            // ÉTAPE 2 : Sinon, utiliser la banque par défaut
             if (!textFr) return imageBank.defaut;
             const clean = textFr.toLowerCase();
 
@@ -145,6 +150,23 @@
             if (clean.includes('mer')) return imageBank.mer;
 
             return imageBank.defaut;
+        }
+
+        // FONCTION DE SAUVEGARDE DE TON IMAGE PERSO
+        function handleImageUpload(event, verseKey) {
+            const file = event.target.files[0];
+            if (!file) return;
+
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                const base64Image = e.target.result;
+                // Enregistre l'image localement pour cette clé de verset
+                localStorage.setItem(`custom-img-${verseKey}`, base64Image);
+                // Met à jour le visuel immédiatement sur l'écran
+                const imgElement = document.getElementById(`img-view-${verseKey}`);
+                if (imgElement) imgElement.src = base64Image;
+            };
+            reader.readAsDataURL(file);
         }
 
         async function init() {
@@ -223,14 +245,20 @@
 
             verses.forEach((v) => {
                 const textFr = v.translations[0].text.replace(/<[^>]*>/g, '');
-                const dynamicImg = getThemeImage(textFr);
+                const dynamicImg = getThemeImage(textFr, v.verse_key);
                 const verseHtml = v.text_uthmani;
 
                 mainContent.innerHTML += `
                     <section id="v-${v.verse_key}" class="glass-card overflow-hidden mb-16 shadow-2xl">
                         <div class="relative h-64 w-full bg-zinc-950 flex items-center justify-center">
-                            <img src="${dynamicImg}" class="w-full h-full object-cover opacity-25 mix-blend-screen" loading="lazy" onerror="this.src='https://images.unsplash.com/photo-1447752875215-b2761acb3c5d?auto=format&fit=crop&w=1200&q=80'">
+                            <img id="img-view-${v.verse_key}" src="${dynamicImg}" class="w-full h-full object-cover opacity-25 mix-blend-screen" loading="lazy">
                             <div class="absolute inset-0 bg-gradient-to-t from-[#020617] via-transparent to-black/30"></div>
+                            
+                            <label class="absolute top-6 right-6 bg-emerald-500/20 hover:bg-emerald-500/50 text-emerald-300 text-xs font-medium px-3 py-1.5 rounded-xl cursor-pointer transition border border-emerald-500/30 backdrop-blur-sm">
+                                📷 Changer l'image
+                                <input type="file" accept="image/*" class="hidden" onchange="handleImageUpload(event, '${v.verse_key}')">
+                            </label>
+
                             <div class="absolute top-6 left-6 bg-black/60 backdrop-blur-md px-4 py-1 rounded-full text-xs font-bold border border-white/10 text-emerald-400">Verset ${v.verse_key}</div>
                         </div>
                         <div class="p-8 md:p-12 space-y-8 -mt-20 relative z-10 bg-gradient-to-b from-transparent to-[#020617]/95">
