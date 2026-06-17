@@ -16,7 +16,6 @@
     <style>
         :root { 
             --emerald: #10b981; 
-            --gold: #fbbf24; 
         }
         body { 
             background: radial-gradient(circle at top, #0f172a 0%, #020617 100%);
@@ -30,18 +29,34 @@
         }
         .quran-arabic { 
             font-family: 'Amiri', serif; 
-            font-size: 3rem; 
-            line-height: 2.4; 
+            font-size: 3.5rem; 
+            line-height: 2.5; 
             display: inline-block;
             filter: drop-shadow(0 2px 4px rgba(0,0,0,0.5));
         }
-        
-        /* --- STYLES DES COULEURS TAJWEED --- */
-        .tjweed-ghunnah, .tjweed-ikhfa, .tjweed-idgham { color: #10b981 !important; font-weight: 700; } /* Vert émeraude */
-        .tjweed-qalqalah { color: #3b82f6 !important; font-weight: 700; } /* Bleu */
-        .tjweed-mad-obligatoire, .tjweed-mad-necessaire { color: #ef4444 !important; font-weight: 700; } /* Rouge vif */
-        .tjweed-mad-permissible, .tjweed-mad-normal { color: #f97316 !important; } /* Orange */
-        .tjweed-muet, .tjweed-hamza-wasl, .tjweed-laam-shamsiyah { color: #64748b !important; opacity: 0.5; font-weight: 300; } /* Gris */
+
+        /* --- STYLES ET COULEURS DU TAJWEED --- */
+        .quran-arabic .ghunnah, .quran-arabic .ikhfa, .quran-arabic .idgham { color: #10b981 !important; font-weight: 700; } /* Vert émeraude */
+        .quran-arabic .qalqalah { color: #3b82f6 !important; font-weight: 700; } /* Bleu */
+        .quran-arabic .madd_6, .quran-arabic .madd_4, .quran-arabic .madd_mandatory { color: #ef4444 !important; font-weight: 700; } /* Rouge */
+        .quran-arabic .madd_2, .quran-arabic .madd_permissible { color: #f97316 !important; } /* Orange */
+        .quran-arabic .hamzat_wasl, .quran-arabic .silent { color: #64748b !important; opacity: 0.5; font-weight: 300; } /* Gris */
+
+        .glass-card { 
+            background: rgba(255, 255, 255, 0.02); 
+            backdrop-filter: blur(15px);
+            border: 1px solid rgba(255, 255, 255, 0.08); 
+            border-radius: 2.5rem;
+            transition: all 0.4s ease;
+        }
+        .glass-card:hover { 
+            border-color: var(--emerald); 
+            transform: translateY(-3px); 
+        }
+        audio { 
+            border-radius: 50px; 
+            width: 100%;
+        }
     </style>
 </head>
 <body class="overflow-x-hidden">
@@ -54,13 +69,13 @@
             
             <div class="flex flex-wrap justify-center items-center gap-3">
                 <div class="relative">
-                    <input type="text" id="searchInput" placeholder="Recherche (ex: Moise, Paix)..." class="search-input w-56 md:w-64 px-4 py-2 rounded-xl text-sm text-white bg-black/40 border border-white/10 focus:border-emerald-500 focus:outline-none">
+                    <input type="text" id="searchInput" placeholder="Recherche (ex: Moise, Paix)..." class="w-56 md:w-64 px-4 py-2 rounded-xl text-sm text-white bg-black/40 border border-white/10 focus:border-emerald-500 focus:outline-none">
                     <button onclick="searchVerse()" class="absolute right-3 top-2 text-emerald-400 hover:text-white transition">
                         <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" stroke-width="2" stroke-linecap="round"></path></svg>
                     </button>
                 </div>
-                <select id="surahSelect" class="bg-zinc-900 border border-zinc-700 px-3 py-2 rounded-xl text-xs outline-none w-32 md:w-40"></select>
-                <select id="reciterSelect" class="bg-zinc-900 border border-zinc-700 px-3 py-2 rounded-xl text-xs outline-none">
+                <select id="surahSelect" class="bg-zinc-900 border border-zinc-700 px-3 py-2 rounded-xl text-xs outline-none w-32 md:w-40 text-white"></select>
+                <select id="reciterSelect" class="bg-zinc-900 border border-zinc-700 px-3 py-2 rounded-xl text-xs outline-none text-white">
                     <option value="7">Mishary Alafasy</option>
                     <option value="3">Abdur-Rahman as-Sudais</option>
                     <option value="128">Yasser Ad-Dussary</option>
@@ -77,7 +92,7 @@
                 <svg class="w-16 h-16 text-emerald-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5s3.332.477 4.5 1.253v13C19.832 18.477 18.246 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"></path></svg>
             </div>
             <h2 class="text-4xl md:text-6xl font-bold tracking-tight">Méditez sur les Signes.</h2>
-            <p class="text-zinc-400 text-lg max-w-lg mx-auto font-light leading-relaxed">Mushaf Tajweed Officiel • Visuels Naturels Purifiés sans visages</p>
+            <p class="text-zinc-400 text-lg max-w-lg mx-auto font-light leading-relaxed">Mushaf Tajweed • Visuels Naturels Purifiés sans visages</p>
         </div>
     </main>
 
@@ -95,74 +110,6 @@
             desert: "https://images.unsplash.com/photo-1509316975850-ff9c5deb0cd9?auto=format&fit=crop&w=1200&q=80",    
             defaut: "https://images.unsplash.com/photo-1518156677180-95a2893f3e9f?auto=format&fit=crop&w=1200&q=80"     
         };
-
-        // Parseur basé sur une pile pour traiter les règles imbriquées d'Alquran.cloud
-        function parseTajweedRules(text) {
-            if (!text) return "";
-            
-            const rulesMap = {
-                'h': 'tjweed-hamza-wasl',
-                's': 'tjweed-muet',
-                'l': 'tjweed-laam-shamsiyah',
-                'n': 'tjweed-mad-normal',
-                'p': 'tjweed-mad-permissible',
-                'm': 'tjweed-mad-necessaire',
-                'q': 'tjweed-qalqalah',
-                'o': 'tjweed-mad-obligatoire',
-                'g': 'tjweed-ghunnah',
-                'f': 'tjweed-ikhfa',
-                'a': 'tjweed-idgham',
-                'u': 'tjweed-idgham',
-                'c': 'tjweed-ikhfa',
-                'i': 'tjweed-iqlab'
-            };
-
-            let result = "";
-            let stack = [];
-            let i = 0;
-
-            while (i < text.length) {
-                if (text[i] === '[' && text[i + 1] !== undefined) {
-                    let nextOpenIdx = text.indexOf('[', i + 1);
-                    let closeIdx = text.indexOf(']', i + 1);
-                    
-                    if (nextOpenIdx !== -1 && (closeIdx === -1 || nextOpenIdx < closeIdx)) {
-                        // C'est l'ouverture d'une règle, ex: [g:2[
-                        let segment = text.substring(i + 1, nextOpenIdx);
-                        let type = segment.split(':')[0];
-                        let className = rulesMap[type] || 'tjweed-default';
-                        
-                        result += `<span class="${className}">`;
-                        stack.push('</span>');
-                        i = nextOpenIdx + 1;
-                    } else {
-                        result += text[i];
-                        i++;
-                    }
-                } else if (text[i] === ']') {
-                    if (text[i + 1] === ']') {
-                        // Fin d'un bloc de règle
-                        if (stack.length > 0) {
-                            result += stack.pop();
-                        }
-                        i += 2;
-                    } else {
-                        result += text[i];
-                        i++;
-                    }
-                } else {
-                    result += text[i];
-                    i++;
-                }
-            }
-
-            // Sécurité pour fermer les balises restantes si le flux de l'API est corrompu
-            while (stack.length > 0) {
-                result += stack.pop();
-            }
-
-            return result;
-        }
 
         function getThemeImage(textFr) {
             const clean = textFr.toLowerCase();
@@ -243,7 +190,7 @@
                 }
 
                 mainContent.innerHTML += `
-                    <div class="glass-card p-6 mb-4 border-l-4 border-emerald-500 bg-white/5 border-l-4 border-emerald-500 rounded-[2.5rem] backdrop-blur-xl">
+                    <div class="glass-card p-6 mb-4 bg-white/5 rounded-[2.5rem] backdrop-blur-xl border-l-4 border-emerald-500">
                         <p class="text-zinc-400 text-xs mb-3 text-left uppercase font-bold tracking-wider">Référence : Verset ${r.verse_key}</p>
                         <p class="${alignClass} mb-5" ${textDirection}>${blockMarkup}</p>
                         <div class="text-left">
@@ -256,7 +203,6 @@
         async function goToVerse(vk) {
             const surahId = vk.split(':')[0];
             document.getElementById('surahSelect').value = surahId;
-            
             await loadSurah();
             
             setTimeout(() => {
@@ -275,24 +221,16 @@
             mainContent.innerHTML = `<div class="py-20 text-emerald-500 animate-bounce text-xl font-bold uppercase">Génération du flux...</div>`;
             
             try {
-                const [vR, tajweedR, aR] = await Promise.all([
-                    fetch(`https://api.quran.com/api/v4/verses/by_chapter/${sid}?language=fr&translations=31&per_page=300`),
-                    fetch(`https://api.alquran.cloud/v1/surah/${sid}/quran-tajweed`),
+                // Utilisation de l'API v4 native de quran.com avec le champ de rendu stable : 'tajweed'
+                const [vR, aR] = await Promise.all([
+                    fetch(`https://api.quran.com/api/v4/verses/by_chapter/${sid}?language=fr&translations=31&fields=text_tajweed&per_page=300`),
                     fetch(`https://api.quran.com/api/v4/chapter_recitations/${rid}/${sid}`)
                 ]);
                 
                 const vD = await vR.json();
-                const tD = await tajweedR.json();
                 const aD = await aR.json();
                 
                 currentVersesList = vD.verses;
-                
-                if(tD.data && tD.data.ayahs) {
-                    currentVersesList.forEach((verse, idx) => {
-                        verse.text_tajweed_clean = parseTajweedRules(tD.data.ayahs[idx].text);
-                    });
-                }
-                
                 renderSurah(currentVersesList, aD.audio_file.audio_url);
             } catch (e) { 
                 console.error(e);
@@ -309,7 +247,8 @@
 
             verses.forEach((v, i) => {
                 const textFr = v.translations[0].text.replace(/<[^>]*>/g, '');
-                const textArTajweed = v.text_tajweed_clean || "Texte indisponible"; 
+                // text_tajweed de quran.com intègre du HTML natif propre sans crochets cassés
+                const textArTajweed = v.text_tajweed || "Texte indisponible"; 
                 const dynamicImg = getThemeImage(textFr);
 
                 mainContent.innerHTML += `
