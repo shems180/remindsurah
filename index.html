@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>QuranVision - Éditeur Illimité</title>
+    <title>QuranVision - Public & Automatique</title>
     
     <link rel="manifest" href="manifest.json">
     <meta name="apple-mobile-web-app-capable" content="yes">
@@ -83,8 +83,8 @@
             <div class="inline-block p-6 rounded-full bg-emerald-500/10 animate-pulse">
                 <svg class="w-16 h-16 text-emerald-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5s3.332.477 4.5 1.253v13C19.832 18.477 18.246 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"></path></svg>
             </div>
-            <h2 class="text-4xl md:text-6xl font-bold tracking-tight">Votre Galerie Infinie.</h2>
-            <p class="text-zinc-400 text-lg max-w-lg mx-auto font-light leading-relaxed">Stockage ultra-haute capacité activé (IndexedDB)</p>
+            <h2 class="text-4xl md:text-6xl font-bold tracking-tight">QuranVision Public</h2>
+            <p class="text-zinc-400 text-lg max-w-lg mx-auto font-light leading-relaxed">Glisse tes photos dans un dossier nommé "images", le code s'occupe du reste !</p>
         </div>
     </main>
 
@@ -92,18 +92,7 @@
         const mainContent = document.getElementById('main-content');
         const surahSelect = document.getElementById('surahSelect');
 
-        // Initialisation de la base de données IndexedDB (Haute capacité)
-        let db;
-        const dbRequest = indexedDB.open("QuranVisionDB", 1);
-        dbRequest.onupgradeneeded = function(e) {
-            db = e.target.result;
-            if (!db.objectStoreNames.contains("images")) {
-                db.createObjectStore("images", { keyPath: "verseKey" });
-            }
-        };
-        dbRequest.onsuccess = function(e) { db = e.target.result; init(); };
-        dbRequest.onerror = function(e) { console.error("Erreur base de données", e); };
-
+        // Banque automatique par défaut (si tu n'as pas encore créé de photo pour le verset)
         const imageBank = {
             univers: "https://images.unsplash.com/photo-1451187580459-43490279c0fa?auto=format&fit=crop&w=1200&q=80",
             balance: "https://images.unsplash.com/photo-1590523177345-420379ee050d?auto=format&fit=crop&w=1200&q=80", 
@@ -154,58 +143,6 @@
             if (clean.includes('montagne')) return imageBank.montagne;
             if (clean.includes('mer')) return imageBank.mer;
             return imageBank.defaut;
-        }
-
-        // Récupération asynchrone depuis la base locale pour un verset donné
-        function getCustomImage(verseKey, fallbackUrl, callback) {
-            if (!db) { callback(fallbackUrl); return; }
-            const transaction = db.transaction(["images"], "readonly");
-            const store = transaction.objectStore("images");
-            const request = store.get(verseKey);
-            
-            request.onsuccess = function() {
-                if (request.result) {
-                    callback(request.result.data);
-                } else {
-                    callback(fallbackUrl);
-                }
-            };
-            request.onerror = function() { callback(fallbackUrl); };
-        }
-
-        // Compression et enregistrement de ta photo
-        function handleImageUpload(event, verseKey) {
-            const file = event.target.files[0];
-            if (!file) return;
-
-            const reader = new FileReader();
-            reader.onload = function(e) {
-                const img = new Image();
-                img.onload = function() {
-                    // Création d'un canvas pour réduire la taille du fichier intelligemment
-                    const canvas = document.createElement('canvas');
-                    const ctx = canvas.getContext('2d');
-                    const maxW = 1200;
-                    const scale = maxW / img.width;
-                    canvas.width = maxW;
-                    canvas.height = img.height * scale;
-                    
-                    ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
-                    const optimizedDataUrl = canvas.toDataURL('image/jpeg', 0.75);
-
-                    // Sauvegarde dans la base locale IndexedDB
-                    const transaction = db.transaction(["images"], "readwrite");
-                    const store = transaction.objectStore("images");
-                    store.put({ verseKey: verseKey, data: optimizedDataUrl });
-
-                    transaction.oncomplete = function() {
-                        const imgElement = document.getElementById(`img-view-${verseKey}`);
-                        if (imgElement) imgElement.src = optimizedDataUrl;
-                    };
-                };
-                img.src = e.target.result;
-            };
-            reader.readAsDataURL(file);
         }
 
         async function init() {
@@ -271,8 +208,7 @@
                 
                 renderSurah(data.verses, audioData.audio_file.audio_url);
             } catch (e) { 
-                console.error(e);
-                mainContent.innerHTML = "<div class='py-20 text-red-400'>Erreur de chargement. Veuillez réessayer.</div>"; 
+                mainContent.innerHTML = "<div class='py-20 text-red-400'>Erreur de chargement.</div>"; 
             }
         }
 
@@ -286,19 +222,21 @@
                 const textFr = v.translations[0].text.replace(/<[^>]*>/g, '');
                 const fallbackImg = getFallbackImage(textFr);
                 const verseHtml = v.text_uthmani;
+                
+                // On transforme la clé "1:4" en "1-4" pour créer le nom du fichier image
+                const imageName = v.verse_key.replace(':', '-');
 
-                // Structure HTML synchrone du bloc de verset
                 mainContent.innerHTML += `
                     <section id="v-${v.verse_key}" class="glass-card overflow-hidden mb-16 shadow-2xl">
                         <div class="relative h-64 w-full bg-zinc-950 flex items-center justify-center">
-                            <img id="img-view-${v.verse_key}" src="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" class="w-full h-full object-cover opacity-25 mix-blend-screen" loading="lazy">
-                            <div class="absolute inset-0 bg-gradient-to-t from-[#020617] via-transparent to-black/30"></div>
                             
-                            <label class="absolute top-6 right-6 bg-emerald-500/20 hover:bg-emerald-500/50 text-emerald-300 text-xs font-medium px-3 py-1.5 rounded-xl cursor-pointer transition border border-emerald-500/30 backdrop-blur-sm z-20">
-                                📷 Importer ma photo
-                                <input type="file" accept="image/*" class="hidden" onchange="handleImageUpload(event, '${v.verse_key}')">
-                            </label>
-
+                            <img id="img-view-${v.verse_key}" 
+                                 src="images/${imageName}.jpg" 
+                                 onerror="this.onerror=null; this.src='${fallbackImg}';" 
+                                 class="w-full h-full object-cover opacity-25 mix-blend-screen" 
+                                 loading="lazy">
+                                 
+                            <div class="absolute inset-0 bg-gradient-to-t from-[#020617] via-transparent to-black/30"></div>
                             <div class="absolute top-6 left-6 bg-black/60 backdrop-blur-md px-4 py-1 rounded-full text-xs font-bold border border-white/10 text-emerald-400">Verset ${v.verse_key}</div>
                         </div>
                         <div class="p-8 md:p-12 space-y-8 -mt-20 relative z-10 bg-gradient-to-b from-transparent to-[#020617]/95">
@@ -309,14 +247,10 @@
                             <p class="text-zinc-200 text-xl md:text-2xl font-light italic leading-relaxed max-w-2xl mx-auto">"${textFr}"</p>
                         </div>
                     </section>`;
-
-                // Attribution asynchrone sécurisée de l'image (Locale perso en priorité, sinon banque Unsplash)
-                getCustomImage(v.verse_key, fallbackImg, function(finalSrc) {
-                    const targetImg = document.getElementById(`img-view-${v.verse_key}`);
-                    if (targetImg) targetImg.src = finalSrc;
-                });
             });
         }
+
+        init();
     </script>
 </body>
 </html>
