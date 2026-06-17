@@ -100,7 +100,7 @@
                 <svg class="w-16 h-16 text-emerald-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5s3.332.477 4.5 1.253v13C19.832 18.477 18.246 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"></path></svg>
             </div>
             <h2 class="text-4xl md:text-6xl font-bold tracking-tight">Accès QuranVision</h2>
-            <p class="text-zinc-400 text-lg max-w-lg mx-auto font-light leading-relaxed">Recherchez un mot-clé ou sélectionnez directement une sourate ci-dessus pour débuter.</p>
+            <p id="loading-status" class="text-zinc-400 text-lg max-w-lg mx-auto font-light leading-relaxed">Préparation du moteur de recherche...</p>
         </div>
     </main>
 
@@ -110,6 +110,7 @@
         
         let isAdminActive = false; 
         let db;
+        let quranCache = []; // Contiendra l'intégralité des 6236 versets traduits pour une recherche locale instantanée
 
         const globalPublishedImages = {};
 
@@ -206,6 +207,7 @@
             reader.readAsDataURL(file);
         }
 
+        // Chargement initial des chapitres ET pré-chargement en tâche de fond du Coran entier
         async function init() {
             try {
                 const res = await fetch('https://api.quran.com/api/v4/chapters?language=fr');
@@ -214,79 +216,88 @@
                 data.chapters.forEach(s => {
                     surahSelect.innerHTML += `<option value="${s.id}">${s.id}. ${s.name_simple}</option>`;
                 });
+                
+                // Lancement de l'indexation locale en tâche de fond
+                preloadQuranData();
             } catch (e) { console.error(e); }
         }
 
-        // SOLUTION ABSOLUE : Téléchargement direct du dictionnaire de traduction pour contourner le bridage de l'API
+        // Télécharge l'index complet par blocs de 100 pour contourner définitivement toutes les limites réseau
+        async function preloadQuranData() {
+            const statusEl = document.getElementById('loading-status');
+            try {
+                let page = 1;
+                let totalPages = 63; // 6236 versets / 100 par page
+                
+                if(statusEl) statusEl.innerText = "Synchronisation de l'index du Coran (0%)...";
+                
+                while(page <= totalPages) {
+                    const res = await fetch(`https://api.quran.com/api/v4/verses/by_translation/31?per_page=100&page=${page}`);
+                    const data = await res.json();
+                    
+                    if(data && data.verses) {
+                        quranCache = quranCache.concat(data.verses);
+                    }
+                    if(statusEl && page % 10 === 0) {
+                        statusEl.innerText = `Synchronisation de l'index du Coran (${Math.round((page/totalPages)*100)}%)...`;
+                    }
+                    page++;
+                }
+                
+                if(statusEl) statusEl.innerText = "Recherchez un mot-clé ou sélectionnez directement une sourate ci-dessus pour débuter.";
+                console.log("Indexation locale terminée. Nombre de versets chargés :", quranCache.length);
+            } catch(err) {
+                if(statusEl) statusEl.innerText = "Recherche active disponible. Entrez un mot-clé ci-dessus.";
+                console.error("Erreur de préchargement", err);
+            }
+        }
+
+        // MOTEUR DE RECHERCHE LOCAL : Sans aucune API intermédiaire, scanne directement la mémoire vive
         async function searchVerse() {
             let userQuery = document.getElementById('searchInput').value.trim();
             if (!userQuery) return;
             
-            mainContent.innerHTML = `<div class="py-20 text-emerald-500 animate-pulse text-xl">Recherche intégrale et instantanée dans les 6236 versets...</div>`;
+            mainContent.innerHTML = `<div class="py-20 text-emerald-500 animate-pulse text-xl">Recherche de "${userQuery}" dans les 6236 versets...</div>`;
             
-            // On normalise sans accents pour matcher toutes les graphies (Moïse, moise, paradis, Paradis)
-            let normalizedQuery = userQuery.toLowerCase()
-                .normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+            let normalizedQuery = userQuery.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
 
-            try {
-                // On appelle le fichier complet de la traduction française (ID 31 : Muhammad Hamidullah)
-                const url = `https://api.quran.com/api/v4/quran/translations/31`;
-                const res = await fetch(url);
-                const data = await res.json();
-                
-                let foundResults = [];
+            // Si le cache en arrière-plan n'a pas fini de charger, on fait une extraction d'urgence sur les premières pages
+            if (quranCache.length < 5000) {
+                mainContent.innerHTML = `<div class="py-20 text-emerald-500 animate-pulse text-xl">Initialisation de la base de données requise, veuillez patienter quelques secondes...</div>`;
+                await preloadQuranData();
+            }
 
-                if (data && data.translations) {
-                    data.translations.forEach(v => {
-                        let textRaw = v.text.replace(/<[^>]*>/g, ''); // Supprime les balises HTML de note de bas de page
-                        let textNormalized = textRaw.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
-                        
-                        if (textNormalized.includes(normalizedQuery)) {
-                            // On retrouve la clé du verset (ex: "1:5") depuis l'ID absolu de l'API si nécessaire
-                            // Mais on peut utiliser l'identifiant direct de l'API pour générer la clé de lecture
-                            foundResults.push({
-                                resource_id: v.resource_id,
-                                verse_id: v.id, 
-                                verse_key: v.verse_key || guessVerseKey(v.id), // Fonction de secours pour la clé de structure
-                                text: textRaw
-                            });
-                        }
-                    });
-                }
-
-                if (foundResults.length > 0) {
-                    mainContent.innerHTML = `<h2 class="text-2xl font-bold mb-8 text-emerald-500">${foundResults.length} occurrence(s) trouvée(s) pour "${userQuery}"</h2>`;
+            let matches = [];
+            quranCache.forEach(v => {
+                if(v.translations && v.translations[0]) {
+                    let textRaw = v.translations[0].text.replace(/<[^>]*>/g, '');
+                    let textNormalized = textRaw.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
                     
-                    foundResults.forEach(r => {
-                        mainContent.innerHTML += `
-                            <div class="glass-card p-6 md:p-8 mb-6 bg-white/5 border-l-4 border-emerald-500 text-left space-y-4">
-                                <div class="flex justify-between items-center text-zinc-400 text-xs">
-                                    <span>Verset ${r.verse_key}</span>
-                                </div>
-                                <p class="text-zinc-200 font-light italic text-sm md:text-base">"${r.text}"</p>
-                                <button onclick="goToVerse('${r.verse_key}')" class="text-emerald-500 text-xs font-bold pt-2 block hover:underline">LIRE LE VERSET EN IMAGE →</button>
-                            </div>`;
-                    });
-                } else {
-                    mainContent.innerHTML = `<p class='py-20 text-zinc-400'>Aucun résultat trouvé pour "${userQuery}". Essayez un autre mot-clé.</p>`;
+                    if (textNormalized.includes(normalizedQuery)) {
+                        matches.push({
+                            verse_key: v.verse_key,
+                            text: textRaw
+                        });
+                    }
                 }
-            } catch (e) {
-                mainContent.innerHTML = "<p class='py-20 text-red-400'>Erreur lors de l'indexation locale des versets.</p>";
-            }
-        }
+            });
 
-        // Fonction utilitaire pour recalculer instantanément le numéro de Sourate:Verset à partir de l'index global (1 à 6236)
-        function guessVerseKey(id) {
-            // Liste cumulative des versets par sourate dans le Coran pour retrouver la clé "Sourate:Verset"
-            const structuralMap = [7,286,200,176,120,165,206,75,129,109,123,111,43,52,99,128,111,110,98,135,112,78,118,64,77,227,93,88,69,60,34,30,73,54,45,83,182,88,75,85,54,53,89,59,37,35,38,29,18,45,60,49,62,55,78,96,29,22,24,13,14,11,11,18,12,12,30,52,52,44,28,28,20,56,40,31,50,40,46,42,29,19,36,25,22,17,19,26,30,20,15,21,11,8,8,19,5,8,8,11,11,8,3,9,5,4,7,3,6,3,5,4,5,6];
-            let currentId = id;
-            for (let i = 0; i < structuralMap.length; i++) {
-                if (currentId <= structuralMap[i]) {
-                    return `${i + 1}:${currentId}`;
-                }
-                currentId -= structuralMap[i];
+            if (matches.length > 0) {
+                mainContent.innerHTML = `<h2 class="text-2xl font-bold mb-8 text-emerald-500">${matches.length} occurrence(s) trouvée(s) pour "${userQuery}"</h2>`;
+                
+                matches.forEach(r => {
+                    mainContent.innerHTML += `
+                        <div class="glass-card p-6 md:p-8 mb-6 bg-white/5 border-l-4 border-emerald-500 text-left space-y-4">
+                            <div class="flex justify-between items-center text-zinc-400 text-xs">
+                                <span>Verset ${r.verse_key}</span>
+                            </div>
+                            <p class="text-zinc-200 font-light italic text-sm md:text-base">"${r.text}"</p>
+                            <button onclick="goToVerse('${r.verse_key}')" class="text-emerald-500 text-xs font-bold pt-2 block hover:underline">LIRE LE VERSET EN IMAGE →</button>
+                        </div>`;
+                });
+            } else {
+                mainContent.innerHTML = `<p class='py-20 text-zinc-400'>Aucun résultat trouvé pour "${userQuery}". Essayez un autre mot-clé (ex: Ciel, Terre, Coeur).</p>`;
             }
-            return "1:1";
         }
 
         async function goToVerse(vk) {
