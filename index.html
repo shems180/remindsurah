@@ -90,15 +90,13 @@
                     <option value="1">1. Al-Fatihah</option>
                     <option value="2">2. Al-Baqarah</option>
                     <option value="3">3. Ali 'Imran</option>
-                    <option value="4">4. An-Nisa</option>
-                    <option value="5">5. Al-Ma'idah</option>
                     <option value="114">114. An-Nas</option>
                 </select>
 
                 <select id="reciterSelect" class="bg-zinc-900 border border-zinc-700 px-3 py-2 rounded-xl text-xs outline-none text-white">
-                    <option value="7">Mishary Alafasy</option>
-                    <option value="3">Abdur-Rahman as-Sudais</option>
-                    <option value="128">Yasser Ad-Dussary</option>
+                    <option value="ar.alafasy">Mishary Alafasy</option>
+                    <option value="ar.as-sudais">Abdur-Rahman as-Sudais</option>
+                    <option value="ar.dussary">Yasser Ad-Dussary</option>
                 </select>
                 
                 <button onclick="loadSurah()" class="bg-emerald-600 hover:bg-emerald-400 text-black font-bold px-6 py-2 rounded-xl transition-all">Explorer</button>
@@ -110,24 +108,80 @@
         
         <div class="sticky top-24 z-40 w-full mb-12 px-4">
             <div class="audio-player-container">
-                <audio src="https://download.quranicaudio.com/qdc/mishari_al_afasy/murattal/1.mp3" controls></audio>
+                <audio id="audioPlayer" src="https://download.quranicaudio.com/qdc/mishari_al_afasy/murattal/1.mp3" controls></audio>
             </div>
         </div>
         
-        <section id="v-1:1" class="glass-card overflow-hidden mb-16 shadow-2xl">
+        <section class="glass-card overflow-hidden mb-16 shadow-2xl">
             <div class="relative h-64 w-full bg-zinc-950 flex items-center justify-center">
-                <span class="absolute top-4 left-4 z-10 bg-black/60 text-emerald-400 text-xs px-3 py-1 rounded-full font-bold border border-emerald-500/30">Verset 1:1</span>
-                <img id="img-view-1:1" src="data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/4gHYSUNDX1BST0ZJTEUAAQEAAAHIAAAAAAQwAABtbnRyUkdCIFhZWiAH4AABAAEAAAAAAABhY3NwAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAQAA9tYAAQAAAADTLQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAlkZXNjAAAA8AAAACRyWFlaAAABFAAAABRnWFlaAAABKAAAABRiWFlaAAABPAAAABR3dHB0AAABUAAAABRyVFJDAAABZAAAAChnVFJDAAABZAAAAChiVFJDAAABZAAAAChjcHJ0AAABjAAAADxtbHVjAAAAAAAAAAEAAAAMZW5VUwAAAAgAAAAcAHMAUgBHAEJYWVogAAAAAAAAb6IAADj1AAADkFhZWiAAAAAAAABimQAAt4UAABjaWFlaIAAAAAAAACSgAAAPhAAAts9YWVogAAAAAAAA9tYAAQAAAADTLXBhcmEAAAAAAAQAAAACZmYAAPKnAAANWQAAE9AAAApbAAAAAAAAAABtbHVjAAAAAAAAAAEAAAAMZW5VUwAAACAAAAAcAEcAbwBvAGcAbABlACAASQBuAGMALgAgADIAMAAxADb/2wBDAAoHBwgHBgoICAgLCgoLDhgQDg0NDh0VFhEYIx8lJCIfIiEmKzcvJik0KSEiMEExNDk7Pj4+JS5ESUM8SDc9Pjv/2wBDAQoLCw4NDhwQEBw7KCIoOzs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozv/wAARCALQA4QDASIAAhEBAxEB/8QAHAABAAICAwEAAAAAAAAAAAAAAAYHBQgBAwQC/8QAThABAAEDAwEEBQcHCQUHBQEAAAECAwQFBhEHEiExQRNRYXGBFCIykaGxwRUjQlJictEWFzNDU5KywtIkVoKUogg1c4ST4fBGVGNkg9P/xAAVAQEBAAAAAAAAAAAAAAAAAAAAAf/EABURAQEAAAAAAAAAAAAAAAAAAAAR/9oADAMBAAIRAxEAPwC5gAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAHlydTwMOqaMnNsWaojtdm5cimePdL0zzxPHj5Ka3D0b1/Uq51ONas5uo36pqyKLtM0UxM/qT393lxMQD17t3FuvWNLydb0bOo0jRMaJ9BVXX2L2ZxPE1U93h6vDlNenep6hrGycDO1Oua8m5FUTXMcTXEVTET9UQr3bnRTPuZVFzcmbRTjW5jjGsVzVVX7Jnwpj3c/BceNjWcTGt42PbptWbVMUUUUxxFMR4RAO0AAAAAAAAHzXXTboqrrqimmmOZmZ7ogH0iu4+o+29sZkYedk3LuT+nax6O3NuP2u+Ij3ePsV5rHXDU41HKt6Xg2Iw5pmjHruxPb9lfq+CN2dUtbk02jbukbXpv6rmVxVf1G/c9Lfrr55qq7XZjsx4+fgDYjT8/G1TAsZ2Hdi7j36Irt1x5xL0sZtzR6NA27g6VRMVfJrMUTMedXjVP1zLJgA4mYiOZngHIhu4uqW2dvzXZ+VfLsmjmPQ4sxVxPqmrwhJtJzp1PSMTPqsVWJybNN30dU8zTzHPHIPYhuq9Vdq6XkZmLVm1XcnFpn5lFuqablf6kVccc/YlebYqysK/j0X67FV23VRF239K3Mxx2o9seKuNV6G6JlUUTpatenYd/GmKPk1ibVqbtER5098TEzPPqbC5un4epY042fi2cqzM8zbvURXTz7pfePjWMTHox8azbs2bccUW7dMU00x6oiPAEa2PoWRgbFsuxbK0XPsRT2puY1ymI9czTKu+g+RTVt3U8T9OzlxXMeyqmIj/DILSAARjWOnW2dd1iNVz8Ca8nmJr7NyaabnHh2ojxSdi9xbgwdsaLe1TUK5i1a4iKafpV1T4UxHrn/wBwfePt/RsTNjNx9LxLWTFPZi7RZpiqI8OOYhkXVjZFvLxLOTanm3eoprpn1xMcwxmg7o07cV/ULWBXVVOn3/QXJmO6qfXHs5iY+AMw48XICnOjMV6Xu3cmi18TNvuqq9tu5VT/AJlxqm2hRTp3XHcOLR4X6Llff66ppuT9srZAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAB83LlNq1VcrnimiJqmfVEA8mo6zpuk1Y9OoZtnGqybno7MXKuO3V6oe1rtqmqYXUPVtYv6jqM4mVZt8aPYrrim1VTEzzTMz+lMRHnHfLJbL6yZej2aNO1+1czMe382i/TP52iPVPP0o+33gvcR7SN+bX1u3TVh6zjduf6q7V6OuP+GrifqZ63etXqe1auUVx66aokH2AAOu7kWbFPavXqLdPrrqiI+1GtZ6k7T0SmYv6tav3Y8LWL+dq93d3R8ZgGa1zWMXQNFytVzKuLONR2p48ap8IiPbMzEfFRuT1w3Rczpu49rDs4/PzbE2u13e2rnn7krxetmi6pq04GpaXNjS7sdmb16Yud/l2qOPD63r3RqPSmjAmvKtaZlVVx82jT6aZuTPvo44+MwDz7d646ZmTTY13EqwLk93prXNduffHjH2rG0zWdM1mz6bTc6xl0ec2q4q498eTU/Opxb+pXY0qxfjGqq/M27sxXXEeqeI73sw9D3HbrpycLS9ToqjvpuWbFyJj3TEA2xGu+29V6i5mu4ukWdR1KzXdr+dORTMxRTHjVPajyhZizedYt6Pldqf6Pt0R7orlX+t9bsnU9Fv4FjRbVm5k2pt13K701xETHE8RxH3rH6Z6dc03YGmWr1M013KJvTTMcTHamao+yYBG922Yt9ads3oj5123xM+6av4rPV/uXDqy+r22OxH9Fj3btU+qI5WADwa3o+Jr+j5Ol5tM1Wcijszx40z5THtie9TnTC3k7W6o5m3cmZmbtu5anyiqaY7dNXxpifrXihWftm7V1d0vX8fHq9DGHdjIuRHze3FM008z65iuI91PsBNZVnrXRz+UGp5Go6juPJuZF6uZj8zHZojypiOfCITDd+6cTaOhXNSyafSVc9izZieJuVz4Qojd24t95lXp9Z+X4GLf77dumiq1a4nwiOPH48g+t39M9X2hE5lvKtZmLR3xdtT2LlHtmnnn4xyym0OsmqaNTbw9aoq1HEp7ouc/nqI9/6Xx7/AGsntLpHoW5NCx9Wq13MvRfp+dTbt00TRV50zz2u+JZbI6CaPVRMY2s5turym5R" class="w-full h-full object-cover" alt="Calligraphie du verset">
+                <span id="verseBadge" class="absolute top-4 left-4 z-10 bg-black/60 text-emerald-400 text-xs px-3 py-1 rounded-full font-bold border border-emerald-500/30">Sourate 1</span>
+                <img id="quranImage" src="https://images.quran.com/images/bismillah.png" class="w-auto h-32 object-contain" alt="Bismillah">
                 <div class="absolute inset-0 bg-gradient-to-t from-[#020617] via-transparent to-black/40"></div>
             </div>
             
             <div class="p-6 md:p-8 bg-zinc-900/50">
                 <div class="quran-container mb-6">
-                    <span class="quran-arabic text-emerald-300">بِسْمِ اللَّهِ الرَّحْمَٰنِ الرَّحِيمِ</span>
+                    <div id="quranText" class="quran-arabic text-emerald-300">بِسْمِ اللَّهِ الرَّحْمَٰنِ الرَّحِيمِ</div>
                 </div>
             </div>
         </section>
     </main>
 
+    <script>
+        async function loadSurah() {
+            const surahNumber = document.getElementById('surahSelect').value;
+            const reciter = document.getElementById('reciterSelect').value;
+            
+            const audioPlayer = document.getElementById('audioPlayer');
+            const quranTextDiv = document.getElementById('quranText');
+            const verseBadge = document.getElementById('verseBadge');
+            const quranImage = document.getElementById('quranImage');
+
+            // 1. Mise à jour de l'audio selon le récitant et la sourate
+            // On formate le numéro de la sourate sur 3 chiffres (ex: 1 -> 001)
+            const formattedSurah = String(surahNumber).padStart(3, '0');
+            
+            // On adapte l'URL selon le récitant sélectionné
+            if(reciter === 'ar.alafasy') {
+                audioPlayer.src = `https://download.quranicaudio.com/qdc/mishari_al_afasy/murattal/${surahNumber}.mp3`;
+            } else if(reciter === 'ar.as-sudais') {
+                audioPlayer.src = `https://download.quranicaudio.com/qdc/abdurrahman_as_sudais/murattal/${surahNumber}.mp3`;
+            } else {
+                audioPlayer.src = `https://server11.mp3quran.net/yasser/${formattedSurah}.mp3`;
+            }
+            audioPlayer.load();
+
+            // 2. Récupération du texte de la Sourate via l'API AlQuran
+            try {
+                quranTextDiv.innerText = "Chargement...";
+                const response = await fetch(`https://api.alquran.cloud/v1/surah/${surahNumber}`);
+                const data = await response.json();
+                
+                if (data.code === 200) {
+                    // On rassemble tous les versets de la sourate
+                    const verses = data.data.ayahs.map(ayah => ayah.text).join(" ۝ ");
+                    quranTextDiv.innerText = verses;
+                    verseBadge.innerText = `Sourate ${surahNumber} - ${data.data.name}`;
+                    
+                    // Masquer l'image de la Bismillah si ce n'est pas la sourate 1
+                    if(surahNumber !== "1") {
+                        quranImage.style.display = "none";
+                    } else {
+                        quranImage.style.display = "block";
+                    }
+                } else {
+                    quranTextDiv.innerText = "Erreur lors du chargement de la sourate.";
+                }
+            } catch (error) {
+                console.error(error);
+                quranTextDiv.innerText = "Impossible de se connecter à l'API.";
+            }
+        }
+
+        // Fonctions secondaires pour éviter les erreurs de console si tu cliques dessus
+        function checkAdminPassword() { alert("Déconnexion admin simulee"); }
+        function exportConfig() { alert("Exportation simulée"); }
+        function searchVerse() { alert("Recherche en cours de développement"); }
+    </script>
 </body>
 </html>
