@@ -33,14 +33,16 @@
             text-align: center;
         }
 
-        /* --- LE RECOUVREMENT DES CLASSES TAJWEED DE L'API CORRIGÉ --- */
-        /* L'API injecte des classes comme .madd, .ghunnah, .ikhfa, .qalqalah, .silent dans son HTML */
-        .quran-arabic .madd_6, .quran-arabic .madd_4, .quran-arabic .madd { color: #ef4444 !important; font-weight: bold; } /* Rouge */
-        .quran-arabic .madd_2 { color: #f43f5e !important; }                                                          /* Rose */
-        .quran-arabic .ghunnah { color: #10b981 !important; font-weight: bold; }                                        /* Vert */
-        .quran-arabic .ikhfa { color: #f97316 !important; }                                                            /* Orange */
-        .quran-arabic .qalqalah { color: #3b82f6 !important; font-weight: bold; }                                      /* Bleu */
-        .quran-arabic .silent { color: #64748b !important; opacity: 0.5; }                                             /* Gris */
+        /* --- STYLES ET COULEURS DES CLASSES INJECTÉES PAR L'API --- */
+        .quran-arabic span { display: inline; }
+        
+        /* Correspondance exacte avec les balises de l'API Uthmani Tajweed */
+        .quran-arabic [class*="tajweed-madd_6"], .quran-arabic [class*="tajweed-madd_4"] { color: #ef4444 !important; font-weight: bold; } /* Rouge */
+        .quran-arabic [class*="tajweed-madd_2"] { color: #f43f5e !important; } /* Rose */
+        .quran-arabic [class*="tajweed-ghunnah"] { color: #10b981 !important; font-weight: bold; } /* Vert */
+        .quran-arabic [class*="tajweed-ikhfa"] { color: #f97316 !important; } /* Orange */
+        .quran-arabic [class*="tajweed-qalqalah"] { color: #3b82f6 !important; font-weight: bold; } /* Bleu */
+        .quran-arabic [class*="tajweed-silent"] { color: #64748b !important; opacity: 0.5; } /* Gris */
 
         .glass-card { 
             background: rgba(15, 23, 42, 0.4); 
@@ -94,7 +96,7 @@
                 <svg class="w-16 h-16 text-emerald-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5s3.332.477 4.5 1.253v13C19.832 18.477 18.246 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"></path></svg>
             </div>
             <h2 class="text-4xl md:text-6xl font-bold tracking-tight">Méditez sur les Signes.</h2>
-            <p class="text-zinc-400 text-lg max-w-lg mx-auto font-light leading-relaxed">Mushaf Multi-couleurs Tajweed Validé</p>
+            <p class="text-zinc-400 text-lg max-w-lg mx-auto font-light leading-relaxed">Mushaf Tajweed Corrigé & Validé</p>
         </div>
     </main>
 
@@ -107,7 +109,7 @@
             ocean: "https://images.unsplash.com/photo-1505118380757-91f5f5632de0?auto=format&fit=crop&w=1200&q=80",     
             nature: "https://images.unsplash.com/photo-1441974231531-c6227db76b6e?auto=format&fit=crop&w=1200&q=80",    
             montagne: "https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?auto=format&fit=crop&w=1200&q=80",  
-            lumiere: "https://images.unsplash.com/photo-1546587348-d12660c30c50?auto=format&fit=crop&w=1200&q=80",   
+            lumiere: "https://images.unsplash.com/photo-1546587348-d12660c30c30?auto=format&fit=crop&w=1200&q=80",   
             desert: "https://images.unsplash.com/photo-1509316975850-ff9c5deb0cd9?auto=format&fit=crop&w=1200&q=80",    
             defaut: "https://images.unsplash.com/photo-1518156677180-95a2893f3e9f?auto=format&fit=crop&w=1200&q=80"     
         };
@@ -177,8 +179,8 @@
             mainContent.innerHTML = `<div class="py-20 text-emerald-500 animate-bounce text-xl font-bold">CHARGEMENT SÉCURISÉ...</div>`;
             
             try {
-                // LA CONFIGURATION ENFIN VALIDÉE EN TEST : v2=true + fields=text_tajweed
-                const res = await fetch(`https://api.quran.com/api/v4/verses/by_chapter/${sid}?language=fr&translations=31&v2=true&fields=text_tajweed&per_page=300`);
+                // PARAMÈTRE EXACT CORRIGÉ : text_uthmani_tajweed fournit le texte arabe avec les classes de couleurs valides
+                const res = await fetch(`https://api.quran.com/api/v4/verses/by_chapter/${sid}?language=fr&translations=31&fields=text_uthmani_tajweed&per_page=300`);
                 const audioRes = await fetch(`https://api.quran.com/api/v4/chapter_recitations/${rid}/${sid}`);
                 
                 const data = await res.json();
@@ -201,8 +203,8 @@
                 const textFr = v.translations[0].text.replace(/<[^>]*>/g, '');
                 const dynamicImg = getThemeImage(textFr);
 
-                // L'API envoie directement une chaîne HTML parfaite avec les spans de couleurs imbriqués
-                const verseHtml = v.text_tajweed;
+                // Extraction de la bonne propriété vérifiée en console locale
+                const verseHtml = v.text_uthmani_tajweed;
 
                 mainContent.innerHTML += `
                     <section id="v-${v.verse_key}" class="glass-card overflow-hidden mb-16 shadow-2xl">
