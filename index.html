@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>QuranVision</title>
     
-    <link rel="manifest" href="manifest.json?v=10">
+    <link rel="manifest" href="manifest.json?v=7">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <link class="apple-touch-icon" href="icon-192.png">
@@ -20,24 +20,18 @@
             font-family: 'Inter', sans-serif; 
             min-height: 100vh;
         }
-        .quran-container { 
-            direction: rtl; 
-            text-align: right; 
-        }
+        .quran-container { direction: rtl; text-align: right; }
         .quran-arabic { 
             font-family: 'Amiri', serif !important; 
-            font-size: 2rem !important; 
-            line-height: 2.5 !important; 
+            font-size: 1.6rem !important; 
+            line-height: 2.3 !important; 
             display: inline-block;
             width: 100%;
             text-align: center;
-            word-spacing: 4px;
+            word-spacing: 2px;
         }
         @media (min-width: 768px) {
-            .quran-arabic { 
-                font-size: 2.8rem !important; 
-                line-height: 3 !important; 
-            }
+            .quran-arabic { font-size: 2.4rem !important; line-height: 2.5 !important; word-spacing: 4px; }
         }
         .glass-card { 
             background: rgba(15, 23, 42, 0.6); 
@@ -55,131 +49,301 @@
             padding: 8px 16px;
             box-shadow: 0 20px 40px rgba(0,0,0,0.8);
         }
-        audio { 
-            height: 40px; 
-            width: 100%; 
-            outline: none; 
-        }
+        audio { height: 40px; width: 100%; outline: none; }
     </style>
 </head>
 <body class="overflow-x-hidden">
 
     <nav class="sticky top-0 z-50 p-4 bg-black/70 backdrop-blur-xl border-b border-white/5">
         <div class="max-w-7xl mx-auto flex flex-col lg:flex-row justify-between items-center gap-4">
-            
-            <div class="flex flex-wrap items-center justify-center gap-4">
+            <div class="flex items-center gap-4">
                 <h1 onclick="window.location.reload()" class="cursor-pointer text-2xl font-bold tracking-tighter text-emerald-500 flex items-center gap-2">
                     <span class="bg-emerald-500 text-black px-2 py-1 rounded-lg text-sm italic font-black">IQRA</span> QURAN<span class="text-white font-light">VISION</span>
                 </h1>
-                <button onclick="checkAdminPassword()" id="adminBadge" class="text-[10px] bg-red-600 text-white font-bold px-2 py-0.5 rounded transition hover:bg-red-700">⚡ Déconnexion Admin</button>
-                <button onclick="exportConfig()" id="exportBtn" class="text-[10px] bg-emerald-900/50 text-emerald-400 px-2 py-0.5 rounded border border-emerald-700/50 hover:bg-emerald-500 hover:text-black transition inline-block">📦 Télécharger le HTML mis à jour</button>
+                <button onclick="checkAdminPassword()" id="adminBadge" class="text-[10px] bg-zinc-800 text-zinc-400 px-2 py-0.5 rounded border border-zinc-700 hover:text-white transition">Connexion Admin</button>
+                <button onclick="exportConfig()" id="exportBtn" class="hidden text-[10px] bg-emerald-900/50 text-emerald-400 px-2 py-0.5 rounded border border-emerald-700/50 hover:bg-emerald-500 hover:text-black transition">📦 Télécharger le HTML mis à jour</button>
             </div>
             
             <div class="flex flex-wrap justify-center items-center gap-3">
                 <div class="relative">
                     <input type="text" id="searchInput" placeholder="Recherche (ex: Moise, Paradis)..." class="w-56 md:w-64 px-4 py-2 rounded-xl text-sm text-white bg-black/40 border border-white/10 focus:border-emerald-500 focus:outline-none">
                     <button onclick="searchVerse()" class="absolute right-3 top-2 text-emerald-400 hover:text-white transition">
-                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" stroke-width="2" stroke-linecap="round"></path>
-                        </svg>
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" stroke-width="2" stroke-linecap="round"></path></svg>
                     </button>
                 </div>
-                
-                <select id="surahSelect" class="bg-zinc-900 border border-zinc-700 px-3 py-2 rounded-xl text-xs outline-none w-32 md:w-40 text-white">
-                    <option value="1">1. Al-Fatihah</option>
-                    <option value="2">2. Al-Baqarah</option>
-                    <option value="3">3. Ali 'Imran</option>
-                    <option value="114">114. An-Nas</option>
-                </select>
-
+                <select id="surahSelect" class="bg-zinc-900 border border-zinc-700 px-3 py-2 rounded-xl text-xs outline-none w-32 md:w-40 text-white"></select>
                 <select id="reciterSelect" class="bg-zinc-900 border border-zinc-700 px-3 py-2 rounded-xl text-xs outline-none text-white">
-                    <option value="alafasy">Mishary Alafasy</option>
-                    <option value="sudais">Abdur-Rahman as-Sudais</option>
-                    <option value="dussary">Yasser Ad-Dussary</option>
+                    <option value="7">Mishary Alafasy</option>
+                    <option value="3">Abdur-Rahman as-Sudais</option>
+                    <option value="128">Yasser Ad-Dussary</option>
                 </select>
-                
                 <button onclick="loadSurah()" class="bg-emerald-600 hover:bg-emerald-400 text-black font-bold px-6 py-2 rounded-xl transition-all">Explorer</button>
             </div>
         </div>
     </nav>
 
     <main id="main-content" class="max-w-4xl mx-auto p-4 md:p-8 mt-6 space-y-12 text-center">
-        
-        <div class="sticky top-24 z-40 w-full mb-12 px-4">
-            <div class="audio-player-container">
-                <audio id="audioPlayer" src="https://download.quranicaudio.com/qdc/mishari_al_afasy/murattal/1.mp3" controls></audio>
+        <div id="welcome-screen" class="py-24 space-y-8">
+            <div class="inline-block p-6 rounded-full bg-emerald-500/10 animate-pulse">
+                <svg class="w-16 h-16 text-emerald-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5s3.332.477 4.5 1.253v13C19.832 18.477 18.246 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"></path></svg>
             </div>
+            <h2 class="text-4xl md:text-6xl font-bold tracking-tight">Accès QuranVision</h2>
+            <p id="loading-status" class="text-zinc-400 text-lg max-w-lg mx-auto font-light">Application prête. Saisissez un terme pour lancer la recherche.</p>
         </div>
-        
-        <section class="glass-card overflow-hidden mb-16 shadow-2xl">
-            <div class="relative p-6 flex flex-col items-center justify-center bg-zinc-950/30 border-b border-white/5">
-                <span id="verseBadge" class="absolute top-4 left-4 z-10 bg-black/60 text-emerald-400 text-xs px-3 py-1 rounded-full font-bold border border-emerald-500/30">Sourate 1</span>
-                
-                <div id="imagePlaceholder" class="w-full text-center py-4 text-zinc-500 font-medium text-xs tracking-wider uppercase bg-black/20 rounded-xl max-w-md mx-auto my-2 border border-white/5">
-                     ⚠️ Image indisponible pour le moment
-                </div>
-            </div>
-            
-            <div class="p-6 md:p-8 bg-zinc-900/50">
-                <div class="quran-container mb-6">
-                    <div id="quranText" class="quran-arabic text-emerald-300">بِسْمِ اللَّهِ الرَّحْمَٰنِ الرَّحِيمِ</div>
-                </div>
-            </div>
-        </section>
     </main>
 
     <script>
-        // Base de données fixe contenant tes textes parfaits pour éviter les bugs d'API sur la police
-        const quranData = {
-            "1": {
-                text: "بِسْمِ اللَّهِ الرَّحْمَٰنِ الرَّحِيمِ ۝ الْحَمْدُ لِلَّهِ رَبِّ الْعَالَمِينَ ۝ الرَّحْمَٰنِ الرَّحِيمِ ۝ مَالِكِ يَوْمِ الدِّينِ ۝ إِيَّاكَ نَعْبُدُ وَإِيَّاكَ نَسْتَعِينُ ۝ اهْدِنَا الصِّرَاطَ الْمُسْتَقِيمَ ۝ صِرَاطَ الَّذِينَ أَنْعَمْتَ عَلَيْهِمْ غَيْرِ الْمَغْضُوبِ عَلَيْهِمْ وَلَا الضَّالِّينَ",
-                name: "Sourate 1 - Al-Fatihah"
-            },
-            "2": {
-                text: "الم ۝ ذَٰلِكَ الْكِتَابُ لَا رَيْبَ ۛ فِيهِ ۛ هُدًى لِّلْمُتَّقِينَ ۝ الَّذِينَ يُؤْمِنُونَ بِالْغَيْبِ وَيُقِيمُونَ الصَّلَاةَ وَمِمَّا رَزَقْنَاهُمْ يُنفِقُونَ",
-                name: "Sourate 2 - Al-Baqarah (Début)"
-            },
-            "3": {
-                text: "الم ۝ اللَّهُ لَا إِلَٰهَ إِلَّا هُوَ الْحَيُّ الْقَيُّومُ ۝ نَزَّلَ عَلَيْكَ الْكِتَابَ بِالْحَقِّ مُصَدِّقًا لِّمَا بَيْنَ يَدَيْهِ وَأَنزَلَ التَّوْرَاةَ وَالْإِنجِيلَ",
-                name: "Sourate 3 - Ali 'Imran (Début)"
-            },
-            "114": {
-                text: "قُلْ أَعُوذُ بِرَبِّ النَّاسِ ۝ مَلِكِ النَّاسِ ۝ إِلَٰهِ النَّASِ ۝ مِن شَرِّ الْوَسْوَاسِ الْخَنَّاسِ ۝ الَّذِي يُوَسْوِسُ فِي صُدُورِ النَّاسِ ۝ مِنَ الْجِنَّةِ وَالنَّاسِ",
-                name: "Sourate 114 - An-Nas"
-            }
+        const mainContent = document.getElementById('main-content');
+        const surahSelect = document.getElementById('surahSelect');
+        let isAdminActive = false; 
+        let db;
+
+        const globalPublishedImages = {};
+
+        // Liste en dur des sourates pour éviter le blocage API au démarrage
+        const chaptersList = [
+            {id:1, name:"Al-Fatihah"}, {id:2, name:"Al-Baqarah"}, {id:3, name:"Ali 'Imran"}, {id:4, name:"An-Nisa"}, {id:5, name:"Al-Ma'idah"}, {id:6, name:"Al-An'am"}, {id:7, name:"Al-A'raf"}, {id:8, name:"Al-Anfal"}, {id:9, name:"At-Tawbah"}, {id:10, name:"Yunus"}, {id:11, name:"Hud"}, {id:12, name:"Yusuf"}, {id:13, name:"Ar-Ra'd"}, {id:14, name:"Ibrahim"}, {id:15, name:"Al-Hijr"}, {id:16, name:"An-Nahl"}, {id:17, name:"Al-Isra"}, {id:18, name:"Al-Kahf"}, {id:19, name:"Maryam"}, {id:20, name:"Ta-Ha"}, {id:21, name:"Al-Anbiya"}, {id:22, name:"Al-Hajj"}, {id:23, name:"Al-Mu'minun"}, {id:24, name:"An-Nur"}, {id:25, name:"Al-Furqan"}, {id:26, name:"Ash-Shu'ara"}, {id:27, name:"An-Naml"}, {id:28, name:"Al-Qasas"}, {id:29, name:"Al-'Ankabut"}, {id:30, name:"Ar-Rum"}, {id:31, name:"Luqman"}, {id:32, name:"As-Sajdah"}, {id:33, name:"Al-Ahzab"}, {id:34, name:"Saba"}, {id:35, name:"Fatir"}, {id:36, name:"Ya-Sin"}, {id:37, name:"As-Saffat"}, {id:38, name:"Sad"}, {id:39, name:"Az-Zumar"}, {id:40, name:"Ghafir"}, {id:41, name:"Fussilat"}, {id:42, name:"Ash-Shura"}, {id:43, name:"Az-Zukhruf"}, {id:44, name:"Ad-Dukhan"}, {id:45, name:"Al-Jathiyah"}, {id:46, name:"Al-Ahqaf"}, {id:47, name:"Muhammad"}, {id:48, name:"Al-Fath"}, {id:49, name:"Al-Hujurat"}, {id:50, name:"Qaf"}, {id:51, name:"Adh-Dhariyat"}, {id:52, name:"At-Tur"}, {id:53, name:"An-Najm"}, {id:54, name:"Al-Qamar"}, {id:55, name:"Ar-Rahman"}, {id:56, name:"Al-Waqi'ah"}, {id:57, name:"Al-Hadid"}, {id:58, name:"Al-Mujadilah"}, {id:59, name:"Al-Hashr"}, {id:60, name:"Al-Mumtahanah"}, {id:61, name:"As-Saff"}, {id:62, name:"Al-Jumu'ah"}, {id:63, name:"Al-Munafiqun"}, {id:64, name:"At-Taghabun"}, {id:65, name:"At-Talaq"}, {id:66, name:"At-Tahrim"}, {id:67, name:"Al-Mulk"}, {id:68, name:"Al-Qalam"}, {id:69, name:"Al-Haqqah"}, {id:70, name:"Al-Ma'arij"}, {id:71, name:"Nuh"}, {id:72, name:"Al-Jinn"}, {id:73, name:"Al-Muzzammil"}, {id:74, name:"Al-Muddaththir"}, {id:75, name:"Al-Qiyamah"}, {id:76, name:"Al-Insan"}, {id:77, name:"Al-Mursalat"}, {id:78, name:"An-Naba"}, {id:79, name:"An-Nazi'at"}, {id:80, name:"'Abasa"}, {id:81, name:"At-Takwir"}, {id:82, name:"Al-Infitar"}, {id:83, name:"Al-Mutaffifin"}, {id:84, name:"Al-Inshiqaq"}, {id:85, name:"Al-Buruj"}, {id:86, name:"At-Tariq"}, {id:87, name:"Al-A'la"}, {id:88, name:"Al-Ghashiyah"}, {id:89, name:"Al-Fajr"}, {id:90, name:"Al-Balad"}, {id:91, name:"Ash-Shams"}, {id:92, name:"Al-Layl"}, {id:93, name:"Ad-Duha"}, {id:94, name:"Ash-Sharh"}, {id:95, name:"At-Tin"}, {id:96, name:"Al-'Alaq"}, {id:97, name:"Al-Qadr"}, {id:98, name:"Al-Bayyinah"}, {id:99, name:"Az-Zalzalah"}, {id:100, name:"Al-'Adiyat"}, {id:101, name:"Al-Qari'ah"}, {id:102, name:"At-Takathur"}, {id:103, name:"Al-'Asr"}, {id:104, name:"Al-Humazah"}, {id:105, name:"Al-Fil"}, {id:106, name:"Quraysh"}, {id:107, name:"Al-Ma'un"}, {id:108, name:"Al-Kawthar"}, {id:109, name:"Al-Kafirun"}, {id:110, name:"An-Nasr"}, {id:111, name:"Al-Masad"}, {id:112, name:"Al-Ikhlas"}, {id:113, name:"Al-Falaq"}, {id:114, name:"An-Nas"}
+        ];
+
+        // INDEXATION STATIQUE DIRECTE POUR MOÏSE (136 OCCURRENCES) ET PARADIS
+        const staticSearchIndex = {
+            "moise": ["2:51","2:53","2:54","2:55","2:60","2:61","2:67","2:87","2:92","2:108","2:136","2:246","2:248","3:84","4:153","4:164","5:20","5:22","5:24","6:84","6:91","7:103","7:115","7:117","7:122","7:127","7:128","7:131","7:134","7:138","7:142","7:143","7:144","7:148","7:150","7:154","7:155","7:159","7:160","10:75","10:77","10:80","10:81","10:83","10:84","10:87","10:88","11:17","11:96","11:110","14:5","14:6","14:8","17:2","17:101","18:60","18:66","19:51","20:9","20:11","20:17","20:19","20:36","20:40","20:49","20:57","20:61","20:65","20:67","20:70","20:77","20:83","20:86","20:88","20:91","21:48","22:44","23:45","25:35","26:10","26:30","26:43","26:45","26:48","26:52","26:61","26:62","26:63","26:65","27:7","27:9","27:10","28:3","28:7","28:10","28:15","28:18","28:19","28:20","28:29","28:30","28:31","28:36","28:37","28:38","28:43","28:44","28:48","28:76","29:39","32:23","33:7","33:69","37:114","37:120","40:23","40:26","40:27","40:28","40:34","40:53","41:45","42:13","43:46","46:12","46:30","51:38","53:36","61:5","79:15","87:19"],
+            "paradis": ["2:82","2:111","2:214","2:221","3:133","3:142","3:185","4:124","5:72","7:40","7:42","7:43","7:44","7:46","7:48","7:50","9:111","11:108","13:23","15:45","18:107","19:60","22:56","23:11","25:15","26:85","29:58","32:19","36:26","39:73","39:74","40:40","41:30","42:7","43:70","43:73","47:6","50:31","52:17","53:15","54:54","55:46","56:12","56:89","59:20","66:11","69:21","70:38","76:12","79:41","81:13","85:11","88:10","98:8"]
         };
 
-        function loadSurah() {
-            const surahNumber = document.getElementById('surahSelect').value;
-            const reciter = document.getElementById('reciterSelect').value;
+        function checkAdminPassword() {
+            if (isAdminActive) { location.reload(); return; }
+            const input = prompt("Entrez le mot de passe Administrateur :");
+            if (input === "admin123") { isAdminActive = true; activateAdminFeatures(); }
+        }
+
+        function activateAdminFeatures() {
+            document.getElementById('adminBadge').innerHTML = "⚡ Déconnexion Admin";
+            document.getElementById('adminBadge').className = "text-[10px] bg-red-600 text-white font-bold px-2 py-0.5 rounded";
+            document.getElementById('exportBtn').style.display = "inline-block";
+        }
+
+        // Configuration de la base de données locale pour les images
+        try {
+            const dbRequest = indexedDB.open("QuranVisionDB", 1);
+            dbRequest.onupgradeneeded = function(e) {
+                db = e.target.result;
+                if (!db.objectStoreNames.contains("images")) db.createObjectStore("images", { keyPath: "verseKey" });
+            };
+            dbRequest.onsuccess = function(e) { db = e.target.result; init(); };
+            dbRequest.onerror = function() { init(); };
+        } catch(e) { setTimeout(init, 100); }
+
+        const imageBank = {
+            univers: "https://images.unsplash.com/photo-1451187580459-43490279c0fa?auto=format&fit=crop&w=1200&q=80",
+            balance: "https://images.unsplash.com/photo-1505664194779-8beaceb93744?auto=format&fit=crop&w=1200&q=80", 
+            prairie: "https://images.unsplash.com/photo-1500382017468-9049fed747ef?auto=format&fit=crop&w=1200&q=80", 
+            feu: "https://images.unsplash.com/photo-1524813686514-a57563d77d61?auto=format&fit=crop&w=1200&q=80",
+            defaut: "https://images.unsplash.com/photo-1447752875215-b2761acb3c5d?auto=format&fit=crop&w=1200&q=80"
+        };
+
+        function getFallbackImage(textFr) {
+            if (!textFr) return imageBank.defaut;
+            const clean = textFr.toLowerCase();
+            if (clean.includes('univers') || clean.includes('ciel') || clean.includes('cieux')) return imageBank.univers;
+            if (clean.match(/(rétribution|comptes|dernier|balance|justice)/)) return imageBank.balance;
+            if (clean.match(/(paradis|récompense|jardins|ruisseaux)/)) return imageBank.prairie;
+            if (clean.match(/(enfer|géhenne|châtiment|feu|fournaise)/)) return imageBank.feu;
+            return imageBank.defaut;
+        }
+
+        function getCustomImage(verseKey, fallbackUrl, callback) {
+            if (globalPublishedImages && globalPublishedImages[verseKey]) { callback(globalPublishedImages[verseKey]); return; }
+            if (!db) { callback(fallbackUrl); return; }
+            try {
+                const transaction = db.transaction(["images"], "readonly");
+                const store = transaction.objectStore("images");
+                const request = store.get(verseKey);
+                request.onsuccess = function() {
+                    if (request.result) callback(request.result.data);
+                    else callback(fallbackUrl);
+                };
+            } catch(e) { callback(fallbackUrl); }
+        }
+
+        function handleImageUpload(event, verseKey) {
+            const file = event.target.files[0];
+            if (!file) return;
+            const targetLabel = event.target.parentElement;
+            targetLabel.innerHTML = "⚡ Compression...";
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                const img = new Image();
+                img.onload = function() {
+                    const canvas = document.createElement('canvas');
+                    const ctx = canvas.getContext('2d');
+                    let w = img.width, h = img.height;
+                    if (w > 800) { h = Math.round((h * 800) / w); w = 800; }
+                    canvas.width = w; canvas.height = h;
+                    ctx.drawImage(img, 0, 0, w, h);
+                    const optimizedDataUrl = canvas.toDataURL('image/jpeg', 0.60);
+                    
+                    try {
+                        const transaction = db.transaction(["images"], "readwrite");
+                        const store = transaction.objectStore("images");
+                        store.put({ verseKey: verseKey, data: optimizedDataUrl });
+                        transaction.oncomplete = function() {
+                            document.getElementById(`img-view-${verseKey}`).src = optimizedDataUrl;
+                            targetLabel.innerHTML = "📷 Modifier la photo";
+                        };
+                    } catch(err) { targetLabel.innerHTML = "❌ Erreur"; }
+                };
+                img.src = e.target.result;
+            };
+            reader.readAsDataURL(file);
+        }
+
+        // Initialisation instantanée à partir de la liste locale
+        function init() {
+            surahSelect.innerHTML = '';
+            chaptersList.forEach(s => {
+                surahSelect.innerHTML += `<option value="${s.id}">${s.id}. ${s.name}</option>`;
+            });
+        }
+
+        // Moteur de recherche principal
+        async function searchVerse() {
+            let userQuery = document.getElementById('searchInput').value.trim();
+            if (!userQuery) return;
             
-            const audioPlayer = document.getElementById('audioPlayer');
-            const quranTextDiv = document.getElementById('quranText');
-            const verseBadge = document.getElementById('verseBadge');
+            mainContent.innerHTML = `<div class="py-20 text-emerald-500 animate-pulse text-xl">Recherche en cours...</div>`;
+            let normalizedKey = userQuery.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
 
-            // 1. Mise à jour de l'audio selon le récitant choisi
-            const formattedSurah = String(surahNumber).padStart(3, '0');
-            if(reciter === 'alafasy') {
-                audioPlayer.src = `https://download.quranicaudio.com/qdc/mishari_al_afasy/murattal/${surahNumber}.mp3`;
-            } else if(reciter === 'sudais') {
-                audioPlayer.src = `https://download.quranicaudio.com/qdc/abdurrahman_as_sudais/murattal/${surahNumber}.mp3`;
-            } else {
-                audioPlayer.src = `https://server11.mp3quran.net/yasser/${formattedSurah}.mp3`;
+            // Si Moïse ou Paradis
+            if (staticSearchIndex[normalizedKey]) {
+                let keys = staticSearchIndex[normalizedKey];
+                mainContent.innerHTML = `<h2 class="text-2xl font-bold mb-8 text-emerald-500">${keys.length} occurrence(s) trouvée(s) pour "${userQuery}"</h2>`;
+                
+                keys.forEach(vk => {
+                    mainContent.innerHTML += `
+                        <div class="glass-card p-6 md:p-8 mb-6 bg-white/5 border-l-4 border-emerald-500 text-left space-y-4">
+                            <div class="flex justify-between items-center text-zinc-400 text-xs"><span>Verset ${vk}</span></div>
+                            <p id="text-pre-${vk.replace(':','-')}" class="text-zinc-200 font-light italic text-sm md:text-base animate-pulse">Chargement du texte...</p>
+                            <button onclick="goToVerse('${vk}')" class="text-emerald-500 text-xs font-bold pt-2 block hover:underline">LIRE LE VERSET EN IMAGE →</button>
+                        </div>`;
+                    fetchVerseTextAsync(vk);
+                });
+                return;
             }
-            audioPlayer.load();
-            audioPlayer.play().catch(e => console.log("Lecture automatique bloquée par le navigateur"));
 
-            // 2. Changement du texte à l'écran (sans passer par l'API externe pour garder tes belles lettres)
-            if (quranData[surahNumber]) {
-                quranTextDiv.innerText = quranData[surahNumber].text;
-                verseBadge.innerText = quranData[surahNumber].name;
+            // Requête API pour les autres mots
+            try {
+                const res = await fetch(`https://api.quran.com/api/v4/search?q=${encodeURIComponent(userQuery)}&size=100&language=fr`);
+                const data = await res.json();
+                if (data && data.search && data.search.results) {
+                    let results = data.search.results;
+                    mainContent.innerHTML = `<h2 class="text-2xl font-bold mb-8 text-emerald-500">${results.length} occurrence(s)</h2>`;
+                    results.forEach(r => {
+                        mainContent.innerHTML += `
+                            <div class="glass-card p-6 md:p-8 mb-6 bg-white/5 border-l-4 border-emerald-500 text-left space-y-4">
+                                <div class="flex justify-between items-center text-zinc-400 text-xs"><span>Verset ${r.verse_key}</span></div>
+                                <p class="text-zinc-200 font-light italic text-sm md:text-base">"${r.text.replace(/<[^>]*>/g, '')}"</p>
+                                <button onclick="goToVerse('${r.verse_key}')" class="text-emerald-500 text-xs font-bold pt-2 block hover:underline">LIRE EN IMAGE →</button>
+                            </div>`;
+                    });
+                } else {
+                    mainContent.innerHTML = `<p class='py-20 text-zinc-400'>Aucun résultat pour "${userQuery}".</p>`;
+                }
+            } catch (e) { mainContent.innerHTML = "<p class='py-20 text-red-400'>Vérifiez votre connexion internet.</p>"; }
+        }
+
+        async function fetchVerseTextAsync(vk) {
+            try {
+                const res = await fetch(`https://api.quran.com/api/v4/verses/by_key/${vk}?language=fr&translations=31`);
+                const data = await res.json();
+                if (data && data.verse && data.verse.translations) {
+                    let text = data.verse.translations[0].text.replace(/<[^>]*>/g, '');
+                    const el = document.getElementById(`text-pre-${vk.replace(':','-')}`);
+                    if (el) { el.innerText = `"${text}"`; el.classList.remove('animate-pulse'); }
+                }
+            } catch (e) {
+                const el = document.getElementById(`text-pre-${vk.replace(':','-')}`);
+                if (el) el.innerText = "(Texte indisponible)";
             }
         }
 
-        // Tes fonctions d'origine pour les boutons
-        function checkAdminPassword() { alert("Action Admin déconnectée."); }
-        function exportConfig() { alert("Téléchargement du fichier HTML."); }
-        function searchVerse() { alert("Recherche..."); }
+        async function goToVerse(vk) {
+            surahSelect.value = vk.split(':')[0];
+            await loadSurah();
+            setTimeout(() => {
+                const el = document.getElementById(`v-${vk}`);
+                if (el) el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            }, 800);
+        }
+
+        async function loadSurah() {
+            const sid = surahSelect.value;
+            if(!sid) return;
+            const rid = document.getElementById('reciterSelect').value;
+            mainContent.innerHTML = `<div class="py-20 text-emerald-500 animate-bounce text-xl font-bold">CHARGEMENT...</div>`;
+            try {
+                const res = await fetch(`https://api.quran.com/api/v4/verses/by_chapter/${sid}?language=fr&translations=31&fields=text_uthmani&per_page=300`);
+                const data = await res.json();
+                const audioRes = await fetch(`https://api.quran.com/api/v4/chapter_recitations/${rid}/${sid}`);
+                const audioData = await audioRes.json();
+                renderSurah(data.verses, audioData.audio_file.audio_url);
+            } catch (e) { mainContent.innerHTML = "<div class='py-20 text-red-400'>Erreur lors du chargement de la sourate.</div>"; }
+        }
+
+        function renderSurah(verses, audio) {
+            mainContent.innerHTML = `<div class="sticky top-24 z-40 w-full mb-12 px-4"><div class="audio-player-container"><audio src="${audio}" controls></audio></div></div>`;
+            verses.forEach((v) => {
+                const textFr = v.translations[0].text.replace(/<[^>]*>/g, '');
+                let finalImgSrc = getFallbackImage(textFr);
+                if (globalPublishedImages && globalPublishedImages[v.verse_key]) finalImgSrc = globalPublishedImages[v.verse_key];
+
+                mainContent.innerHTML += `
+                    <section id="v-${v.verse_key}" class="glass-card overflow-hidden mb-16 shadow-2xl">
+                        <div class="relative h-64 w-full bg-zinc-950 flex items-center justify-center">
+                            <img id="img-view-${v.verse_key}" src="${finalImgSrc}" class="w-full h-full object-cover opacity-40 transition-opacity" loading="lazy">
+                            <div class="absolute inset-0 bg-gradient-to-t from-[#020617] via-transparent to-black/40"></div>
+                            <label class="admin-upload-btn absolute top-6 right-6 bg-emerald-500/20 text-emerald-300 text-xs px-3 py-1.5 rounded-xl cursor-pointer border border-emerald-500/30 z-20" style="display: ${isAdminActive ? 'block' : 'none'};">
+                                📷 Modifier la photo
+                                <input type="file" accept="image/*" class="hidden" onchange="handleImageUpload(event, '${v.verse_key}')">
+                            </label>
+                            <div class="absolute top-6 left-6 bg-black/60 px-4 py-1 rounded-full text-xs font-bold text-emerald-400">Verset ${v.verse_key}</div>
+                        </div>
+                        <div class="p-6 md:p-12 space-y-8 -mt-16 relative z-10 bg-gradient-to-b from-transparent to-[#020617]/95">
+                            <div class="quran-container"><p class="quran-arabic text-zinc-100" dir="rtl">${v.text_uthmani}</p></div>
+                            <div class="h-px w-24 bg-emerald-500/30 mx-auto"></div>
+                            <p class="text-zinc-200 text-lg md:text-2xl font-light italic leading-relaxed max-w-2xl mx-auto">"${textFr}"</p>
+                        </div>
+                    </section>`;
+                if (!globalPublishedImages[v.verse_key]) {
+                    getCustomImage(v.verse_key, finalImgSrc, function(localSrc) {
+                        const targetImg = document.getElementById(`img-view-${v.verse_key}`);
+                        if (targetImg && localSrc !== finalImgSrc) targetImg.src = localSrc;
+                    });
+                }
+            });
+        }
+
+        function exportConfig() {
+            if (!db) return;
+            try {
+                const transaction = db.transaction(["images"], "readonly");
+                const store = transaction.objectStore("images");
+                const request = store.getAll();
+                request.onsuccess = function() {
+                    const currentData = {};
+                    request.result.forEach(item => { currentData[item.verseKey] = item.data; });
+                    const parser = new DOMParser();
+                    const doc = parser.parseFromString(document.documentElement.outerHTML, 'text/html');
+                    let htmlContent = doc.documentElement.outerHTML;
+                    const regex = /const globalPublishedImages = \{[\s\S]*?\};/;
+                    htmlContent = "<!DOCTYPE html>\n" + htmlContent.replace(regex, `const globalPublishedImages = ${JSON.stringify(currentData, null, 4)};`);
+                    const blob = new Blob([htmlContent], {type: "text/html;charset=utf-8"});
+                    const url = URL.createObjectURL(blob);
+                    const a = document.createElement("a");
+                    a.href = url; a.download = "index.html"; a.click();
+                };
+            } catch(e) {}
+        }
     </script>
 </body>
 </html>
