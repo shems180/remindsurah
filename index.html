@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>QuranVision</title>
     
-    <link rel="manifest" href="manifest.json?v=5">
+    <link rel="manifest" href="manifest.json?v=6">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <link class="apple-touch-icon" href="icon-192.png">
@@ -71,7 +71,9 @@
                         <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" stroke-width="2" stroke-linecap="round"></path></svg>
                     </button>
                 </div>
-                <select id="surahSelect" class="bg-zinc-900 border border-zinc-700 px-3 py-2 rounded-xl text-xs outline-none w-32 md:w-40 text-white"></select>
+                <select id="surahSelect" class="bg-zinc-900 border border-zinc-700 px-3 py-2 rounded-xl text-xs outline-none w-32 md:w-40 text-white">
+                    <option value="">Chargement...</option>
+                </select>
                 <select id="reciterSelect" class="bg-zinc-900 border border-zinc-700 px-3 py-2 rounded-xl text-xs outline-none text-white">
                     <option value="7">Mishary Alafasy</option>
                     <option value="3">Abdur-Rahman as-Sudais</option>
@@ -88,7 +90,7 @@
                 <svg class="w-16 h-16 text-emerald-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5s3.332.477 4.5 1.253v13C19.832 18.477 18.246 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"></path></svg>
             </div>
             <h2 class="text-4xl md:text-6xl font-bold tracking-tight">Accès QuranVision</h2>
-            <p class="text-zinc-400 text-lg max-w-lg mx-auto font-light">Moteur de recherche interne forcé. Saisissez un terme.</p>
+            <p id="loading-status" class="text-zinc-400 text-lg max-w-lg mx-auto font-light">Initialisation du système de recherche...</p>
         </div>
     </main>
 
@@ -100,10 +102,10 @@
 
         const globalPublishedImages = {};
 
-        // INDEXATION INTERNE DES INDEXS STATIQUES POUR EVITER TOUT BRIDAGE API
+        // INDEXATION STATIQUE DIRECTE SANS REQUÊTE BRIDÉE
         const staticSearchIndex = {
-            "moise": ["2:51","2:53","2:54","2:55","2:60","2:61","2:67","2:87","2:92","2:108","2:136","2:246","2:248","3:84","4:153","4:164","5:20","5:22","5:24","6:84","6:91","7:103","7:115","7:117","7:122","7:127","7:128","7:131","7:134","7:138","7:142","7:143","7:144","7:148","7:150","7:154","7:155","7:159","7:160","10:75","10:77","10:80","10:81","10:83","10:84","10:87","10:88","11:17","11:96","11:110","14:5","14:6","14:8","17:2","17:101","18:60","18:66","19:51","20:9","20:11","20:17","20:19","20:36","20:40","20:49","20:57","20:61","20:65","20:67","20:70","20:77","20:83","20:86","20:88","20:91","21:48","22:44","23:45","25:35","26:10","26:30","26:43","26:45","26:48","26:52","26:61","26:62","26:63","26:65","27:7","27:9","27:10","28:3","28:7","28:10","28:15","28:18","28:19","28:20","28:29","28:30","28:31","28:36","28:37","28:38","28:43","28:44","28:48","28:76","29:39","32:23","33:7","33:69","37:114","37:120","40:23","40:26","40:27","40:28","40:34","40:53","41:45","42:13","43:46","46:12","46:30","51:38","53:36","61:5","79:15","87:19"],
-            "paradis": ["2:82","2:111","2:214","2:221","3:133","3:142","3:185","4:124","5:72","7:40","7:42","7:43","7:44","7:44","7:46","7:48","7:50","9:111","11:108","13:23","15:45","18:107","19:60","22:56","23:11","25:15","26:85","29:58","32:19","36:26","39:73","39:74","40:40","41:30","42:7","43:70","43:73","47:6","50:31","52:17","53:15","54:54","55:46","56:12","56:89","59:20","66:11","69:21","70:38","76:12","79:41","81:13","85:11","88:10","98:8"]
+            "moise": ["2:51","2:53","2:54","2:55","2:60","2:61","2:67","2:87","2:92","2:108","2:136","2:246","2:248","3:84","4:153","4:164","5:20","5:22","5:24","6:84","6:91","7:103","7:115","7:117","7:122","7:127","7:128","7:131","7:134","7:138","7:142","7:143","7:144","7:148","7:150","7:154","7:155","7:159","7:160","10:75","10:77","10:80","10:81","10:83","10:84","10:87","10:88","11:17","11:96","11:110","14:5","14:6","14:8","17:2","17:101","18:60","18:66","19:51","20:9","20:11","20:17","20:19","20:36","20:40","20:40","20:49","20:57","20:61","20:65","20:67","20:70","20:77","20:83","20:86","20:88","20:91","21:48","22:44","23:45","25:35","26:10","26:30","26:43","26:45","26:48","26:52","26:61","26:62","26:63","26:65","27:7","27:9","27:10","28:3","28:7","28:10","28:15","28:18","28:19","28:20","28:29","28:30","28:31","28:36","28:37","28:38","28:43","28:44","28:48","28:76","29:39","32:23","33:7","33:69","37:114","37:120","40:23","40:26","40:27","40:28","40:34","40:53","41:45","42:13","43:46","46:12","46:30","51:38","53:36","61:5","79:15","87:19"],
+            "paradis": ["2:82","2:111","2:214","2:221","3:133","3:142","3:185","4:124","5:72","7:40","7:42","7:43","7:44","7:46","7:48","7:50","9:111","11:108","13:23","15:45","18:107","19:60","22:56","23:11","25:15","26:85","29:58","32:19","36:26","39:73","39:74","40:40","41:30","42:7","43:70","43:73","47:6","50:31","52:17","53:15","54:54","55:46","56:12","56:89","59:20","66:11","69:21","70:38","76:12","79:41","81:13","85:11","88:10","98:8"]
         };
 
         function checkAdminPassword() {
@@ -118,12 +120,19 @@
             document.getElementById('exportBtn').style.display = "inline-block";
         }
 
-        const dbRequest = indexedDB.open("QuranVisionDB", 1);
-        dbRequest.onupgradeneeded = function(e) {
-            db = e.target.result;
-            if (!db.objectStoreNames.contains("images")) db.createObjectStore("images", { keyPath: "verseKey" });
-        };
-        dbRequest.onsuccess = function(e) { db = e.target.result; init(); };
+        // Connexion sécurisée à IndexedDB
+        try {
+            const dbRequest = indexedDB.open("QuranVisionDB", 1);
+            dbRequest.onupgradeneeded = function(e) {
+                db = e.target.result;
+                if (!db.objectStoreNames.contains("images")) db.createObjectStore("images", { keyPath: "verseKey" });
+            };
+            dbRequest.onsuccess = function(e) { db = e.target.result; init(); };
+            dbRequest.onerror = function() { console.log("Mode sans échec IndexedDB"); init(); };
+        } catch(e) {
+            console.log("IndexedDB non supporté");
+            setTimeout(init, 100);
+        }
 
         const imageBank = {
             univers: "https://images.unsplash.com/photo-1451187580459-43490279c0fa?auto=format&fit=crop&w=1200&q=80",
@@ -146,13 +155,16 @@
         function getCustomImage(verseKey, fallbackUrl, callback) {
             if (globalPublishedImages && globalPublishedImages[verseKey]) { callback(globalPublishedImages[verseKey]); return; }
             if (!db) { callback(fallbackUrl); return; }
-            const transaction = db.transaction(["images"], "readonly");
-            const store = transaction.objectStore("images");
-            const request = store.get(verseKey);
-            request.onsuccess = function() {
-                if (request.result) callback(request.result.data);
-                else callback(fallbackUrl);
-            };
+            try {
+                const transaction = db.transaction(["images"], "readonly");
+                const store = transaction.objectStore("images");
+                const request = store.get(verseKey);
+                request.onsuccess = function() {
+                    if (request.result) callback(request.result.data);
+                    else callback(fallbackUrl);
+                };
+                request.onerror = function() { callback(fallbackUrl); };
+            } catch(e) { callback(fallbackUrl); }
         }
 
         function handleImageUpload(event, verseKey) {
@@ -171,13 +183,18 @@
                     canvas.width = w; canvas.height = h;
                     ctx.drawImage(img, 0, 0, w, h);
                     const optimizedDataUrl = canvas.toDataURL('image/jpeg', 0.60);
-                    const transaction = db.transaction(["images"], "readwrite");
-                    const store = transaction.objectStore("images");
-                    store.put({ verseKey: verseKey, data: optimizedDataUrl });
-                    transaction.oncomplete = function() {
-                        document.getElementById(`img-view-${verseKey}`).src = optimizedDataUrl;
-                        targetLabel.innerHTML = "📷 Modifier la photo";
-                    };
+                    
+                    try {
+                        const transaction = db.transaction(["images"], "readwrite");
+                        const store = transaction.objectStore("images");
+                        store.put({ verseKey: verseKey, data: optimizedDataUrl });
+                        transaction.oncomplete = function() {
+                            document.getElementById(`img-view-${verseKey}`).src = optimizedDataUrl;
+                            targetLabel.innerHTML = "📷 Modifier la photo";
+                        };
+                    } catch(err) {
+                        targetLabel.innerHTML = "❌ Erreur stockage";
+                    }
                 };
                 img.src = e.target.result;
             };
@@ -185,24 +202,32 @@
         }
 
         async function init() {
+            const statusEl = document.getElementById('loading-status');
             try {
                 const res = await fetch('https://api.quran.com/api/v4/chapters?language=fr');
                 const data = await res.json();
-                surahSelect.innerHTML = '';
-                data.chapters.forEach(s => {
-                    surahSelect.innerHTML += `<option value="${s.id}">${s.id}. ${s.name_simple}</option>`;
-                });
-            } catch (e) { console.error(e); }
+                if(data && data.chapters) {
+                    surahSelect.innerHTML = '';
+                    data.chapters.forEach(s => {
+                        surahSelect.innerHTML += `<option value="${s.id}">${s.id}. ${s.name_simple}</option>`;
+                    });
+                    if (statusEl) statusEl.innerText = "Système prêt. Faites vos recherches.";
+                }
+            } catch (e) { 
+                if (statusEl) statusEl.innerText = "Erreur de connexion API, mais recherche locale disponible.";
+                console.error(e); 
+            }
         }
 
-        // RECHERCHE DIRECTE DEPASSANT LE BRIDAGE DE L'API EXTERNE
+        // Lancement de la recherche principale
         async function searchVerse() {
             let userQuery = document.getElementById('searchInput').value.trim();
             if (!userQuery) return;
             
-            mainContent.innerHTML = `<div class="py-20 text-emerald-500 animate-pulse text-xl">Calcul du moteur local...</div>`;
+            mainContent.innerHTML = `<div class="py-20 text-emerald-500 animate-pulse text-xl">Recherche de "${userQuery}"...</div>`;
             let normalizedKey = userQuery.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
 
+            // Traitement via l'index direct (Moïse / Paradis)
             if (staticSearchIndex[normalizedKey]) {
                 let keys = staticSearchIndex[normalizedKey];
                 mainContent.innerHTML = `<h2 class="text-2xl font-bold mb-8 text-emerald-500">${keys.length} occurrence(s) trouvée(s) pour "${userQuery}"</h2>`;
@@ -211,7 +236,7 @@
                     mainContent.innerHTML += `
                         <div class="glass-card p-6 md:p-8 mb-6 bg-white/5 border-l-4 border-emerald-500 text-left space-y-4">
                             <div class="flex justify-between items-center text-zinc-400 text-xs"><span>Verset ${vk}</span></div>
-                            <p id="text-pre-${vk.replace(':','-')}" class="text-zinc-200 font-light italic text-sm md:text-base animate-pulse">Chargement...</p>
+                            <p id="text-pre-${vk.replace(':','-')}" class="text-zinc-200 font-light italic text-sm md:text-base animate-pulse">Chargement du texte...</p>
                             <button onclick="goToVerse('${vk}')" class="text-emerald-500 text-xs font-bold pt-2 block hover:underline">LIRE LE VERSET EN IMAGE →</button>
                         </div>`;
                     fetchVerseTextAsync(vk);
@@ -219,9 +244,9 @@
                 return;
             }
 
-            // Fallback API standard si mot différent
+            // Fallback API standard si mot libre
             try {
-                const res = await fetch(`https://api.quran.com/api/v4/search?q=${encodeURIComponent(userQuery)}&size=100&language=fr&nocache=${Date.now()}`);
+                const res = await fetch(`https://api.quran.com/api/v4/search?q=${encodeURIComponent(userQuery)}&size=100&language=fr`);
                 const data = await res.json();
                 if (data && data.search && data.search.results) {
                     let results = data.search.results;
@@ -234,20 +259,27 @@
                                 <button onclick="goToVerse('${r.verse_key}')" class="text-emerald-500 text-xs font-bold pt-2 block hover:underline">LIRE EN IMAGE →</button>
                             </div>`;
                     });
+                } else {
+                    mainContent.innerHTML = `<p class='py-20 text-zinc-400'>Aucun résultat pour "${userQuery}".</p>`;
                 }
-            } catch (e) { mainContent.innerHTML = "<p class='py-20 text-red-400'>Erreur réseau.</p>"; }
+            } catch (e) { 
+                mainContent.innerHTML = "<p class='py-20 text-red-400'>Erreur réseau lors de la recherche.</p>"; 
+            }
         }
 
         async function fetchVerseTextAsync(vk) {
             try {
-                const res = await fetch(`https://api.quran.com/api/v4/verses/by_key/${vk}?language=fr&translations=31&nocache=${Date.now()}`);
+                const res = await fetch(`https://api.quran.com/api/v4/verses/by_key/${vk}?language=fr&translations=31`);
                 const data = await res.json();
                 if (data && data.verse && data.verse.translations) {
                     let text = data.verse.translations[0].text.replace(/<[^>]*>/g, '');
                     const el = document.getElementById(`text-pre-${vk.replace(':','-')}`);
                     if (el) { el.innerText = `"${text}"`; el.classList.remove('animate-pulse'); }
                 }
-            } catch (e) {}
+            } catch (e) {
+                const el = document.getElementById(`text-pre-${vk.replace(':','-')}`);
+                if (el) el.innerText = "(Texte indisponible - Erreur API)";
+            }
         }
 
         async function goToVerse(vk) {
@@ -261,6 +293,7 @@
 
         async function loadSurah() {
             const sid = surahSelect.value;
+            if(!sid) return;
             const rid = document.getElementById('reciterSelect').value;
             mainContent.innerHTML = `<div class="py-20 text-emerald-500 animate-bounce text-xl font-bold">CHARGEMENT...</div>`;
             try {
@@ -269,7 +302,7 @@
                 const audioRes = await fetch(`https://api.quran.com/api/v4/chapter_recitations/${rid}/${sid}`);
                 const audioData = await audioRes.json();
                 renderSurah(data.verses, audioData.audio_file.audio_url);
-            } catch (e) { mainContent.innerHTML = "<div class='py-20 text-red-400'>Erreur.</div>"; }
+            } catch (e) { mainContent.innerHTML = "<div class='py-20 text-red-400'>Erreur lors de la récupération de la sourate.</div>"; }
         }
 
         function renderSurah(verses, audio) {
@@ -307,22 +340,24 @@
 
         function exportConfig() {
             if (!db) return;
-            const transaction = db.transaction(["images"], "readonly");
-            const store = transaction.objectStore("images");
-            const request = store.getAll();
-            request.onsuccess = function() {
-                const currentData = {};
-                request.result.forEach(item => { currentData[item.verseKey] = item.data; });
-                const parser = new DOMParser();
-                const doc = parser.parseFromString(document.documentElement.outerHTML, 'text/html');
-                let htmlContent = doc.documentElement.outerHTML;
-                const regex = /const globalPublishedImages = \{[\s\S]*?\};/;
-                htmlContent = "<!DOCTYPE html>\n" + htmlContent.replace(regex, `const globalPublishedImages = ${JSON.stringify(currentData, null, 4)};`);
-                const blob = new Blob([htmlContent], {type: "text/html;charset=utf-8"});
-                const url = URL.createObjectURL(blob);
-                const a = document.createElement("a");
-                a.href = url; a.download = "index.html"; a.click();
-            };
+            try {
+                const transaction = db.transaction(["images"], "readonly");
+                const store = transaction.objectStore("images");
+                const request = store.getAll();
+                request.onsuccess = function() {
+                    const currentData = {};
+                    request.result.forEach(item => { currentData[item.verseKey] = item.data; });
+                    const parser = new DOMParser();
+                    const doc = parser.parseFromString(document.documentElement.outerHTML, 'text/html');
+                    let htmlContent = doc.documentElement.outerHTML;
+                    const regex = /const globalPublishedImages = \{[\s\S]*?\};/;
+                    htmlContent = "<!DOCTYPE html>\n" + htmlContent.replace(regex, `const globalPublishedImages = ${JSON.stringify(currentData, null, 4)};`);
+                    const blob = new Blob([htmlContent], {type: "text/html;charset=utf-8"});
+                    const url = URL.createObjectURL(blob);
+                    const a = document.createElement("a");
+                    a.href = url; a.download = "index.html"; a.click();
+                };
+            } catch(e) {}
         }
     </script>
 </body>
