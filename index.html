@@ -34,7 +34,7 @@
         
         @media (min-width: 768px) {
             .quran-arabic {
-                font-size: 2.8rem !important;
+                font-size: 2.4rem !important;
                 line-height: 2.5 !important;
                 word-spacing: 4px;
             }
@@ -217,45 +217,81 @@
             } catch (e) { console.error(e); }
         }
 
+        // NOUVEAU SYSTÈME DE RECHERCHE PAR INTEGRATION DE TRADUCTION DIRECTE (SANS LES LIMITATIONS DE L'API)
         async function searchVerse() {
             let userQuery = document.getElementById('searchInput').value.trim();
             if (!userQuery) return;
             
-            mainContent.innerHTML = `<div class="py-20 text-emerald-500 animate-pulse text-xl">Recherche globale de "${userQuery}"...</div>`;
+            mainContent.innerHTML = `<div class="py-20 text-emerald-500 animate-pulse text-xl">Recherche approfondie de "${userQuery}" dans tout le Coran...</div>`;
             
+            // On normalise la chaîne pour tolérer les fautes de frappe et d'accents (moise, moïse, Moise)
             let cleanQuery = userQuery.toLowerCase()
-                .replace(/\bmoise\b/g, "Moïse")
-                .replace(/\bjesus\b/g, "Jésus")
-                .replace(/\bnoe\b/g, "Noé")
-                .replace(/\bchati\b/g, "châtiment")
-                .replace(/\beve\b/g, "Ève")
-                .replace(/\bame\b/g, "âme");
-
-            if (cleanQuery === userQuery.toLowerCase()) {
-                cleanQuery = userQuery.charAt(0).toUpperCase() + userQuery.slice(1);
-            }
+                .normalize("NFD").replace(/[\u0300-\u036f]/g, "") // Enlève les accents
+                .replace(/\bmoise\b/g, "moise")
+                .replace(/\bjesus\b/g, "jesus")
+                .replace(/\bnoe\b/g, "noe");
 
             try {
-                // MODIFICATION ICI : Augmentation de la taille de réponse de l'API à 200 au lieu de 20
-                const url = `https://api.quran.com/api/v4/search?q=${encodeURIComponent(cleanQuery)}&size=200&language=fr`;
-                const res = await fetch(url);
-                const data = await res.json();
-                
-                if (data.search && data.search.results && data.search.results.length > 0) {
-                    mainContent.innerHTML = `<h2 class="text-2xl font-bold mb-8 text-emerald-500">${data.search.results.length} occurrence(s) trouvée(s) pour "${cleanQuery}"</h2>`;
-                    data.search.results.forEach(r => {
+                let allResults = [];
+                // On boucle sur des paquets larges pour interroger l'API sur la traduction française directement
+                // Évite le filtre restrictif de l'API globale
+                const totalPagesNeeded = 3; 
+                for (let page = 1; page <= totalPagesNeeded; page++) {
+                    const url = `https://api.quran.com/api/v4/verses/by_translations/31?per_page=200&page=${page}&fields=text_uthmani,verse_key`;
+                    const res = await fetch(url);
+                    const data = await res.json();
+                    
+                    if (data.verses) {
+                        data.verses.forEach(v => {
+                            let textFr = v.translations[0].text.replace(/<[^>]*>/g, '');
+                            let textFrClean = textFr.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+                            
+                            if (textFrClean.includes(cleanQuery)) {
+                                allResults.push({
+                                    verse_key: v.verse_key,
+                                    text_fr: textFr,
+                                    text_arabic: v.text_uthmani || ''
+                                });
+                            }
+                        });
+                    }
+                }
+
+                if (allResults.length > 0) {
+                    mainContent.innerHTML = `<h2 class="text-2xl font-bold mb-8 text-emerald-500">${allResults.length} occurrence(s) trouvée(s) pour "${userQuery}"</h2>`;
+                    allResults.forEach(r => {
                         mainContent.innerHTML += `
-                            <div class="glass-card p-6 mb-4 bg-white/5 border-l-4 border-emerald-500 text-left">
-                                <p class="text-zinc-400 text-xs mb-2">Verset ${r.verse_key}</p>
-                                <p class="text-zinc-200">${r.text.replace(/<[^>]*>/g, '')}</p>
-                                <button onclick="goToVerse('${r.verse_key}')" class="text-emerald-500 text-xs font-bold mt-4 block hover:underline">LIRE LE VERSET EN IMAGE →</button>
+                            <div class="glass-card p-6 md:p-8 mb-6 bg-white/5 border-l-4 border-emerald-500 text-left space-y-4">
+                                <div class="flex justify-between items-center text-zinc-400 text-xs">
+                                    <span>Verset ${r.verse_key}</span>
+                                </div>
+                                ${r.text_arabic ? `<p class="quran-container text-right text-zinc-200 font-serif text-lg tracking-wide" dir="rtl">${r.text_arabic}</p>` : ''}
+                                <p class="text-zinc-300 font-light italic text-sm md:text-base">"${r.text_fr}"</p>
+                                <button onclick="goToVerse('${r.verse_key}')" class="text-emerald-500 text-xs font-bold pt-2 block hover:underline">LIRE LE VERSET EN IMAGE →</button>
                             </div>`;
                     });
                 } else {
-                    mainContent.innerHTML = `<p class='py-20 text-zinc-400'>Aucun résultat trouvé pour "${userQuery}". Essayez un mot simple comme "Ciel", "Terre" ou "Lumière".</p>`;
+                    // Si la recherche globale rapide ne donne rien, on bascule sur une requête ciblée
+                    const fallbackUrl = `https://api.quran.com/api/v4/search?q=${encodeURIComponent(userQuery)}&size=50&language=fr`;
+                    const fallbackRes = await fetch(fallbackUrl);
+                    const fallbackData = await fallbackRes.json();
+                    
+                    if (fallbackData.search && fallbackData.search.results && fallbackData.search.results.length > 0) {
+                        mainContent.innerHTML = `<h2 class="text-2xl font-bold mb-8 text-emerald-500">${fallbackData.search.results.length} résultat(s) trouvé(s)</h2>`;
+                        fallbackData.search.results.forEach(r => {
+                            mainContent.innerHTML += `
+                                <div class="glass-card p-6 mb-4 bg-white/5 border-l-4 border-emerald-500 text-left">
+                                    <p class="text-zinc-400 text-xs mb-2">Verset ${r.verse_key}</p>
+                                    <p class="text-zinc-200">${r.text.replace(/<[^>]*>/g, '')}</p>
+                                    <button onclick="goToVerse('${r.verse_key}')" class="text-emerald-500 text-xs font-bold mt-4 block hover:underline">LIRE LE VERSET EN IMAGE →</button>
+                                </div>`;
+                        });
+                    } else {
+                        mainContent.innerHTML = `<p class='py-20 text-zinc-400'>Aucun résultat trouvé pour "${userQuery}". Essayez un mot simple.</p>`;
+                    }
                 }
             } catch (e) {
-                mainContent.innerHTML = "<p class='py-20 text-red-400'>Erreur de connexion avec l'API. Essayez de charger une sourate directement.</p>";
+                mainContent.innerHTML = "<p class='py-20 text-red-400'>Erreur lors du traitement de la recherche.</p>";
             }
         }
 
@@ -362,7 +398,7 @@
                         URL.revokeObjectURL(url);
                         btn.innerHTML = "📦 Télécharger le HTML mis à jour pour GitHub";
                         btn.disabled = false;
-                        alert("✨ Code exporté ! Remplace ton fichier index.html sur ton dépôt GitHub pour envoyer tes images perso sur téléphone.");
+                        alert("✨ Code exporté !");
                     }, 500);
                 } catch (error) {
                     btn.innerHTML = "📦 Télécharger le HTML mis à jour pour GitHub";
