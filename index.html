@@ -111,7 +111,6 @@
         let isAdminActive = false; 
         let db;
 
-        // BANQUE D'IMAGES COMPILÉES (Sera remplie automatiquement lors de ton export)
         const globalPublishedImages = {};
 
         function checkAdminPassword() {
@@ -155,7 +154,6 @@
             return imageBank.defaut;
         }
 
-        // CORRECTION CRITIQUE : Priorité absolue à globalPublishedImages (données exportées GitHub)
         function getCustomImage(verseKey, fallbackUrl, callback) {
             if (globalPublishedImages && globalPublishedImages[verseKey]) {
                 callback(globalPublishedImages[verseKey]);
@@ -238,12 +236,13 @@
             }
 
             try {
-                const url = `https://api.quran.com/api/v4/search?q=${encodeURIComponent(cleanQuery)}&size=20&language=fr`;
+                // MODIFICATION ICI : Augmentation de la taille de réponse de l'API à 200 au lieu de 20
+                const url = `https://api.quran.com/api/v4/search?q=${encodeURIComponent(cleanQuery)}&size=200&language=fr`;
                 const res = await fetch(url);
                 const data = await res.json();
                 
                 if (data.search && data.search.results && data.search.results.length > 0) {
-                    mainContent.innerHTML = `<h2 class="text-2xl font-bold mb-8 text-emerald-500">${data.search.results.length} résultat(s) trouvé(s)</h2>`;
+                    mainContent.innerHTML = `<h2 class="text-2xl font-bold mb-8 text-emerald-500">${data.search.results.length} occurrence(s) trouvée(s) pour "${cleanQuery}"</h2>`;
                     data.search.results.forEach(r => {
                         mainContent.innerHTML += `
                             <div class="glass-card p-6 mb-4 bg-white/5 border-l-4 border-emerald-500 text-left">
@@ -282,13 +281,11 @@
             } catch (e) { mainContent.innerHTML = "<div class='py-20 text-red-400'>Erreur réseau lors du chargement.</div>"; }
         }
 
-        // SYNCHRONISATION SYNCHRONE DIRECTE AVANT LE RENDU IMAGE
         function renderSurah(verses, audio) {
             mainContent.innerHTML = `<div class="sticky top-24 z-40 w-full mb-12 px-4"><div class="audio-player-container"><audio src="${audio}" controls></audio></div></div>`;
             verses.forEach((v) => {
                 const textFr = v.translations[0].text.replace(/<[^>]*>/g, '');
                 
-                // Détermination de l'image (Vérifie d'abord si elle existe dans le global publié via GitHub)
                 let finalImgSrc = getFallbackImage(textFr);
                 if (globalPublishedImages && globalPublishedImages[v.verse_key]) {
                     finalImgSrc = globalPublishedImages[v.verse_key];
@@ -312,7 +309,6 @@
                         </div>
                     </section>`;
                 
-                // Si l'image n'était pas dans le HTML global mais existe dans l'IndexedDB local de l'admin
                 if (!globalPublishedImages[v.verse_key]) {
                     getCustomImage(v.verse_key, finalImgSrc, function(localSrc) {
                         const targetImg = document.getElementById(`img-view-${v.verse_key}`);
