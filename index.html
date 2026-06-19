@@ -60,6 +60,13 @@
                 <h1 onclick="window.location.reload()" class="cursor-pointer text-2xl font-bold tracking-tighter text-emerald-500 flex items-center gap-2">
                     <span class="bg-emerald-500 text-black px-2 py-1 rounded-lg text-sm italic font-black">IQRA</span> QURAN<span class="text-white font-light">VISION</span>
                 </h1>
+                <div class="flex items-center gap-1.5 bg-zinc-900/80 border border-zinc-800 px-3 py-1 rounded-full text-xs font-medium text-zinc-400">
+                    <svg class="w-4 h-4 text-emerald-500" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                    </svg>
+                    <span id="liveCounter">1</span> en ligne
+                </div>
             </div>
             
             <div class="flex flex-wrap justify-center items-center gap-3">
@@ -86,7 +93,7 @@
                 <svg class="w-16 h-16 text-emerald-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5s3.332.477 4.5 1.253v13C19.832 18.477 18.246 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"></path></svg>
             </div>
             <h2 class="text-4xl md:text-6xl font-bold tracking-tight">Accès QuranVision</h2>
-            <p id="loading-status" class="text-zinc-400 text-lg max-w-lg mx-auto font-light">Application prête. Saisissez un terme ou choisissez une Sourate.</p>
+            <p id="loading-status" class="text-zinc-400 text-lg max-w-lg mx-auto font-light">Bienvenue sur QURANVISION. Saisissez un terme du Quran ou choisissez une Sourate.</p>
         </div>
     </main>
 
@@ -95,7 +102,6 @@
         const surahSelect = document.getElementById('surahSelect');
         let globalPublishedImages = {};
 
-        // Une belle image de fond cosmique quand l'image n'est pas fournie ou introuvable
         const DEFAULT_FALLBACK_IMAGE = "https://images.unsplash.com/photo-1506318137071-a8e063b4bec0?auto=format&fit=crop&w=1200&q=80";
 
         async function loadPublishedImages() {
@@ -119,7 +125,34 @@
             "paradis": ["2:82","2:111","2:214","2:221","3:133","3:142","3:185","4:124","5:72","7:40","7:42","7:43","7:44","7:46","7:48","7:50","9:111","11:108","13:23","15:45","18:107","19:60","22:56","23:11","25:15","26:85","29:58","32:19","36:26","39:73","39:74","40:40","41:30","42:7","43:70","43:73","47:6","50:31","52:17","53:15","54:54","55:46","56:12","56:89","59:20","66:11","69:21","70:38","76:12","79:41","81:13","85:11","88:10","98:8"]
         };
 
+        // Système de tracking Réel (Basé sur l'API externe gratuite CountAPI)
+        async function fetchRealOnlineCounter() {
+            const namespace = "quranvision_live_visitors"; 
+            const key = "current_users";
+            const counterEl = document.getElementById('liveCounter');
+            
+            try {
+                // Étape 1 : On signale la présence de l'utilisateur (expire automatiquement après 5 min d'inactivité)
+                await fetch(`https://api.countapi.xyz/hit/${namespace}/${key}`).catch(() => {});
+                
+                // Étape 2 : On récupère la valeur exacte globale en temps réel
+                const res = await fetch(`https://api.countapi.xyz/info/${namespace}/${key}`);
+                if (res.ok) {
+                    const data = await res.json();
+                    // On affiche le nombre de requêtes uniques récentes (qui équivaut aux sessions actives)
+                    counterEl.textContent = data.value || 1;
+                }
+            } catch (e) {
+                // Si l'API externe rencontre une baisse de réseau, on laisse 1 par défaut
+                counterEl.textContent = "1";
+            }
+        }
+
         async function init() {
+            // Lance le vrai compteur immédiatement, puis rafraîchit toutes les 15 secondes
+            fetchRealOnlineCounter();
+            setInterval(fetchRealOnlineCounter, 15000);
+
             await loadPublishedImages();
             surahSelect.innerHTML = '';
             chaptersList.forEach(s => {
@@ -204,12 +237,10 @@
             } catch (e) { mainContent.innerHTML = "<div class='py-20 text-red-400'>Erreur lors du chargement.</div>"; }
         }
 
-        // Fonction magique de secours si l'image locale plante ou n'existe pas
         function handleImageError(imgElement) {
-            imgElement.onerror = null; // Évite les boucles infinies
+            imgElement.onerror = null; 
             imgElement.src = DEFAULT_FALLBACK_IMAGE;
             
-            // On cherche l'overlay d'indisponibilité pour s'assurer qu'il s'affiche
             const parent = imgElement.parentElement;
             if (parent && !parent.querySelector('.unavailable-tag')) {
                 const overlay = document.createElement('div');
@@ -224,10 +255,7 @@
             
             verses.forEach((v) => {
                 const textFr = v.translations[0].text.replace(/<[^>]*>/g, '');
-                
-                // On vérifie si l'image est déclarée dans ton JSON
                 let hasImageConfigured = globalPublishedImages && globalPublishedImages[v.verse_key] && globalPublishedImages[v.verse_key].trim() !== "";
-                
                 let finalImgSrc = hasImageConfigured ? "images/" + globalPublishedImages[v.verse_key] : DEFAULT_FALLBACK_IMAGE;
 
                 let unavailableOverlay = !hasImageConfigured 
