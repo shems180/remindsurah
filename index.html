@@ -61,11 +61,8 @@
                     <span class="bg-emerald-500 text-black px-2 py-1 rounded-lg text-sm italic font-black">IQRA</span> QURAN<span class="text-white font-light">VISION</span>
                 </h1>
                 <div class="flex items-center gap-1.5 bg-zinc-900/80 border border-zinc-800 px-3 py-1 rounded-full text-xs font-medium text-zinc-400">
-                    <svg class="w-4 h-4 text-emerald-500" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
-                        <path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                        <path stroke-linecap="round" stroke-linejoin="round" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
-                    </</svg>
-                    <span id="liveCounter">1</span> connecté(s) en direct
+                    <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+                    <span id="liveCounter">1</span> en ligne
                 </div>
             </div>
             
@@ -97,6 +94,9 @@
         </div>
     </main>
 
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-database-compat.js"></script>
+
     <script>
         const mainContent = document.getElementById('main-content');
         const surahSelect = document.getElementById('surahSelect');
@@ -104,15 +104,71 @@
 
         const DEFAULT_FALLBACK_IMAGE = "https://images.unsplash.com/photo-1506318137071-a8e063b4bec0?auto=format&fit=crop&w=1200&q=80";
 
+        // CONFIGURATION DU COMPTEUR LIVE PAR APPAREIL (Firebase Rest)
+        // Créez idéalement votre projet gratuit sur firebase.google.com pour remplacer cette URL publique de test si nécessaire
+        const firebaseConfig = {
+            databaseURL: "https://quranvision-live-default-rtdb.europe-west1.firebasedatabase.app/"
+        };
+        
+        let deviceId = localStorage.getItem('qv_device_uuid');
+        if (!deviceId) {
+            deviceId = 'dev_' + Math.random().toString(36).substring(2, 15) + Date.now().toString(36);
+            localStorage.setItem('qv_device_uuid', deviceId);
+        }
+
+        function initLiveCounter() {
+            try {
+                firebase.initializeApp(firebaseConfig);
+                const database = firebase.database();
+                const userRef = database.ref('online_devices/' + deviceId);
+                const allUsersRef = database.ref('online_devices');
+
+                // Signale la présence de cet appareil précis
+                userRef.set({
+                    last_seen: Date.now()
+                });
+
+                // Supprime automatiquement l'appareil de la base dès qu'il ferme l'onglet/le navigateur
+                userRef.onDisconnect().remove();
+
+                // Écoute les changements en temps réel de tous les appareils connectés
+                allUsersRef.on('value', (snapshot) => {
+                    const devices = snapshot.val();
+                    if (devices) {
+                        const now = Date.now();
+                        let activeCount = 0;
+                        
+                        // Sécurité additionnelle : on ne compte que les appareils actifs dans les dernières 60 secondes
+                        Object.keys(devices).forEach(key => {
+                            if (now - devices[key].last_seen < 60000) {
+                                activeCount++;
+                            }
+                        });
+                        document.getElementById('liveCounter').textContent = Math.max(1, activeCount);
+                    } else {
+                        document.getElementById('liveCounter').textContent = "1";
+                    }
+                });
+
+                // Actualise le timestamp de l'appareil toutes les 20 secondes pour rester considéré en ligne
+                setInterval(() => {
+                    userRef.set({ last_seen: Date.now() });
+                }, 20000);
+
+            } catch (error) {
+                console.log("Erreur d'initialisation du compteur Firebase :", error);
+                document.getElementById('liveCounter').textContent = "1";
+            }
+        }
+
         async function loadPublishedImages() {
             try {
                 const response = await fetch(`images.json?t=${Date.now()}`);
                 if (response.ok) {
                     globalPublishedImages = await response.json();
-                    console.log("Configuration JSON chargée avec succès.");
                 }
             } catch (e) {
-                console.log("Fichier images.json introuvable ou erreur de lecture.");
+                console.log("Fichier images.json introuvable.");
             }
         }
 
@@ -125,55 +181,8 @@
             "paradis": ["2:82","2:111","2:214","2:221","3:133","3:142","3:185","4:124","5:72","7:40","7:42","7:43","7:44","7:46","7:48","7:50","9:111","11:108","13:23","15:45","18:107","19:60","22:56","23:11","25:15","26:85","29:58","32:19","36:26","39:73","39:74","40:40","41:30","42:7","43:70","43:73","47:6","50:31","52:17","53:15","54:54","55:46","56:12","56:89","59:20","66:11","69:21","70:38","76:12","79:41","81:13","85:11","88:10","98:8"]
         };
 
-        // Gestion de l'identifiant unique par Appareil
-        function getOrCreateDeviceID() {
-            let deviceId = localStorage.getItem('qv_device_id');
-            if (!deviceId) {
-                deviceId = 'dev_' + Math.random().toString(36).substring(2, 15) + Date.now().toString(36);
-                localStorage.setItem('qv_device_id', deviceId);
-            }
-            return deviceId;
-        }
-
-        // Système Avancé de Compteur Temps Réel par Appareil (API countapi.io / api.countapi.xyz alternative stable)
-        async function fetchRealOnlineCounter() {
-            const counterEl = document.getElementById('liveCounter');
-            const deviceId = getOrCreateDeviceID();
-            const namespace = "quranvision_live_production";
-            
-            try {
-                // Étape 1 : Ping de l'appareil actuel auprès du serveur externe pour signaler l'activité directe
-                // On utilise un timestamp pour forcer le rafraîchissement au niveau de l'API
-                const pingUrl = `https://api.countapi.io/hit/${namespace}/live_users?device=${deviceId}&t=${Date.now()}`;
-                
-                const response = await fetch(pingUrl);
-                if (response.ok) {
-                    const data = await response.json();
-                    // L'API filtre par les tokens/IP actifs des dernières minutes 
-                    // Si l'API retourne une valeur brute cumulative, on simule une plage active réaliste basée sur la clé de session
-                    if(data.value) {
-                        // Nettoyage et affichage dynamique des connexions réelles par appareil
-                        let activeUsers = Math.max(1, Math.floor(data.value % 45) + 1); 
-                        counterEl.textContent = activeUsers;
-                    }
-                } else {
-                    // Fallback vers API secondaire si saturation du réseau externe
-                    const altRes = await fetch(`https://api.apiify.com/v1/count/${namespace}?id=${deviceId}`);
-                    const altData = await altRes.json();
-                    counterEl.textContent = altData.count || "1";
-                }
-            } catch (e) {
-                // En cas de panne réseau complète ou de bloqueur de publicité sur le navigateur de l'appareil
-                console.log("Erreur de synchronisation du compteur d'appareil API.");
-                counterEl.textContent = "1"; 
-            }
-        }
-
         async function init() {
-            // Initialise le compteur pour l'appareil et actualise toutes les 15 secondes
-            fetchRealOnlineCounter();
-            setInterval(fetchRealOnlineCounter, 15000);
-
+            initLiveCounter();
             await loadPublishedImages();
             surahSelect.innerHTML = '';
             chaptersList.forEach(s => {
