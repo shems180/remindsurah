@@ -177,7 +177,7 @@
         ];
 
         const staticSearchIndex = {
-            "moise": ["2:51","2:53","2:54","2:55","2:60","2:61","2:67","2:87","2:92","2:108","2:136","2:246","2:248","3:84","4:153","4:164","5:20","5:22","5:24","6:84","6:91","7:103","7:104","7:115","7:117","7:122","7:127","7:128","7:131","7:134","7:138","7:142","7:143","7:144","7:148","7:150","7:154","7:155","7:159","7:160","10:75","10:77","10:80","10:81","10:83","10:84","10:87","10:88","11:17","11:96","11:110","14:5","14:6","14:8","17:2","17:101","18:60","18:66","19:51","20:9","20:11","20:17","20:19","20:36","20:40","20:49","20:57","20:61","20:65","20:67","20:70","20:77","20:83","20:86","20:88","20:91","21:48","22:44","23:45","25:35","26:10","26:30","26:43","26:45","26:48","26:52","26:61","26:62","26:63","26:65","27:7","27:9","27:10","28:3","28:7","28:10","28:15","28:18","28:19","28:20","28:29","28:30","28:31","28:36","28:37","28:38","28:43","28:44","28:48","28:76","29:39","32:23","33:7","33:69","37:114","37:120","40:23","40:26","40:27","40:28","40:34","40:53","41:45","42:13","43:46","46:12","46:30","51:38","51:39" /* Ajouts possibles */],
+            "moise": ["2:51","2:53","2:54","2:55","2:60","2:61","2:67","2:87","2:92","2:108","2:136","2:246","2:248","3:84","4:153","4:164","5:20","5:22","5:24","6:84","6:91","7:103","7:104","7:115","7:117","7:122","7:127","7:128","7:131","7:134","7:138","7:142","7:143","7:144","7:148","7:150","7:154","7:155","7:159","7:160","10:75","10:77","10:80","10:81","10:83","10:84","10:87","10:88","11:17","11:96","11:110","14:5","14:6","14:8","17:2","17:101","18:60","18:66","19:51","20:9","20:11","20:17","20:19","20:36","20:40","20:49","20:57","20:61","20:65","20:67","20:70","20:77","20:83","20:86","20:88","20:91","21:48","22:44","23:45","25:35","26:10","26:30","26:43","26:45","26:48","26:52","26:61","26:62","26:63","26:65","27:7","27:9","27:10","28:3","28:7","28:10","28:15","28:18","28:19","28:20","28:29","28:30","28:31","28:36","28:37","28:38","28:43","28:44","28:48","28:76","29:39","32:23","33:7","33:69","37:114","37:120","40:23","40:26","40:27","40:28","40:34","40:53","41:45","42:13","43:46","46:12","46:30","51:38","51:39"],
             "paradis": ["2:82","2:111","2:214","2:221","3:133","3:142","3:185","4:124","5:72","7:40","7:42","7:43","7:44","7:46","7:48","7:50","9:111","11:108","13:23","15:45","18:107","19:60","22:56","23:11","25:15","26:85","29:58","32:19","36:26","39:73","39:74","40:40","41:30","42:7","43:70","43:73","47:6","50:31","52:17","53:15","54:54","55:46","56:12","56:89","59:20","66:11","69:21","70:38","76:12","79:41","81:13","85:11","88:10","98:8"]
         };
 
@@ -214,13 +214,11 @@
             
             mainContent.innerHTML = `<div class="py-20 text-emerald-500 animate-pulse text-xl">Recherche en cours... / جاري البحث...</div>`;
             
-            // Étape 1 : Détection automatique de la langue (Arabe vs Français)
+            // Détection de la langue de saisie
             const isArabic = /[\u0600-\u06FF]/.test(userQuery);
-            const searchLanguage = isArabic ? 'ar' : 'fr';
-            
             let normalizedKey = userQuery.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
 
-            // Vérification dans l'index statique (seulement si ce n'est pas de l'arabe)
+            // Index statique (seulement si recherche française)
             if (!isArabic && staticSearchIndex[normalizedKey]) {
                 let keys = staticSearchIndex[normalizedKey];
                 mainContent.innerHTML = `<h2 class="text-2xl font-bold mb-8 text-emerald-500">${keys.length} occurrence(s) trouvée(s) pour "${userQuery}"</h2>`;
@@ -236,16 +234,16 @@
                 return;
             }
 
-            // Étape 2 : Requête dynamique adaptée à la langue saisie
             try {
-                const res = await fetch(`https://api.quran.com/api/v4/search?q=${encodeURIComponent(userQuery)}&size=100&language=${searchLanguage}`);
+                // On force TOUJOURS l'appel API avec language=fr pour éviter les plantages de l'API
+                const res = await fetch(`https://api.quran.com/api/v4/search?q=${encodeURIComponent(userQuery)}&size=100&language=fr`);
                 const data = await res.json();
                 
                 if (data && data.search && data.search.results) {
                     let results = data.search.results;
                     let totalOccurrences = data.search.total_results || results.length;
                     
-                    // Titre adapté selon la langue
+                    // Titre adapté selon la langue de saisie
                     if (isArabic) {
                         mainContent.innerHTML = `<h2 class="text-2xl font-bold mb-8 text-emerald-500" dir="rtl">${totalOccurrences} نتيجة تم العثور عليها لـ "${userQuery}"</h2>`;
                     } else {
@@ -257,10 +255,25 @@
                         return;
                     }
 
-                    results.forEach(r => {
-                        let cleanText = r.text.replace(/<[^>]*>/g, '');
+                    for (const r of results) {
+                        let finalDisplay = "";
                         
-                        // Si recherche en arabe : on aligne le texte du résultat à droite, sinon à gauche.
+                        if (isArabic) {
+                            // Recherche en Arabe -> On force l'extraction de l'arabe original depuis l'API
+                            try {
+                                const verseRes = await fetch(`https://api.quran.com/api/v4/verses/by_key/${r.verse_key}?fields=text_uthmani`);
+                                const verseData = await verseRes.json();
+                                if (verseData && verseData.verse) {
+                                    finalDisplay = verseData.verse.text_uthmani;
+                                }
+                            } catch(err) {
+                                finalDisplay = r.text.replace(/<[^>]*>/g, '');
+                            }
+                        } else {
+                            // Recherche en Français -> On garde proprement le texte français épuré des balises HTML
+                            finalDisplay = r.text.replace(/<[^>]*>/g, '');
+                        }
+
                         let alignmentClass = isArabic ? "text-right" : "text-left";
                         let directionAttr = isArabic ? 'dir="rtl"' : 'dir="ltr"';
                         let buttonLabel = isArabic ? "← اقرأ الآية في الصورة" : "LIRE EN IMAGE →";
@@ -270,10 +283,10 @@
                                 <div class="flex justify-between items-center text-zinc-400 text-xs">
                                     <span>${isArabic ? 'آية ' + r.verse_key : 'Verset ' + r.verse_key}</span>
                                 </div>
-                                <p class="text-zinc-200 font-light ${isArabic ? 'font-serif text-lg md:text-xl leading-relaxed' : 'italic text-sm md:text-base'}">"${cleanText}"</p>
+                                <p class="text-zinc-200 font-light ${isArabic ? 'font-serif text-xl md:text-2xl leading-relaxed' : 'italic text-sm md:text-base'}">"${finalDisplay}"</p>
                                 <button onclick="goToVerse('${r.verse_key}')" class="text-emerald-500 text-xs font-bold pt-2 block hover:underline">${buttonLabel}</button>
                             </div>`;
-                    });
+                    }
                 } else {
                     mainContent.innerHTML = `<p class='py-20 text-zinc-400'>${isArabic ? 'لا توجد نتائج لـ ' : 'Aucun résultat pour '}"${userQuery}".</p>`;
                 }
