@@ -97,8 +97,8 @@
             <div class="inline-block p-6 rounded-full bg-emerald-500/10 animate-pulse">
                 <svg class="w-16 h-16 text-emerald-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5s3.332.477 4.5 1.253v13C19.832 18.477 18.246 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"></path></svg>
             </div>
-            <h2 class="text-4xl md:text-6xl font-bold tracking-tight">Accès QuranVision</h2>
-            <p id="loading-status" class="text-zinc-400 text-lg max-w-lg mx-auto font-light">Bienvenue sur QURANVISION. Saisissez un terme du Quran ou choisissez une Sourate.</p>
+            <h2 class="text-4xl md:text-6xl font-bold tracking-tight">Bienvenue sur QuranVision</h2>
+            <p id="loading-status" class="text-zinc-400 text-lg max-w-lg mx-auto font-light">Recherchez un terme du Quran ou choisissez une Sourate.</p>
         </div>
     </main>
 
@@ -145,7 +145,7 @@
                                 count++;
                             }
                         });
-                        document.getElementById('liveCounter').textContent = Math.max(1, count);
+                        document.getElementById('liveCounter').textContent = Math.max(0, count);
                     } else {
                         document.getElementById('liveCounter').textContent = "1";
                     }
@@ -268,7 +268,7 @@
                 if (totalResultsFound.length > 0) {
                     mainContent.innerHTML = `
                         <h2 class="text-2xl font-bold mb-2 text-emerald-500">${totalResultsFound.length} occurrence(s) au total trouvée(s) pour "${userQuery}"</h2>
-                        <p class="text-zinc-400 text-sm mb-8">Affichage complet de tous les versets extraits sans restriction :</p>
+                        <p class="text-zinc-400 text-sm mb-8">Affichage complet de tous les versets correspondants :</p>
                     `;
 
                     totalResultsFound.forEach(r => {
