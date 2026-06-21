@@ -74,6 +74,11 @@
                     </button>
                 </div>
                 <select id="surahSelect" class="bg-zinc-900 border border-zinc-700 px-3 py-2 rounded-xl text-xs outline-none w-32 md:w-40 text-white"></select>
+                
+                <select id="verseSelect" onchange="scrollToSelectedVerse()" class="bg-zinc-900 border border-zinc-700 px-3 py-2 rounded-xl text-xs outline-none w-24 text-white hidden">
+                    <option value="">Verset</option>
+                </select>
+
                 <select id="reciterSelect" class="bg-zinc-900 border border-zinc-700 px-3 py-2 rounded-xl text-xs outline-none text-white">
                     <option value="7">Mishary Alafasy</option>
                     <option value="3">Abdur-Rahman as-Sudais</option>
@@ -100,16 +105,13 @@
     <script>
         const mainContent = document.getElementById('main-content');
         const surahSelect = document.getElementById('surahSelect');
+        const verseSelect = document.getElementById('verseSelect');
         let globalPublishedImages = {};
 
         const DEFAULT_FALLBACK_IMAGE = "https://images.unsplash.com/photo-1506318137071-a8e063b4bec0?auto=format&fit=crop&w=1200&q=80";
 
-        // Clé unique générée à CHAQUE ouverture (Garantit l'unicité par appareil / session)
         const deviceSessionId = 'dev_' + Math.random().toString(36).substring(2, 15) + Date.now().toString(36);
 
-        // ==========================================
-        // Configuration Firebase Realtime Database active
-        // ==========================================
         const firebaseConfig = {
             apiKey: "AIzaSyD1ljf1JiGquijBF6NSKu1R6TVeIpBTW1Q",
             authDomain: "quranvision-d107a.firebaseapp.com",
@@ -128,20 +130,14 @@
                 const userRef = database.ref('live_connections/' + deviceSessionId);
                 const allUsersRef = database.ref('live_connections');
 
-                // Enregistre l'appareil immédiatement
                 userRef.set({ timestamp: Date.now() });
-
-                // Supprime l'appareil dès qu'il quitte ou ferme l'application
                 userRef.onDisconnect().remove();
 
-                // Met à jour l'affichage dès qu'un appareil se connecte ou se déconnecte
                 allUsersRef.on('value', (snapshot) => {
                     const users = snapshot.val();
                     if (users) {
                         const now = Date.now();
                         let count = 0;
-                        
-                        // Sécurité anti-veille : on ne valide que les appareils ayant donné signe de vie les 45 dernières secondes
                         Object.keys(users).forEach(key => {
                             if (now - users[key].timestamp < 45000) {
                                 count++;
@@ -153,7 +149,6 @@
                     }
                 });
 
-                // Envoi d'un signal d'activité régulier toutes les 15 secondes
                 setInterval(() => {
                     userRef.set({ timestamp: Date.now() });
                 }, 15000);
@@ -191,11 +186,16 @@
             chaptersList.forEach(s => {
                 surahSelect.innerHTML += `<option value="${s.id}">${s.id}. ${s.name}</option>`;
             });
+            // Cacher le sélecteur de verset au démarrage
+            verseSelect.classList.add('hidden');
         }
 
         async function searchVerse() {
             let userQuery = document.getElementById('searchInput').value.trim();
             if (!userQuery) return;
+            
+            // Masquer la sélection de verset lors d'une recherche textuelle globale
+            verseSelect.classList.add('hidden');
             
             mainContent.innerHTML = `<div class="py-20 text-emerald-500 animate-pulse text-xl">Recherche en cours...</div>`;
             let normalizedKey = userQuery.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
@@ -253,6 +253,8 @@
             setTimeout(() => {
                 const el = document.getElementById(`v-${vk}`);
                 if (el) el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                // Mettre à jour également la valeur du selecteur de verset
+                verseSelect.value = vk.split(':')[1];
             }, 800);
         }
 
@@ -266,8 +268,33 @@
                 const data = await res.json();
                 const audioRes = await fetch(`https://api.quran.com/api/v4/chapter_recitations/${rid}/${sid}`);
                 const audioData = await audioRes.json();
+                
+                // Mettre à jour le sélecteur de versets avec le bon nombre de versets
+                updateVerseSelect(data.verses.length);
+                
                 renderSurah(data.verses, audioData.audio_file.audio_url);
             } catch (e) { mainContent.innerHTML = "<div class='py-20 text-red-400'>Erreur lors du chargement.</div>"; }
+        }
+
+        // Fonction pour remplir le menu déroulant des versets dynamiquement
+        function updateVerseSelect(totalVerses) {
+            verseSelect.innerHTML = '<option value="">Verset</option>';
+            for (let i = 1; i <= totalVerses; i++) {
+                verseSelect.innerHTML += `<option value="${i}">Verset ${i}</option>`;
+            }
+            verseSelect.classList.remove('hidden'); // Rendre le menu visible
+        }
+
+        // Fonction pour défiler automatiquement vers le verset sélectionné
+        function scrollToSelectedVerse() {
+            const verseId = verseSelect.value;
+            const surahId = surahSelect.value;
+            if (!verseId || !surahId) return;
+
+            const targetElement = document.getElementById(`v-${surahId}:${verseId}`);
+            if (targetElement) {
+                targetElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            }
         }
 
         function handleImageError(imgElement) {
