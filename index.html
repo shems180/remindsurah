@@ -67,15 +67,18 @@
             </div>
             
             <div class="flex flex-wrap justify-center items-center gap-3">
-                <div class="relative">
-                    <input type="text" id="searchInput" placeholder="Recherche (ex: Moise, Paradis)..." class="w-56 md:w-64 px-4 py-2 rounded-xl text-sm text-white bg-black/40 border border-white/10 focus:border-emerald-500 focus:outline-none">
-                    <button onclick="searchVerse()" class="absolute right-3 top-2 text-emerald-400 hover:text-white transition">
-                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" stroke-width="2" stroke-linecap="round"></path></svg>
+                <div class="flex items-center gap-2">
+                    <input type="text" id="searchInput" placeholder="Recherche (ex: Moise, Paradis)..." class="w-48 md:w-56 px-4 py-2 rounded-xl text-sm text-white bg-black/40 border border-white/10 focus:border-emerald-500 focus:outline-none">
+                    <button onclick="searchVerse()" class="bg-zinc-800 hover:bg-zinc-700 text-emerald-400 p-2.5 rounded-xl border border-white/10 transition-all flex items-center justify-center" title="Rechercher">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" stroke-width="2.5" stroke-linecap="round"></path>
+                        </svg>
                     </button>
                 </div>
-                <select id="surahSelect" class="bg-zinc-900 border border-zinc-700 px-3 py-2 rounded-xl text-xs outline-none w-32 md:w-40 text-white"></select>
+
+                <select id="surahSelect" onchange="handleSurahChange()" class="bg-zinc-900 border border-zinc-700 px-3 py-2 rounded-xl text-xs outline-none w-32 md:w-40 text-white"></select>
                 
-                <select id="verseSelect" onchange="scrollToSelectedVerse()" class="bg-zinc-900 border border-zinc-700 px-3 py-2 rounded-xl text-xs outline-none w-24 text-white hidden">
+                <select id="verseSelect" onchange="scrollToSelectedVerse()" class="bg-zinc-900 border border-zinc-700 px-3 py-2 rounded-xl text-xs outline-none w-24 text-white">
                     <option value="">Verset</option>
                 </select>
 
@@ -109,7 +112,6 @@
         let globalPublishedImages = {};
 
         const DEFAULT_FALLBACK_IMAGE = "https://images.unsplash.com/photo-1506318137071-a8e063b4bec0?auto=format&fit=crop&w=1200&q=80";
-
         const deviceSessionId = 'dev_' + Math.random().toString(36).substring(2, 15) + Date.now().toString(36);
 
         const firebaseConfig = {
@@ -171,7 +173,7 @@
         }
 
         const chaptersList = [
-            {id:1, name:"Al-Fatihah"}, {id:2, name:"Al-Baqarah"}, {id:3, name:"Ali 'Imran"}, {id:4, name:"An-Nisa"}, {id:5, name:"Al-Ma'idah"}, {id:6, name:"Al-An'am"}, {id:7, name:"Al-A'raf"}, {id:8, name:"Al-Anfal"}, {id:9, name:"At-Tawbah"}, {id:10, name:"Yunus"}, {id:11, name:"Hud"}, {id:12, name:"Yusuf"}, {id:13, name:"Ar-Ra'd"}, {id:14, name:"Ibrahim"}, {id:15, name:"Al-Hijr"}, {id:16, name:"An-Nahl"}, {id:17, name:"Al-Isra"}, {id:18, name:"Al-Kahf"}, {id:19, name:"Maryam"}, {id:20, name:"Ta-Ha"}, {id:21, name:"Al-Anbiya"}, {id:22, name:"Al-Hajj"}, {id:23, name:"Al-Mu'minun"}, {id:24, name:"An-Nur"}, {id:25, name:"Al-Furqan"}, {id:26, name:"Ash-Shu'ara"}, {id:27, name:"An-Naml"}, {id:28, name:"Al-Qasas"}, {id:29, name:"Al-'Ankabut"}, {id:30, name:"Ar-Rum"}, {id:31, name:"Luqman"}, {id:32, name:"As-Sajdah"}, {id:33, name:"Al-Ahzab"}, {id:34, name:"Saba"}, {id:35, name:"Fatir"}, {id:36, name:"Ya-Sin"}, {id:37, name:"As-Saffat"}, {id:38, name:"Sad"}, {id:39, name:"Az-Zumar"}, {id:40, name:"Ghafir"}, {id:41, name:"Fussilat"}, {id:42, name:"Ash-Shura"}, {id:43, name:"Az-Zukhruf"}, {id:44, name:"Ad-Dukhan"}, {id:45, name:"Al-Jathiyah"}, {id:46, name:"Al-Ahqaf"}, {id:47, name:"Muhammad"}, {id:48, name:"Al-Fath"}, {id:49, name:"Al-Hujurat"}, {id:50, name:"Qaf"}, {id:51, name:"Adh-Dhariyat"}, {id:52, name:"At-Tur"}, {id:53, name:"An-Najm"}, {id:54, name:"Al-Qamar"}, {id:55, name:"Ar-Rahman"}, {id:56, name:"Al-Waqi'ah"}, {id:57, name:"Al-Hadid"}, {id:58, name:"Al-Mujadilah"}, {id:59, name:"Al-Hashr"}, {id:60, name:"Al-Mumtahanah"}, {id:61, name:"As-Saff"}, {id:62, name:"Al-Jumu'ah"}, {id:63, name:"Al-Munafiqun"}, {id:64, name: "At-Taghabun"}, {id:65, name:"At-Talaq"}, {id:66, name:"At-Tahrim"}, {id:67, name:"Al-Mulk"}, {id:68, name:"Al-Qalam"}, {id:69, name:"Al-Haqqah"}, {id:70, name:"Al-Ma'arij"}, {id:71, name:"Nuh"}, {id:72, name:"Al-Jinn"}, {id:73, name:"Al-Muzzammil"}, {id:74, name:"Al-Muddaththir"}, {id:75, name:"Al-Qiyamah"}, {id:76, name:"Al-Insan"}, {id:77, name:"Al-Mursalat"}, {id:78, name:"An-Naba"}, {id:79, name:"An-Nazi'at"}, {id:80, name:"'Abasa"}, {id:81, name:"At-Takwir"}, {id:82, name:"Al-Infitar"}, {id:83, name:"Al-Mutaffifin"}, {id:84, name:"Al-Inshiqaq"}, {id:85, name:"Al-Buruj"}, {id:86, name:"At-Tariq"}, {id:87, name:"Al-A'la"}, {id:88, name:"Al-Ghashiyah"}, {id:89, name:"Al-Fajr"}, {id:90, name:"Al-Balad"}, {id:91, name:"Ash-Shams"}, {id:92, name:"Al-Layl"}, {id:93, name:"Ad-Duha"}, {id:94, name:"Ash-Sharh"}, {id:95, name:"At-Tin"}, {id:96, name:"Al-'Alaq"}, {id:97, name:"Al-Qadr"}, {id:98, name:"Al-Bayyinah"}, {id:99, name:"Az-Zalzalah"}, {id:100, name:"Al-'Adiyat"}, {id:101, name:"Al-Qari'ah"}, {id:102, name:"At-Takathur"}, {id:103, name:"Al-'Asr"}, {id:104, name:"Al-Humazah"}, {id:105, name:"Al-Fil"}, {id:106, name:"Quraysh"}, {id:107, name:"Al-Ma'un"}, {id:108, name:"Al-Kawthar"}, {id:109, name:"Al-Kafirun"}, {id:110, name:"An-Nasr"}, {id:111, name:"Al-Masad"}, {id:112, name:"Al-Ikhlas"}, {id:113, name:"Al-Falaq"}, {id:114, name:"An-Nas"}
+            {id:1, name:"Al-Fatihah", verses:7}, {id:2, name:"Al-Baqarah", verses:286}, {id:3, name:"Ali 'Imran", verses:200}, {id:4, name:"An-Nisa", verses:176}, {id:5, name:"Al-Ma'idah", verses:120}, {id:6, name:"Al-An'am", verses:165}, {id:7, name:"Al-A'raf", verses:206}, {id:8, name:"Al-Anfal", verses:75}, {id:9, name:"At-Tawbah", verses:129}, {id:10, name:"Yunus", verses:109}, {id:11, name:"Hud", verses:123}, {id:12, name:"Yusuf", verses:111}, {id:13, name:"Ar-Ra'd", verses:43}, {id:14, name:"Ibrahim", verses:52}, {id:15, name:"Al-Hijr", verses:99}, {id:16, name:"An-Nahl", verses:128}, {id:17, name:"Al-Isra", verses:111}, {id:18, name:"Al-Kahf", verses:110}, {id:19, name:"Maryam", verses:98}, {id:20, name:"Ta-Ha", verses:135}, {id:21, name:"Al-Anbiya", verses:112}, {id:22, name:"Al-Hajj", verses:78}, {id:23, name:"Al-Mu'minun", verses:118}, {id:24, name:"An-Nur", verses:64}, {id:25, name:"Al-Furqan", verses:77}, {id:26, name:"Ash-Shu'ara", verses:227}, {id:27, name:"An-Naml", verses:93}, {id:28, name:"Al-Qasas", verses:88}, {id:29, name:"Al-'Ankabut", verses:69}, {id:30, name:"Ar-Rum", verses:60}, {id:31, name:"Luqman", verses:34}, {id:32, name:"As-Sajdah", verses:30}, {id:33, name:"Al-Ahzab", verses:73}, {id:34, name:"Saba", verses:54}, {id:35, name:"Fatir", verses:45}, {id:36, name:"Ya-Sin", verses:83}, {id:37, name:"As-Saffat", verses:182}, {id:38, name:"Sad", verses:88}, {id:39, name:"Az-Zumar", verses:75}, {id:40, name:"Ghafir", verses:85}, {id:41, name:"Fussilat", verses:54}, {id:42, name:"Ash-Shura", verses:53}, {id:43, name:"Az-Zukhruf", verses:89}, {id:44, name:"Ad-Dukhan", verses:59}, {id:45, name:"Al-Jathiyah", verses:37}, {id:46, name:"Al-Ahqaf", verses:35}, {id:47, name:"Muhammad", verses:38}, {id:48, name:"Al-Fath", verses:29}, {id:49, name:"Al-Hujurat", verses:18}, {id:50, name:"Qaf", verses:45}, {id:51, name:"Adh-Dhariyat", verses:60}, {id:52, name:"At-Tur", verses:49}, {id:53, name:"An-Najm", verses:62}, {id:54, name:"Al-Qamar", verses:55}, {id:55, name:"Ar-Rahman", verses:78}, {id:56, name:"Al-Waqi'ah", verses:96}, {id:57, name:"Al-Hadid", verses:29}, {id:58, name:"Al-Mujadilah", verses:22}, {id:59, name:"Al-Hashr", verses:24}, {id:60, name:"Al-Mumtahanah", verses:13}, {id:61, name:"As-Saff", verses:14}, {id:62, name:"Al-Jumu'ah", verses:11}, {id:63, name:"Al-Munafiqun", verses:11}, {id:64, name: "At-Taghabun", verses:18}, {id:65, name:"At-Talaq", verses:12}, {id:66, name:"At-Tahrim", verses:12}, {id:67, name:"Al-Mulk", verses:30}, {id:68, name:"Al-Qalam", verses:52}, {id:69, name:"Al-Haqqah", verses:52}, {id:70, name:"Al-Ma'arij", verses:44}, {id:71, name:"Nuh", verses:28}, {id:72, name:"Al-Jinn", verses:28}, {id:73, name:"Al-Muzzammil", verses:20}, {id:74, name:"Al-Muddaththir", verses:56}, {id:75, name:"Al-Qiyamah", verses:40}, {id:76, name:"Al-Insan", verses:31}, {id:77, name:"Al-Mursalat", verses:50}, {id:78, name:"An-Naba", verses:40}, {id:79, name:"An-Nazi'at", verses:46}, {id:80, name:"'Abasa", verses:42}, {id:81, name:"At-Takwir", verses:29}, {id:82, name:"Al-Infitar", verses:19}, {id:83, name:"Al-Mutaffifin", verses:36}, {id:84, name:"Al-Inshiqaq", verses:25}, {id:85, name:"Al-Buruj", verses:22}, {id:86, name:"At-Tariq", verses:17}, {id:87, name:"Al-A'la", verses:19}, {id:88, name:"Al-Ghashiyah", verses:26}, {id:89, name:"Al-Fajr", verses:30}, {id:90, name:"Al-Balad", verses:20}, {id:91, name:"Ash-Shams", verses:15}, {id:92, name:"Al-Layl", verses:21}, {id:93, name:"Ad-Duha", verses:11}, {id:94, name:"Ash-Sharh", verses:8}, {id:95, name:"At-Tin", verses:8}, {id:96, name:"Al-'Alaq", verses:19}, {id:97, name:"Al-Qadr", verses:5}, {id:98, name:"Al-Bayyinah", verses:8}, {id:99, name:"Az-Zalzalah", verses:8}, {id:100, name:"Al-'Adiyat", verses:11}, {id:101, name:"Al-Qari'ah", verses:11}, {id:102, name:"At-Takathur", verses:8}, {id:103, name:"Al-'Asr", verses:3}, {id:104, name:"Al-Humazah", verses:9}, {id:105, name:"Al-Fil", verses:5}, {id:106, name:"Quraysh", verses:4}, {id:107, name:"Al-Ma'un", verses:7}, {id:108, name:"Al-Kawthar", verses:3}, {id:109, name:"Al-Kafirun", verses:6}, {id:110, name:"An-Nasr", verses:3}, {id:111, name:"Al-Masad", verses:5}, {id:112, name:"Al-Ikhlas", verses:4}, {id:113, name:"Al-Falaq", verses:5}, {id:114, name:"An-Nas", verses:6}
         ];
 
         const staticSearchIndex = {
@@ -182,20 +184,34 @@
         async function init() {
             initLiveCounter();
             await loadPublishedImages();
+            
             surahSelect.innerHTML = '';
             chaptersList.forEach(s => {
                 surahSelect.innerHTML += `<option value="${s.id}">${s.id}. ${s.name}</option>`;
             });
-            // Cacher le sélecteur de verset au démarrage
-            verseSelect.classList.add('hidden');
+
+            // Initialise le menu des versets immédiatement pour la première sourate (Al-Fatihah)
+            handleSurahChange();
+        }
+
+        function handleSurahChange() {
+            const sid = parseInt(surahSelect.value);
+            const chapter = chaptersList.find(c => c.id === sid);
+            if (chapter) {
+                updateVerseSelect(chapter.verses);
+            }
+        }
+
+        function updateVerseSelect(totalVerses) {
+            verseSelect.innerHTML = '<option value="">Verset</option>';
+            for (let i = 1; i <= totalVerses; i++) {
+                verseSelect.innerHTML += `<option value="${i}">Verset ${i}</option>`;
+            }
         }
 
         async function searchVerse() {
             let userQuery = document.getElementById('searchInput').value.trim();
             if (!userQuery) return;
-            
-            // Masquer la sélection de verset lors d'une recherche textuelle globale
-            verseSelect.classList.add('hidden');
             
             mainContent.innerHTML = `<div class="py-20 text-emerald-500 animate-pulse text-xl">Recherche en cours...</div>`;
             let normalizedKey = userQuery.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
@@ -249,11 +265,11 @@
 
         async function goToVerse(vk) {
             surahSelect.value = vk.split(':')[0];
+            handleSurahChange();
             await loadSurah();
             setTimeout(() => {
                 const el = document.getElementById(`v-${vk}`);
                 if (el) el.scrollIntoView({ behavior: 'smooth', block: 'center' });
-                // Mettre à jour également la valeur du selecteur de verset
                 verseSelect.value = vk.split(':')[1];
             }, 800);
         }
@@ -269,30 +285,25 @@
                 const audioRes = await fetch(`https://api.quran.com/api/v4/chapter_recitations/${rid}/${sid}`);
                 const audioData = await audioRes.json();
                 
-                // Mettre à jour le sélecteur de versets avec le bon nombre de versets
                 updateVerseSelect(data.verses.length);
-                
                 renderSurah(data.verses, audioData.audio_file.audio_url);
             } catch (e) { mainContent.innerHTML = "<div class='py-20 text-red-400'>Erreur lors du chargement.</div>"; }
         }
 
-        // Fonction pour remplir le menu déroulant des versets dynamiquement
-        function updateVerseSelect(totalVerses) {
-            verseSelect.innerHTML = '<option value="">Verset</option>';
-            for (let i = 1; i <= totalVerses; i++) {
-                verseSelect.innerHTML += `<option value="${i}">Verset ${i}</option>`;
-            }
-            verseSelect.classList.remove('hidden'); // Rendre le menu visible
-        }
-
-        // Fonction pour défiler automatiquement vers le verset sélectionné
-        function scrollToSelectedVerse() {
+        async function scrollToSelectedVerse() {
             const verseId = verseSelect.value;
             const surahId = surahSelect.value;
             if (!verseId || !surahId) return;
 
-            const targetElement = document.getElementById(`v-${surahId}:${verseId}`);
-            if (targetElement) {
+            let targetElement = document.getElementById(`v-${surahId}:${verseId}`);
+            
+            if (!targetElement) {
+                await loadSurah();
+                setTimeout(() => {
+                    targetElement = document.getElementById(`v-${surahId}:${verseId}`);
+                    if (targetElement) targetElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                }, 800);
+            } else {
                 targetElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
             }
         }
