@@ -190,7 +190,6 @@
                 surahSelect.innerHTML += `<option value="${s.id}">${s.id}. ${s.name}</option>`;
             });
 
-            // Initialise le menu des versets immédiatement pour la première sourate (Al-Fatihah)
             handleSurahChange();
         }
 
@@ -232,11 +231,22 @@
             }
 
             try {
+                // Utilisation des données globales de l'API pour extraire le nombre total réel
                 const res = await fetch(`https://api.quran.com/api/v4/search?q=${encodeURIComponent(userQuery)}&size=100&language=fr`);
                 const data = await res.json();
                 if (data && data.search && data.search.results) {
                     let results = data.search.results;
-                    mainContent.innerHTML = `<h2 class="text-2xl font-bold mb-8 text-emerald-500">${results.length} occurrence(s)</h2>`;
+                    
+                    // Récupération de l'indicateur d'occurrences globales de l'API
+                    let totalOccurrences = data.search.total_results || results.length;
+                    
+                    mainContent.innerHTML = `<h2 class="text-2xl font-bold mb-8 text-emerald-500">${totalOccurrences} occurrence(s) trouvée(s) pour "${userQuery}"</h2>`;
+                    
+                    if (results.length === 0) {
+                        mainContent.innerHTML += `<p class='py-10 text-zinc-400'>Aucun verset textuel trouvé.</p>`;
+                        return;
+                    }
+
                     results.forEach(r => {
                         mainContent.innerHTML += `
                             <div class="glass-card p-6 md:p-8 mb-6 bg-white/5 border-l-4 border-emerald-500 text-left space-y-4">
