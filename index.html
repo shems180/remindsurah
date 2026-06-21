@@ -107,9 +107,18 @@
         // Clé unique générée à CHAQUE ouverture (Garantit l'unicité par appareil / session)
         const deviceSessionId = 'dev_' + Math.random().toString(36).substring(2, 15) + Date.now().toString(36);
 
-        // Instance Firebase en temps réel partagée
+        // ==========================================
+        // Configuration Firebase Realtime Database active
+        // ==========================================
         const firebaseConfig = {
-            databaseURL: "https://quranvision-live-default-rtdb.europe-west1.firebasedatabase.app/"
+            apiKey: "AIzaSyD1ljf1JiGquijBF6NSKu1R6TVeIpBTW1Q",
+            authDomain: "quranvision-d107a.firebaseapp.com",
+            databaseURL: "https://quranvision-d107a-default-rtdb.europe-west1.firebasedatabase.app/",
+            projectId: "quranvision-d107a",
+            storageBucket: "quranvision-d107a.firebasestorage.app",
+            messagingSenderId: "374171323189",
+            appId: "1:374171323189:web:2496ae1cf1c0b01429da7c",
+            measurementId: "G-CK02L7988Z"
         };
 
         function initLiveCounter() {
