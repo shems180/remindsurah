@@ -8,7 +8,9 @@
     <link rel="manifest" href="manifest.json?v=8">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-    <link class="apple-touch-icon" href="icon-192.png">
+    
+    <link rel="icon" type="image/jpeg" href="logo4.jpg">
+    <link class="apple-touch-icon" href="logo4.jpg">
 
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Amiri:wght@400;700&family=Inter:wght@300;500;700&display=swap" rel="stylesheet">
@@ -52,7 +54,7 @@
         audio { height: 40px; width: 100%; outline: none; }
     </style>
 </head>
-<body class="overflow-x-hidden">
+<body class="overflow-x-hidden relative">
 
     <nav class="sticky top-0 z-50 p-4 bg-black/70 backdrop-blur-xl border-b border-white/5">
         <div class="max-w-7xl mx-auto flex flex-col lg:flex-row justify-between items-center gap-4">
@@ -102,6 +104,12 @@
         </div>
     </main>
 
+    <button id="scrollToTopBtn" onclick="scrollToTop()" class="fixed bottom-6 right-6 z-50 bg-emerald-600 hover:bg-emerald-500 text-black p-3 rounded-full shadow-2xl transition-all duration-300 translate-y-20 opacity-0 pointer-events-none border border-emerald-400/20" title="Retourner en haut">
+        <svg class="w-6 h-6 stroke-[3]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M4.5 15.75l7.5-7.5 7.5 7.5"></path>
+        </svg>
+    </button>
+
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-database-compat.js"></script>
 
@@ -109,6 +117,7 @@
         const mainContent = document.getElementById('main-content');
         const surahSelect = document.getElementById('surahSelect');
         const verseSelect = document.getElementById('verseSelect');
+        const scrollToTopBtn = document.getElementById('scrollToTopBtn');
         let globalPublishedImages = {};
 
         const DEFAULT_FALLBACK_IMAGE = "https://images.unsplash.com/photo-1506318137071-a8e063b4bec0?auto=format&fit=crop&w=1200&q=80";
@@ -191,6 +200,9 @@
             });
 
             handleSurahChange();
+            
+            // Écouteur de scroll pour afficher le bouton "Retour en haut"
+            window.addEventListener('scroll', toggleScrollButton);
         }
 
         function handleSurahChange() {
@@ -208,17 +220,34 @@
             }
         }
 
-        // --- NOUVELLES FONCTIONS DE NAVIGATION ---
         function changeSurah(direction) {
             let currentSid = parseInt(surahSelect.value);
             let nextSid = currentSid + direction;
 
-            // Bloquer si on dépasse les limites (1 à 114)
             if (nextSid >= 1 && nextSid <= 114) {
                 surahSelect.value = nextSid;
                 handleSurahChange();
                 loadSurah();
             }
+        }
+
+        // --- FONCTIONS DU BOUTON RETOUR EN HAUT ---
+        function toggleScrollButton() {
+            // Affiche le bouton si on a défilé de plus de 400px vers le bas
+            if (window.scrollY > 400) {
+                scrollToTopBtn.classList.remove('translate-y-20', 'opacity-0', 'pointer-events-none');
+                scrollToTopBtn.classList.add('translate-y-0', 'opacity-100', 'pointer-events-auto');
+            } else {
+                scrollToTopBtn.classList.remove('translate-y-0', 'opacity-100', 'pointer-events-auto');
+                scrollToTopBtn.classList.add('translate-y-20', 'opacity-0', 'pointer-events-none');
+            }
+        }
+
+        function scrollToTop() {
+            window.scrollTo({
+                top: 0,
+                behavior: 'smooth'
+            });
         }
 
         async function searchVerse() {
@@ -357,18 +386,6 @@
             } catch (e) {}
         }
 
-        async function fetchVerseTextAsync(vk) {
-            try {
-                const res = await fetch(`https://api.quran.com/api/v4/verses/by_key/${vk}?language=fr&translations=31`);
-                const data = await res.json();
-                if (data && data.verse && data.verse.translations) {
-                    let text = data.verse.translations[0].text.replace(/<[^>]*>/g, '');
-                    const el = document.getElementById(`text-pre-${vk.replace(':','-')}`);
-                    if (el) { el.innerText = `"${text}"`; el.classList.remove('animate-pulse'); }
-                }
-            } catch (e) {}
-        }
-
         async function goToVerse(vk) {
             surahSelect.value = vk.split(':')[0];
             handleSurahChange();
@@ -428,7 +445,6 @@
         }
 
         function renderSurah(verses, audio) {
-            // Modification ici : Ajout des boutons de navigation autour/avec l'audio player
             mainContent.innerHTML = `
                 <div class="sticky top-24 z-40 w-full mb-12 px-4 flex justify-center items-center gap-2">
                     <button onclick="changeSurah(-1)" class="bg-zinc-900/90 hover:bg-zinc-800 text-emerald-400 p-3 rounded-full border border-white/10 transition-all shadow-xl" title="Sourate précédente">
