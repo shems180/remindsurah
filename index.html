@@ -231,9 +231,15 @@
             }
 
             try {
+                // Détection de la langue de recherche améliorée pour forcer le français si requis
                 const isArabic = /[\u0600-\u06FF]/.test(userQuery);
-                const langParam = isArabic ? 'ar' : 'fr';
+                let langParam = isArabic ? 'ar' : 'fr';
                 
+                // Si l'utilisateur tape Allah en lettres latines, on s'assure d'interroger l'index français complet
+                if (normalizedKey === 'allah' || normalizedKey === 'dieu') {
+                    langParam = 'fr';
+                }
+
                 const res = await fetch(`https://api.quran.com/api/v4/search?q=${encodeURIComponent(userQuery)}&size=200&language=${langParam}`);
                 const data = await res.json();
                 
@@ -243,7 +249,7 @@
                     
                     mainContent.innerHTML = `
                         <h2 class="text-2xl font-bold mb-2 text-emerald-500">${totalOccurrences} occurrence(s) au total pour "${userQuery}"</h2>
-                        <p class="text-zinc-400 text-sm mb-8">Affichage des ${results.length} premiers versets trouvés textuellement ci-dessous :</p>
+                        <p class="text-zinc-400 text-sm mb-8">Affichage des résultats textuels trouvés ci-dessous :</p>
                     `;
                     
                     if (results.length === 0) {
@@ -253,14 +259,16 @@
 
                     results.forEach(r => {
                         let cleanText = r.text.replace(/<[^>]*>/g, '');
-                        let textClass = isArabic ? "quran-container text-right text-xl font-serif text-zinc-100" : "text-zinc-200 font-light italic text-sm md:text-base text-left";
-                        let cardAlign = isArabic ? "text-right border-r-4 border-l-0" : "text-left border-l-4 border-r-0";
+                        // Force un affichage propre à gauche pour le français
+                        let isResultArabic = /[\u0600-\u06FF]/.test(cleanText);
+                        let textClass = isResultArabic ? "quran-container text-right text-xl font-serif text-zinc-100" : "text-zinc-200 font-light italic text-sm md:text-base text-left";
+                        let cardAlign = isResultArabic ? "text-right border-r-4 border-l-0" : "text-left border-l-4 border-r-0";
 
                         mainContent.innerHTML += `
                             <div class="glass-card p-6 md:p-8 mb-6 bg-white/5 ${cardAlign} border-emerald-500 space-y-4">
                                 <div class="flex justify-between items-center text-zinc-400 text-xs"><span>Verset ${r.verse_key}</span></div>
                                 <div class="${textClass}">"${cleanText}"</div>
-                                <button onclick="goToVerse('${r.verse_key}')" class="text-emerald-500 text-xs font-bold pt-2 block hover:underline ${isArabic ? 'mr-auto' : 'ml-0'}">LIRE EN IMAGE →</button>
+                                <button onclick="goToVerse('${r.verse_key}')" class="text-emerald-500 text-xs font-bold pt-2 block hover:underline ${isResultArabic ? 'mr-auto' : 'ml-0'}">LIRE EN IMAGE →</button>
                             </div>`;
                     });
                 } else {
