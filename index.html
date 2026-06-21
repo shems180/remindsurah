@@ -202,7 +202,7 @@
         }
 
         function updateVerseSelect(totalVerses) {
-            verseSelect.innerHTML = '<option value="">Verset</option>';
+            this.verseSelect.innerHTML = '<option value="">Verset</option>';
             for (let i = 1; i <= totalVerses; i++) {
                 verseSelect.innerHTML += `<option value="${i}">Verset ${i}</option>`;
             }
@@ -217,15 +217,20 @@
 
             if (staticSearchIndex[normalizedKey]) {
                 let keys = staticSearchIndex[normalizedKey];
-                mainContent.innerHTML = `<h2 class="text-2xl font-bold mb-8 text-emerald-500">${keys.length} occurrence(s) trouvée(s) pour "${userQuery}"</h2>`;
+                mainContent.innerHTML = `
+                    <h2 class="text-2xl font-bold mb-2 text-emerald-500">${keys.length} occurrence(s) au total trouvée(s) pour "${userQuery}"</h2>
+                    <p class="text-zinc-400 text-sm mb-8">Affichage complet de tous les versets correspondants :</p>
+                `;
+                
                 keys.forEach(vk => {
                     mainContent.innerHTML += `
-                        <div class="glass-card p-6 md:p-8 mb-6 bg-white/5 border-l-4 border-emerald-500 text-left space-y-4">
+                        <div class="glass-card p-6 md:p-8 mb-6 bg-white/5 text-right border-r-4 border-l-0 border-emerald-500 space-y-4">
                             <div class="flex justify-between items-center text-zinc-400 text-xs"><span>Verset ${vk}</span></div>
-                            <p id="text-pre-${vk.replace(':','-')}" class="text-zinc-200 font-light italic text-sm md:text-base animate-pulse">Chargement du texte...</p>
-                            <button onclick="goToVerse('${vk}')" class="text-emerald-500 text-xs font-bold pt-2 block hover:underline">LIRE LE VERSET EN IMAGE →</button>
+                            <div id="arabic-pre-${vk.replace(':','-')}" class="quran-container text-right text-xl font-serif text-zinc-100 animate-pulse">Chargement de l'arabe...</div>
+                            <p id="text-pre-${vk.replace(':','-')}" class="text-zinc-400 font-light italic text-sm text-left pt-3 border-t border-white/5 animate-pulse">Chargement de la traduction française...</p>
+                            <button onclick="goToVerse('${vk}')" class="text-emerald-500 text-xs font-bold pt-2 block hover:underline text-left">LIRE EN IMAGE →</button>
                         </div>`;
-                    fetchVerseTextAsync(vk);
+                    fetchStaticVerseDetailsAsync(vk);
                 });
                 return;
             }
@@ -239,7 +244,6 @@
                 let currentPage = 1;
                 let hasMorePages = true;
 
-                // NOUVELLE LOGIQUE : Boucle de pagination infinie pour TOUS les mots recherchés
                 while (hasMorePages && currentPage <= 15) { 
                     let url = `https://api.quran.com/api/v4/search?q=${safeQuery}&page=${currentPage}&size=250&language=${langParam}`;
                     let res = await fetch(url);
@@ -249,12 +253,10 @@
                     if (data && data.search && data.search.results && data.search.results.length > 0) {
                         totalResultsFound = totalResultsFound.concat(data.search.results);
                         
-                        // Si on a récupéré moins d'éléments que la taille max demandée, c'est qu'on est à la fin
                         if (data.search.results.length < 20 && currentPage === 1) {
                             hasMorePages = false;
                         }
                         
-                        // Vérification basée sur les données de pagination de l'API si disponibles
                         if (data.search.total_pages && currentPage >= data.search.total_pages) {
                             hasMorePages = false;
                         }
@@ -275,7 +277,7 @@
                         let cleanText = r.text.replace(/<[^>]*>/g, '');
                         let isResultArabic = /[\u0600-\u06FF]/.test(cleanText);
                         
-                        let textClass = isResultArabic ? "quran-container text-right text-xl font-serif text-zinc-100" : "text-zinc-200 font-light italic text-sm md:text-base text-left";
+                        let textClass = isResultArabic ? "quran-container text-right text-xl font-serif text-zinc-110" : "text-zinc-200 font-light italic text-sm md:text-base text-left";
                         let cardAlign = isResultArabic ? "text-right border-r-4 border-l-0" : "text-left border-l-4 border-r-0";
 
                         let translationPlaceholder = isResultArabic 
@@ -301,6 +303,29 @@
                 console.error(e);
                 mainContent.innerHTML = "<p class='py-20 text-red-400'>La recherche a échoué ou l'API rencontre des difficultés de surcharge.</p>"; 
             }
+        }
+
+        async function fetchStaticVerseDetailsAsync(vk) {
+            try {
+                const res = await fetch(`https://api.quran.com/api/v4/verses/by_key/${vk}?language=fr&translations=31&fields=text_uthmani`);
+                const data = await res.json();
+                if (data && data.verse) {
+                    const arabicEl = document.getElementById(`arabic-pre-${vk.replace(':','-')}`);
+                    if (arabicEl && data.verse.text_uthmani) {
+                        arabicEl.innerText = `"${data.verse.text_uthmani}"`;
+                        arabicEl.classList.remove('animate-pulse');
+                    }
+                    if (data.verse.translations && data.verse.translations[0]) {
+                        let textFr = data.verse.translations[0].text.replace(/<[^>]*>/g, '');
+                        const transEl = document.getElementById(`text-pre-${vk.replace(':','-')}`);
+                        if (transEl) { 
+                            transEl.innerText = `Traduction : "${textFr}"`; 
+                            transEl.classList.remove('animate-pulse');
+                            transEl.classList.replace('text-zinc-400', 'text-zinc-300');
+                        }
+                    }
+                }
+            } catch (e) { console.error(e); }
         }
 
         async function fetchSearchTranslationAsync(vk) {
