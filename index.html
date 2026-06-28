@@ -56,33 +56,25 @@
         
         .phonetic-text.hidden { display: none !important; }
 
-        /* --- CODE ÉPURÉ POUR SMARTPHONE --- */
+        /* --- AJUSTEMENT VISIBILITÉ AUDIO --- */
         @media (max-width: 768px) {
-            /* Positionne les commandes audio fixées en bas pour libérer la vue */
+            /* On place l'audio tout en bas sur mobile pour libérer complètement la vue */
             .sticky-audio-mobile {
                 position: fixed !important;
                 bottom: 0 !important;
                 top: auto !important;
                 left: 0 !important;
                 right: 0 !important;
-                padding: 12px 16px !important;
-                background: rgba(2, 6, 23, 0.95) !important;
-                backdrop-filter: blur(20px) !important;
-                border-top: 1px solid rgba(255, 255, 255, 0.1);
-                border-b: none !important;
+                padding: 16px !important;
+                background: linear-gradient(to top, rgba(2, 6, 23, 1) 80%, rgba(2, 6, 23, 0)) !important;
                 margin-bottom: 0 !important;
-                z-index: 5000 !important;
-                box-shadow: 0 -10px 30px rgba(0, 0, 0, 0.9);
+                z-index: 50;
             }
+            /* Espace de sécurité en bas de page pour ne pas cacher le dernier verset */
+            #main-content { padding-bottom: 100px !important; }
             
-            /* Laisse de l'espace en bas de la page pour ne pas cacher le dernier verset */
-            #main-content { padding-bottom: 90px !important; }
-            
-            /* Masque la bannière image décorative */
             .mobile-hide-img { display: none !important; }
-            /* Masque le texte arabe et la traduction française */
             .quran-arabic, .translation-text { display: none !important; }
-            /* Réduit les espaces superflus pour une lecture en liste compacte */
             .glass-card { border-radius: 1.25rem; margin-bottom: 1rem !important; }
             section[id^="v-"] .p-6 { padding: 1.25rem !important; margin-top: 0 !important; background: transparent !important; }
         }
