@@ -56,24 +56,22 @@
         
         .phonetic-text.hidden { display: none !important; }
 
-        /* --- CODE ÉPURÉ ET AJUSTEMENT AUDIO POUR SMARTPHONE --- */
+        /* --- CODE ÉPURÉ POUR SMARTPHONE --- */
         @media (max-width: 768px) {
-            /* Fixe le lecteur audio tout en bas sur mobile pour être ultra pratique sous le pouce */
+            /* Fixe les commandes audio tout en haut sur mobile au défilement */
             .sticky-audio-mobile {
                 position: fixed !important;
-                bottom: 0 !important;
-                top: auto !important;
+                top: 0 !important;
                 left: 0 !important;
                 right: 0 !important;
-                padding: 16px !important;
-                background: linear-gradient(to top, rgba(2, 6, 23, 0.98), rgba(2, 6, 23, 0.85)) !important;
-                backdrop-filter: blur(16px) !important;
-                border-top: 1px solid rgba(255, 255, 255, 0.1);
+                padding: 12px 16px !important;
+                background: rgba(2, 6, 23, 0.9) !important;
+                backdrop-filter: blur(12px) !important;
+                border-b: 1px solid rgba(255, 255, 255, 0.05);
                 margin-bottom: 0 !important;
-                z-index: 50 !important;
             }
-            /* Laisse de la place en bas de page pour que le dernier verset ne soit pas caché par l'audio */
-            #main-content { padding-bottom: 100px !important; }
+            /* Compense l'espace du lecteur audio fixé en haut */
+            #main-content { padding-top: 60px !important; }
             
             /* Masque la bannière image décorative */
             .mobile-hide-img { display: none !important; }
