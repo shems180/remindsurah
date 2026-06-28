@@ -42,50 +42,54 @@
             border: 1px solid rgba(255, 255, 255, 0.08); 
             border-radius: 2.5rem;
         }
-        .audio-player-container {
-            background: rgba(15, 23, 42, 0.95);
-            border: 1px solid rgba(255, 255, 255, 0.15);
-            backdrop-filter: blur(20px);
-            border-radius: 100px;
-            max-w: 550px;
-            margin: 0 auto;
-            padding: 8px 16px;
-            box-shadow: 0 20px 40px rgba(0,0,0,0.8);
+        
+        /* --- NOUVEAU DESIGN AUDIO FLOTTANT EN BAS --- */
+        .audio-player-fixed-container {
+            position: fixed;
+            bottom: 24px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: calc(100% - 32px);
+            max-w: 500px;
+            background: rgba(15, 23, 42, 0.9);
+            border: 1px solid rgba(16, 185, 129, 0.3); /* Légère lueur émeraude */
+            backdrop-filter: blur(25px);
+            border-radius: 30px;
+            padding: 10px 16px;
+            box-shadow: 0 20px 50px rgba(0,0,0,0.9);
+            z-index: 100;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            transition: all 0.3s ease;
         }
-        audio { height: 40px; width: 100%; outline: none; }
+        audio { height: 36px; width: 100%; outline: none; }
         
         .phonetic-text.hidden { display: none !important; }
 
-        /* --- CODE ÉPURÉ POUR SMARTPHONE --- */
+        /* Animation de transition pour la barre de navigation */
+        nav {
+            transition: transform 0.3s ease, opacity 0.3s ease;
+        }
+
+        /* Classe dynamique ajoutée via JS lors du scroll */
+        .nav-hidden {
+            transform: translateY(-100%);
+            opacity: 0;
+            pointer-events: none;
+        }
+
         @media (max-width: 768px) {
-            /* Fixe les commandes audio tout en haut sur mobile au défilement */
-            .sticky-audio-mobile {
-                position: fixed !important;
-                top: 0 !important;
-                left: 0 !important;
-                right: 0 !important;
-                padding: 12px 16px !important;
-                background: rgba(2, 6, 23, 0.9) !important;
-                backdrop-filter: blur(12px) !important;
-                border-b: 1px solid rgba(255, 255, 255, 0.05);
-                margin-bottom: 0 !important;
-            }
-            /* Compense l'espace du lecteur audio fixé en haut */
-            #main-content { padding-top: 60px !important; }
-            
-            /* Masque la bannière image décorative */
             .mobile-hide-img { display: none !important; }
-            /* Masque le texte arabe et la traduction française */
             .quran-arabic, .translation-text { display: none !important; }
-            /* Réduit les espaces superflus pour une lecture en liste compacte */
             .glass-card { border-radius: 1.25rem; margin-bottom: 1rem !important; }
             section[id^="v-"] .p-6 { padding: 1.25rem !important; margin-top: 0 !important; background: transparent !important; }
+            /* On remonte un peu le bouton de retour en haut pour ne pas gêner le lecteur audio */
+            #scrollToTopBtn { bottom: 95px !important; right: 20px !important; }
         }
     </style>
 </head>
-<body class="overflow-x-hidden relative">
-
-    <nav class="p-4 bg-black/70 backdrop-blur-xl border-b border-white/5">
+<body class="overflow-x-hidden relative pb-32"> <nav id="mainNavbar" class="sticky top-0 z-50 p-4 bg-black/70 backdrop-blur-xl border-b border-white/5">
         <div class="max-w-7xl mx-auto flex flex-col lg:flex-row justify-between items-center gap-4">
             
             <div class="flex items-center justify-between w-full lg:w-auto gap-4">
