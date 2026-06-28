@@ -402,14 +402,14 @@
             }, 800);
         }
 
-  async function loadSurah() {
+ async function loadSurah() {
             const sid = surahSelect.value;
             if(!sid) return;
             const rid = document.getElementById('reciterSelect').value;
             mainContent.innerHTML = `<div class="py-20 text-emerald-500 animate-bounce text-xl font-bold">CHARGEMENT...</div>`;
             try {
-                // Utilisation du champ natif 'transliteration' pour une fiabilité à 100%
-                const res = await fetch(`https://api.quran.com/api/v4/verses/by_chapter/${sid}?language=fr&translations=31&fields=text_uthmani,transliteration&per_page=300`);
+                // Appel des deux ressources : 31 (Français) et 57 (Phonétique officielle complète)
+                const res = await fetch(`https://api.quran.com/api/v4/verses/by_chapter/${sid}?language=fr&translations=31,57&fields=text_uthmani&per_page=300`);
                 const data = await res.json();
                 const audioRes = await fetch(`https://api.quran.com/api/v4/chapter_recitations/${rid}/${sid}`);
                 const audioData = await audioRes.json();
@@ -450,7 +450,7 @@
             }
         }
 
-        function renderSurah(verses, audio) {
+ function renderSurah(verses, audio) {
             mainContent.innerHTML = `
                 <div class="sticky top-24 z-40 w-full mb-12 px-4 flex justify-center items-center gap-2">
                     <button onclick="changeSurah(-1)" class="bg-zinc-900/90 hover:bg-zinc-800 text-emerald-400 p-3 rounded-full border border-white/10 transition-all shadow-xl" title="Sourate précédente">
@@ -473,9 +473,9 @@
             const isPhoneticHidden = !document.getElementById('togglePhonetic').checked;
 
             verses.forEach((v) => {
-                const textFr = v.translations[0]?.text.replace(/<[^>]*>/g, '') || "Traduction indisponible";
-                // Récupération directe de la translittération fournie nativement par l'API
-                const textPhonetic = v.transliteration?.text || "Phonétique indisponible";
+                // On cherche l'ID 31 pour le français et l'ID 57 pour la phonétique
+                const textFr = v.translations.find(t => t.resource_id === 31)?.text.replace(/<[^>]*>/g, '') || "Traduction indisponible";
+                const textPhonetic = v.translations.find(t => t.resource_id === 57)?.text.replace(/<[^>]*>/g, '') || "Phonétique indisponible";
                 
                 let hasImageConfigured = globalPublishedImages && globalPublishedImages[v.verse_key] && globalPublishedImages[v.verse_key].trim() !== "";
                 let finalImgSrc = hasImageConfigured ? "images/" + globalPublishedImages[v.verse_key] : DEFAULT_FALLBACK_IMAGE;
