@@ -17,33 +17,18 @@
     <link href="https://fonts.googleapis.com/css2?family=Amiri:wght@400;700&family=Inter:wght@300;500;700&display=swap" rel="stylesheet">
     
     <style>
-        /* Bloque le défilement global de la page entière */
+        /* Fige l'écran complet pour créer une interface applicative native stable */
         html, body { 
             background: radial-gradient(circle at top, #0f172a 0%, #020617 100%);
             color: #f8fafc; 
             font-family: 'Inter', sans-serif; 
             height: 100vh;
-            overflow: hidden; 
+            overflow: hidden;
             margin: 0;
             padding: 0;
             display: flex;
             flex-direction: column;
         }
-        
-        /* Configuration de la navigation fixe en haut */
-        nav {
-            flex-shrink: 0;
-            z-index: 50;
-        }
-
-        /* PERMET LE DÉFILEMENT UNIQUEMENT ICI (Zone des versets) */
-        main {
-            flex-grow: 1;
-            overflow-y: auto;
-            -webkit-overflow-scrolling: touch; /* Défilement fluide sur iOS */
-            padding-bottom: 90px !important; /* Laisse de l'espace pour ne pas cacher le dernier verset derrière l'audio */
-        }
-
         .quran-container { direction: rtl; text-align: right; }
         .quran-arabic { 
             font-family: 'Amiri', serif !important; 
@@ -68,7 +53,7 @@
             border: 1px solid rgba(255, 255, 255, 0.15);
             backdrop-filter: blur(20px);
             border-radius: 100px;
-            max-w: 550px;
+            max-width: 550px;
             margin: 0 auto;
             padding: 8px 16px;
             box-shadow: 0 20px 40px rgba(0,0,0,0.8);
@@ -77,23 +62,32 @@
         
         .phonetic-text.hidden { display: none !important; }
 
-        /* Fixe la barre audio en bas de l'écran sans bouger */
+        /* ZONE DE DEFILEMENT DES VERSETS : Seule cette zone centrale scroll */
+        main#main-content {
+            flex-grow: 1;
+            overflow-y: auto;
+            -webkit-overflow-scrolling: touch;
+            padding-bottom: 130px !important; /* Marge pour ne pas masquer le dernier verset sous la barre audio */
+        }
+
+        /* BARRE AUDIO FIXED TOUT EN BAS */
         .bottom-audio-bar {
             position: fixed !important;
             bottom: 0 !important;
             left: 0 !important;
             right: 0 !important;
-            z-index: 40;
+            z-index: 50;
             background: rgba(2, 6, 23, 0.95) !important;
             backdrop-filter: blur(16px) !important;
             border-top: 1px solid rgba(255, 255, 255, 0.1);
-            padding: 12px 16px !important;
+            padding: 16px 12px !important;
         }
     </style>
 </head>
 <body class="relative">
 
-    <nav class="p-4 bg-black/70 backdrop-blur-xl border-b border-white/5">
+    <!-- Barre de navigation / Options figée en haut -->
+    <nav class="p-4 bg-black/70 backdrop-blur-xl border-b border-white/5 shrink-0 z-50">
         <div class="max-w-7xl mx-auto flex flex-col lg:flex-row justify-between items-center gap-4">
             
             <div class="flex items-center justify-between w-full lg:w-auto gap-4">
@@ -139,7 +133,8 @@
         </div>
     </nav>
 
-    <main id="main-content" class="max-w-4xl mx-auto p-4 md:p-8 w-full space-y-12 text-center">
+    <!-- Zone principale contenant les versets (Défilement indépendant) -->
+    <main id="main-content" class="max-w-4xl mx-auto p-4 md:p-8 mt-6 space-y-12 text-center w-full">
         <div id="welcome-screen" class="py-24 space-y-8">
             <div class="inline-block p-6 rounded-full bg-emerald-500/10 animate-pulse">
                 <svg class="w-16 h-16 text-emerald-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5s3.332.477 4.5 1.253v13C19.832 18.477 18.246 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"></path></svg>
@@ -149,14 +144,350 @@
         </div>
     </main>
 
-    <div id="audio-bar-container"></div>
+    <!-- Conteneur fixe et isolé pour la barre audio tout en bas -->
+    <div id="fixed-audio-container"></div>
+
+    <button id="scrollToTopBtn" onclick="scrollToTop()" class="fixed bottom-28 right-6 z-50 bg-emerald-600 hover:bg-emerald-500 text-black p-3 rounded-full shadow-2xl transition-all duration-300 translate-y-20 opacity-0 pointer-events-none border border-emerald-400/20" title="Retourner en haut">
+        <svg class="w-6 h-6 stroke-[3]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M4.5 15.75l7.5-7.5 7.5 7.5"></path>
+        </svg>
+    </button>
+
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-database-compat.js"></script>
 
     <script>
-        // Implémentation de la fonction de rendu modifiée pour cibler le bas de l'écran
+        const mainContent = document.getElementById('main-content');
+        const surahSelect = document.getElementById('surahSelect');
+        const verseSelect = document.getElementById('verseSelect');
+        const scrollToTopBtn = document.getElementById('scrollToTopBtn');
+        let globalPublishedImages = {};
+
+        const DEFAULT_FALLBACK_IMAGE = "https://images.unsplash.com/photo-1506318137071-a8e063b4bec0?auto=format&fit=crop&w=1200&q=80";
+        const deviceSessionId = 'dev_' + Math.random().toString(36).substring(2, 15) + Date.now().toString(36);
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyD1ljf1JiGquijBF6NSKu1R6TVeIpBTW1Q",
+            authDomain: "quranvision-d107a.firebaseapp.com",
+            databaseURL: "https://quranvision-d107a-default-rtdb.europe-west1.firebasedatabase.app/",
+            projectId: "quranvision-d107a",
+            storageBucket: "quranvision-d107a.firebasestorage.app",
+            messagingSenderId: "374171323189",
+            appId: "1:374171323189:web:2496ae1cf1c0b01429da7c",
+            measurementId: "G-CK02L7988Z"
+        };
+
+        function initLiveCounter() {
+            try {
+                firebase.initializeApp(firebaseConfig);
+                const database = firebase.database();
+                const userRef = database.ref('live_connections/' + deviceSessionId);
+                const allUsersRef = database.ref('live_connections');
+
+                userRef.set({ timestamp: Date.now() });
+                userRef.onDisconnect().remove();
+
+                allUsersRef.on('value', (snapshot) => {
+                    const users = snapshot.val();
+                    if (users) {
+                        const now = Date.now();
+                        let count = 0;
+                        Object.keys(users).forEach(key => {
+                            if (now - users[key].timestamp < 45000) {
+                                count++;
+                            }
+                        });
+                        document.getElementById('liveCounter').textContent = Math.max(0, count);
+                    } else {
+                        document.getElementById('liveCounter').textContent = "1";
+                    }
+                });
+
+                setInterval(() => {
+                    userRef.set({ timestamp: Date.now() });
+                }, 15000);
+
+            } catch (error) {
+                console.error("Erreur de connexion live :", error);
+                document.getElementById('liveCounter').textContent = "1";
+            }
+        }
+
+        async function loadPublishedImages() {
+            try {
+                const response = await fetch(`images.json?t=${Date.now()}`);
+                if (response.ok) {
+                    globalPublishedImages = await response.json();
+                }
+            } catch (e) {
+                console.log("Configuration images.json non trouvée.");
+            }
+        }
+
+        const chaptersList = [
+            {id:1, name:"Al-Fatihah", verses:7}, {id:2, name:"Al-Baqarah", verses:286}, {id:3, name:"Ali 'Imran", verses:200}, {id:4, name:"An-Nisa", verses:176}, {id:5, name:"Al-Ma'idah", verses:120}, {id:6, name:"Al-An'am", verses:165}, {id:7, name:"Al-A'raf", verses:206}, {id:8, name:"Al-Anfal", verses:75}, {id:9, name:"At-Tawbah", verses:129}, {id:10, name:"Yunus", verses:109}, {id:11, name:"Hud", verses:123}, {id:12, name:"Yusuf", verses:111}, {id:13, name:"Ar-Ra'd", verses:43}, {id:14, name:"Ibrahim", verses:52}, {id:15, name:"Al-Hijr", verses:99}, {id:16, name:"An-Nahl", verses:128}, {id:17, name:"Al-Isra", verses:111}, {id:18, name:"Al-Kahf", verses:110}, {id:19, name:"Maryam", verses:98}, {id:20, name:"Ta-Ha", verses:135}, {id:21, name:"Al-Anbiya", verses:112}, {id:22, name:"Al-Hajj", verses:78}, {id:23, name:"Al-Mu'minun", verses:118}, {id:24, name:"An-Nur", verses:64}, {id:25, name:"Al-Furqan", verses:77}, {id:26, name:"Ash-Shu'ara", verses:227}, {id:27, name:"An-Naml", verses:93}, {id:28, name:"Al-Qasas", verses:88}, {id:29, name:"Al-'Ankabut", verses:69}, {id:30, name:"Ar-Rum", verses:60}, {id:31, name:"Luqman", verses:34}, {id:32, name:"As-Sajdah", verses:30}, {id:33, name:"Al-Ahzab", verses:73}, {id:34, name:"Saba", verses:54}, {id:35, name:"Fatir", verses:45}, {id:36, name:"Ya-Sin", verses:83}, {id:37, name:"As-Saffat", verses:182}, {id:38, name:"Sad", verses:88}, {id:39, name:"Az-Zumar", verses:75}, {id:40, name:"Ghafir", verses:85}, {id:41, name:"Fussilat", verses:54}, {id:42, name:"Ash-Shura", verses:53}, {id:43, name:"Az-Zukhruf", verses:89}, {id:44, name:"Ad-Dukhan", verses:59}, {id:45, name:"Al-Jathiyah", verses:37}, {id:46, name:"Al-Ahqaf", verses:35}, {id:47, name:"Muhammad", verses:38}, {id:48, name:"Al-Fath", verses:29}, {id:49, name:"Al-Hujurat", verses:18}, {id:50, name:"Qaf", verses:45}, {id:51, name:"Adh-Dhariyat", verses:60}, {id:52, name:"At-Tur", verses:49}, {id:53, name:"An-Najm", verses:62}, {id:54, name:"Al-Qamar", verses:55}, {id:55, name:"Ar-Rahman", verses:78}, {id:56, name:"Al-Waqi'ah", verses:96}, {id:57, name:"Al-Hadid", verses:29}, {id:58, name:"Al-Mujadilah", verses:22}, {id:59, name:"Al-Hashr", verses:24}, {id:60, name:"Al-Mumtahanah", verses:13}, {id:61, name:"As-Saff", verses:14}, {id:62, name:"Al-Jumu'ah", verses:11}, {id:63, name:"Al-Munafiqun", verses:11}, {id:64, name: "At-Taghabun", verses:18}, {id:65, name:"At-Talaq", verses:12}, {id:66, name:"At-Tahrim", verses:12}, {id:67, name:"Al-Mulk", verses:30}, {id:68, name:"Al-Qalam", verses:52}, {id:69, name:"Al-Haqqah", verses:52}, {id:70, name:"Al-Ma'arij", verses:44}, {id:71, name:"Nuh", verses:28}, {id:72, name:"Al-Jinn", verses:28}, {id:73, name:"Al-Muzzammil", verses:20}, {id:74, name:"Al-Muddaththir", verses:56}, {id:75, name:"Al-Qiyamah", verses:40}, {id:76, name:"Al-Insan", verses:31}, {id:77, name:"Al-Mursalat", verses:50}, {id:78, name:"An-Naba", verses:40}, {id:79, name:"An-Nazi'at", verses:46}, {id:80, name:"'Abasa", verses:42}, {id:81, name:"At-Takwir", verses:29}, {id:82, name:"Al-Infitar", verses:19}, {id:83, name:"Al-Mutaffifin", verses:36}, {id:84, name:"Al-Inshiqaq", verses:25}, {id:85, name:"Al-Buruj", verses:22}, {id:86, name:"At-Tariq", verses:17}, {id:87, name:"Al-A'la", verses:19}, {id:88, name:"Al-Ghashiyah", verses:26}, {id:89, name:"Al-Fajr", verses:30}, {id:90, name:"Al-Balad", verses:20}, {id:91, name:"Ash-Shams", verses:15}, {id:92, name:"Al-Layl", verses:21}, {id:93, name:"Ad-Duha", verses:11}, {id:94, name:"Ash-Sharh", verses:8}, {id:95, name:"At-Tin", verses:8}, {id:96, name:"Al-'Alaq", verses:19}, {id:97, name:"Al-Qadr", verses:5}, {id:98, name:"Al-Bayyinah", verses:8}, {id:99, name:"Az-Zalzalah", verses:8}, {id:100, name:"Al-'Adiyat", verses:11}, {id:101, name:"Al-Qari's", verses:11}, {id:102, name:"At-Takathur", verses:8}, {id:103, name:"Al-'Asr", verses:3}, {id:104, name:"Al-Humazah", verses:9}, {id:105, name:"Al-Fil", verses:5}, {id:106, name:"Quraysh", verses:4}, {id:107, name:"Al-Ma'un", verses:7}, {id:108, name:"Al-Kawthar", verses:3}, {id:109, name:"Al-Kafirun", verses:6}, {id:110, name:"An-Nasr", verses:3}, {id:111, name:"Al-Masad", verses:5}, {id:112, name:"Al-Ikhlas", verses:4}, {id:113, name:"Al-Falaq", verses:5}, {id:114, name:"An-Nas", verses:6}
+        ];
+
+        const staticSearchIndex = {
+            "moise": ["2:51","2:53","2:54","2:55","2:60","2:61","2:67","2:87","2:92","2:108","2:136","2:246","2:248","3:84","4:153","4:164","5:20","5:22","5:24","6:84","6:91","7:103","7:104","7:115","7:117","7:122","7:127","7:128","7:131","7:134","7:138","7:142","7:143","7:144","7:148","7:150","7:154","7:155","7:159","7:160","10:75","10:77","10:80","10:81","10:83","10:84","10:87","10:88","11:17","11:96","11:110","14:5","14:6","14:8","17:2","17:101","18:60","18:66","19:51","20:9","20:11","20:17","20:19","20:36","20:40","20:49","20:57","20:61","20:65","20:67","20:70","20:77","20:83","20:86","20:88","20:91","21:48","22:44","23:45","25:35","26:10","26:30","26:43","26:45","26:48","26:52","26:61","26:62","26:63","26:65","27:7","27:9","27:10","28:3","28:7","28:10","28:15","28:18","28:19","28:20","28:29","28:30","28:31","28:36","28:37","28:38","28:43","28:44","28:44","28:48","28:76","29:39","32:23","33:7","33:69","37:114","37:120","40:23","40:26","40:27","40:28","40:34","40:53","41:45","42:13","43:46","46:12","46:30","51:38","53:36","61:5","79:15","87:19"],
+            "paradis": ["2:82","2:111","2:214","2:221","3:133","3:142","3:185","4:124","5:72","7:40","7:42","7:43","7:44","7:46","7:48","7:50","9:111","11:108","13:23","15:45","18:107","19:60","22:56","23:11","25:15","26:85","29:58","32:19","36:26","39:73","39:74","40:40","41:30","42:7","43:70","43:73","47:6","50:31","52:17","53:15","54:54","55:46","56:12","56:89","59:20","66:11","69:21","70:38","76:12","79:41","81:13","85:11","88:10","98:8"]
+        };
+
+        async function init() {
+            initLiveCounter();
+            await loadPublishedImages();
+            
+            surahSelect.innerHTML = '';
+            chaptersList.forEach(s => {
+                surahSelect.innerHTML += `<option value="${s.id}">${s.id}. ${s.name}</option>`;
+            });
+            handleSurahChange();
+            
+            // On écoute le défilement de l'élément principal désormais
+            mainContent.addEventListener('scroll', toggleScrollButton);
+        }
+
+        function handleSurahChange() {
+            const sid = parseInt(surahSelect.value);
+            const chapter = chaptersList.find(c => c.id === sid);
+            if (chapter) {
+                updateVerseSelect(chapter.verses);
+            }
+        }
+
+        function updateVerseSelect(totalVerses) {
+            this.verseSelect.innerHTML = '<option value="">Verset</option>';
+            for (let i = 1; i <= totalVerses; i++) {
+                verseSelect.innerHTML += `<option value="${i}">Verset ${i}</option>`;
+            }
+        }
+
+        function changeSurah(direction) {
+            let currentSid = parseInt(surahSelect.value);
+            let nextSid = currentSid + direction;
+
+            if (nextSid >= 1 && nextSid <= 114) {
+                surahSelect.value = nextSid;
+                handleSurahChange();
+                loadSurah();
+            }
+        }
+
+        function toggleScrollButton() {
+            if (mainContent.scrollTop > 400) {
+                scrollToTopBtn.classList.remove('translate-y-20', 'opacity-0', 'pointer-events-none');
+                scrollToTopBtn.classList.add('translate-y-0', 'opacity-100', 'pointer-events-auto');
+            } else {
+                scrollToTopBtn.classList.remove('translate-y-0', 'opacity-100', 'pointer-events-auto');
+                scrollToTopBtn.classList.add('translate-y-20', 'opacity-0', 'pointer-events-none');
+            }
+        }
+
+        function scrollToTop() {
+            mainContent.scrollTo({
+                top: 0,
+                behavior: 'smooth'
+            });
+        }
+
+        async function searchVerse() {
+            let userQuery = document.getElementById('searchInput').value.trim();
+            if (!userQuery) return;
+            
+            mainContent.innerHTML = `<div class="py-20 text-emerald-500 animate-pulse text-xl">Recherche globale en cours... (Chargement de toutes les pages d'occurrences)</div>`;
+            let normalizedKey = userQuery.toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "");
+
+            if (staticSearchIndex[normalizedKey]) {
+                let keys = staticSearchIndex[normalizedKey];
+                mainContent.innerHTML = `
+                    <h2 class="text-2xl font-bold mb-2 text-emerald-500">${keys.length} occurrence(s) au total trouvée(s) pour "${userQuery}"</h2>
+                    <p class="text-zinc-400 text-sm mb-8">Affichage complet de tous les versets correspondants :</p>
+                `;
+                
+                keys.forEach(vk => {
+                    mainContent.innerHTML += `
+                        <div class="glass-card p-6 md:p-8 mb-6 bg-white/5 text-right border-r-4 border-l-0 border-emerald-500 space-y-4">
+                            <div class="flex justify-between items-center text-zinc-400 text-xs"><span>Verset ${vk}</span></div>
+                            <div id="arabic-pre-${vk.replace(':','-')}" class="quran-container text-right text-xl font-serif text-zinc-100 animate-pulse">Chargement de l'arabe...</div>
+                            <p id="text-pre-${vk.replace(':','-')}" class="text-zinc-400 font-light italic text-sm text-left pt-3 border-t border-white/5 animate-pulse">Chargement de la traduction française...</p>
+                            <button onclick="goToVerse('${vk}')" class="text-emerald-500 text-xs font-bold pt-2 block hover:underline text-left">LIRE EN IMAGE →</button>
+                        </div>`;
+                    fetchStaticVerseDetailsAsync(vk);
+                });
+                return;
+            }
+
+            try {
+                const isArabic = /[؀-ۿ]/.test(userQuery);
+                let langParam = isArabic ? 'ar' : 'fr';
+                let safeQuery = encodeURIComponent(userQuery);
+
+                let totalResultsFound = [];
+                let currentPage = 1;
+                let hasMorePages = true;
+
+                while (hasMorePages && currentPage <= 15) { 
+                    let url = `https://api.quran.com/api/v4/search?q=${safeQuery}&page=${currentPage}&size=250&language=${langParam}`;
+                    let res = await fetch(url);
+                    if (!res.ok) break;
+                    
+                    let data = await res.json();
+                    if (data && data.search && data.search.results && data.search.results.length > 0) {
+                        totalResultsFound = totalResultsFound.concat(data.search.results);
+                        
+                        if (data.search.results.length < 20 && currentPage === 1) {
+                            hasMorePages = false;
+                        }
+                        
+                        if (data.search.total_pages && currentPage >= data.search.total_pages) {
+                            hasMorePages = false;
+                        }
+                        
+                        currentPage++;
+                    } else {
+                        hasMorePages = false;
+                    }
+                }
+                
+                if (totalResultsFound.length > 0) {
+                    mainContent.innerHTML = `
+                        <h2 class="text-2xl font-bold mb-2 text-emerald-500">${totalResultsFound.length} occurrence(s) au total trouvée(s) pour "${userQuery}"</h2>
+                        <p class="text-zinc-400 text-sm mb-8">Affichage complet de tous les versets correspondants :</p>
+                    `;
+
+                    totalResultsFound.forEach(r => {
+                        let cleanText = r.text.replace(/<[^>]*>/g, '');
+                        let isResultArabic = /[؀-ۿ]/.test(cleanText);
+                        
+                        let textClass = isResultArabic ? "quran-container text-right text-xl font-serif text-zinc-110" : "text-zinc-200 font-light italic text-sm md:text-base text-left";
+                        let cardAlign = isResultArabic ? "text-right border-r-4 border-l-0" : "text-left border-l-4 border-r-0";
+
+                        let translationPlaceholder = isResultArabic 
+                            ? `<p id="trans-search-${r.verse_key.replace(':','-')}" class="text-zinc-400 font-light italic text-sm text-left pt-3 border-t border-white/5 animate-pulse">Chargement de la traduction française...</p>` 
+                            : '';
+
+                        mainContent.innerHTML += `
+                            <div class="glass-card p-6 md:p-8 mb-6 bg-white/5 ${cardAlign} border-emerald-500 space-y-4">
+                                <div class="flex justify-between items-center text-zinc-400 text-xs"><span>Verset ${r.verse_key}</span></div>
+                                <div class="${textClass}">"${cleanText}"</div>
+                                ${translationPlaceholder}
+                                <button onclick="goToVerse('${r.verse_key}')" class="text-emerald-500 text-xs font-bold pt-2 block hover:underline text-left">LIRE EN IMAGE →</button>
+                            </div>`;
+                        
+                        if (isResultArabic) {
+                            fetchSearchTranslationAsync(r.verse_key);
+                        }
+                    });
+                } else {
+                    mainContent.innerHTML = `<p class='py-20 text-zinc-400'>Aucun résultat trouvé pour "${userQuery}".</p>`;
+                }
+            } catch (e) { 
+                console.error(e);
+                mainContent.innerHTML = "<p class='py-20 text-red-400'>La recherche a échoué ou l'API rencontre des difficultés de surcharge.</p>"; 
+            }
+        }
+
+        async function fetchStaticVerseDetailsAsync(vk) {
+            try {
+                const res = await fetch(`https://api.quran.com/api/v4/verses/by_key/${vk}?language=fr&translations=31&fields=text_uthmani`);
+                const data = await res.json();
+                if (data && data.verse) {
+                    const arabicEl = document.getElementById(`arabic-pre-${vk.replace(':','-')}`);
+                    if (arabicEl && data.verse.text_uthmani) {
+                        arabicEl.innerText = `"${data.verse.text_uthmani}"`;
+                        arabicEl.classList.remove('animate-pulse');
+                    }
+                    if (data.verse.translations && data.verse.translations[0]) {
+                        let textFr = data.verse.translations[0].text.replace(/<[^>]*>/g, '');
+                        const transEl = document.getElementById(`text-pre-${vk.replace(':','-')}`);
+                        if (transEl) { 
+                            transEl.innerText = `Traduction : "${textFr}"`; 
+                            transEl.classList.remove('animate-pulse');
+                            transEl.classList.replace('text-zinc-400', 'text-zinc-300');
+                        }
+                    }
+                }
+            } catch (e) { console.error(e); }
+        }
+
+        async function fetchSearchTranslationAsync(vk) {
+            try {
+                const res = await fetch(`https://api.quran.com/api/v4/verses/by_key/${vk}?language=fr&translations=31`);
+                const data = await res.json();
+                if (data && data.verse && data.verse.translations) {
+                    let text = data.verse.translations[0].text.replace(/<[^>]*>/g, '');
+                    const el = document.getElementById(`trans-search-${vk.replace(':','-')}`);
+                    if (el) { 
+                        el.innerText = `Traduction : "${text}"`; 
+                        el.classList.remove('animate-pulse'); 
+                        el.classList.replace('text-zinc-400', 'text-zinc-300');
+                    }
+                }
+            } catch (e) {}
+        }
+
+        async function goToVerse(vk) {
+            surahSelect.value = vk.split(':')[0];
+            handleSurahChange();
+            await loadSurah();
+            setTimeout(() => {
+                const el = document.getElementById(`v-${vk}`);
+                if (el) el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                verseSelect.value = vk.split(':')[1];
+            }, 800);
+        }
+
+        async function loadSurah() {
+            const sid = surahSelect.value;
+            if(!sid) return;
+            const rid = document.getElementById('reciterSelect').value;
+            mainContent.innerHTML = `<div class="py-20 text-emerald-500 animate-bounce text-xl font-bold">CHARGEMENT...</div>`;
+            try {
+                const res = await fetch(`https://api.quran.com/api/v4/verses/by_chapter/${sid}?language=fr&translations=31,57&fields=text_uthmani&per_page=300`);
+                const data = await res.json();
+                const audioRes = await fetch(`https://api.quran.com/api/v4/chapter_recitations/${rid}/${sid}`);
+                const audioData = await audioRes.json();
+                
+                updateVerseSelect(data.verses.length);
+                renderSurah(data.verses, audioData.audio_file.audio_url);
+            } catch (e) { mainContent.innerHTML = "<div class='py-20 text-red-400'>Erreur lors du chargement.</div>"; }
+        }
+
+        async function scrollToSelectedVerse() {
+            const verseId = verseSelect.value;
+            const surahId = surahSelect.value;
+            if (!verseId || !surahId) return;
+
+            let targetElement = document.getElementById(`v-${surahId}:${verseId}`);
+            
+            if (!targetElement) {
+                await loadSurah();
+                setTimeout(() => {
+                    targetElement = document.getElementById(`v-${surahId}:${verseId}`);
+                    if (targetElement) targetElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                }, 800);
+            } else {
+                targetElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            }
+        }
+
+        function handleImageError(imgElement) {
+            imgElement.onerror = null; 
+            imgElement.src = DEFAULT_FALLBACK_IMAGE;
+            
+            const parent = imgElement.parentElement;
+            if (parent && !parent.querySelector('.unavailable-tag')) {
+                const overlay = document.createElement('div');
+                overlay.className = "absolute inset-0 flex items-center justify-center bg-black/50 backdrop-blur-[2px] unavailable-tag";
+                overlay.innerHTML = `<span class="bg-black/70 text-zinc-400 text-xs md:text-sm font-medium px-4 py-2 rounded-xl border border-white/5 tracking-wide uppercase">Image indisponible pour le moment</span>`;
+                parent.appendChild(overlay);
+            }
+        }
+
         function renderSurah(verses, audio) {
-            // On met les commandes audio fixes dans le conteneur du bas
-            document.getElementById('audio-bar-container').innerHTML = `
-                <div class="bottom-audio-bar flex justify-center items-center gap-2">
+            // L'audio est injecté de manière isolée tout en bas dans le conteneur fixe dédié
+            document.getElementById('fixed-audio-container').innerHTML = `
+                <div class="bottom-audio-bar w-full flex justify-center items-center gap-2">
                     <button onclick="changeSurah(-1)" class="bg-zinc-900/90 hover:bg-zinc-800 text-emerald-400 p-3 rounded-full border border-white/10 transition-all shadow-xl" title="Sourate précédente">
                         <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M15 19l-7-7 7-7"></path>
@@ -174,7 +505,6 @@
                     </button>
                 </div>`;
             
-            // On nettoie et prépare la zone des versets
             mainContent.innerHTML = '';
             const isPhoneticHidden = !document.getElementById('togglePhonetic').checked;
 
@@ -196,14 +526,18 @@
                         <div class="relative h-64 w-full bg-zinc-950 flex items-center justify-center">
                             <img src="${finalImgSrc}" onerror="handleImageError(this)" class="w-full h-full object-cover opacity-40" loading="lazy">
                             <div class="absolute inset-0 bg-gradient-to-t from-[#020617] via-transparent to-black/40"></div>
+                            
                             ${unavailableOverlay}
+
                             <div class="absolute top-6 left-6 bg-black/60 px-4 py-1 rounded-full text-xs font-bold text-emerald-400">Verset ${v.verse_key}</div>
                         </div>
                         <div class="p-6 md:p-12 space-y-6 -mt-16 relative z-10 bg-gradient-to-b from-transparent to-[#020617]/95">
                             <p class="quran-arabic text-zinc-100">${v.text_uthmani}</p>
+                            
                             <p class="phonetic-text text-sm md:text-base font-medium italic text-teal-300/90 tracking-wide text-left pt-4 border-t border-white/5 ${isPhoneticHidden ? 'hidden' : ''}">
                                 ${textPhonetic}
                             </p>
+                            
                             <p class="text-zinc-300 font-light italic text-base md:text-lg leading-relaxed text-left pt-2">
                                 "${textFr}"
                             </p>
@@ -211,29 +545,24 @@
                     </section>
                 `;
             });
-            
-            // Remonte le scroll de la zone principale au début lors du changement de sourate
+
+            // Re-scrolle automatiquement la zone des versets en haut au changement de chapitre
             mainContent.scrollTop = 0;
         }
 
-        // Modifie également la fonction de défilement vers un verset précis pour qu'elle cible la zone <main>
-        async function scrollToSelectedVerse() {
-            const verseId = verseSelect.value;
-            const surahId = surahSelect.value;
-            if (!verseId || !surahId) return;
-
-            let targetElement = document.getElementById(`v-${surahId}:${verseId}`);
-            
-            if (!targetElement) {
-                await loadSurah();
-                setTimeout(() => {
-                    targetElement = document.getElementById(`v-${surahId}:${verseId}`);
-                    if (targetElement) targetElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
-                }, 800);
-            } else {
-                targetElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
-            }
+        function togglePhoneticDisplay() {
+            const isChecked = document.getElementById('togglePhonetic').checked;
+            const phonetics = document.querySelectorAll('.phonetic-text');
+            phonetics.forEach(el => {
+                if (isChecked) {
+                    el.classList.remove('hidden');
+                } else {
+                    el.classList.add('hidden');
+                }
+            });
         }
+
+        window.onload = init;
     </script>
 </body>
 </html>
