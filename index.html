@@ -402,14 +402,14 @@
             }, 800);
         }
 
-        async function loadSurah() {
+  async function loadSurah() {
             const sid = surahSelect.value;
             if(!sid) return;
             const rid = document.getElementById('reciterSelect').value;
             mainContent.innerHTML = `<div class="py-20 text-emerald-500 animate-bounce text-xl font-bold">CHARGEMENT...</div>`;
             try {
-                // Modification de la requête pour ajouter la phonétique (ID 2116)
-                const res = await fetch(`https://api.quran.com/api/v4/verses/by_chapter/${sid}?language=fr&translations=31,2116&fields=text_uthmani&per_page=300`);
+                // Utilisation du champ natif 'transliteration' pour une fiabilité à 100%
+                const res = await fetch(`https://api.quran.com/api/v4/verses/by_chapter/${sid}?language=fr&translations=31&fields=text_uthmani,transliteration&per_page=300`);
                 const data = await res.json();
                 const audioRes = await fetch(`https://api.quran.com/api/v4/chapter_recitations/${rid}/${sid}`);
                 const audioData = await audioRes.json();
@@ -473,8 +473,9 @@
             const isPhoneticHidden = !document.getElementById('togglePhonetic').checked;
 
             verses.forEach((v) => {
-                const textFr = v.translations.find(t => t.resource_id === 31)?.text.replace(/<[^>]*>/g, '') || "Traduction indisponible";
-                const textPhonetic = v.translations.find(t => t.resource_id === 2116)?.text.replace(/<[^>]*>/g, '') || "Phonétique indisponible";
+                const textFr = v.translations[0]?.text.replace(/<[^>]*>/g, '') || "Traduction indisponible";
+                // Récupération directe de la translittération fournie nativement par l'API
+                const textPhonetic = v.transliteration?.text || "Phonétique indisponible";
                 
                 let hasImageConfigured = globalPublishedImages && globalPublishedImages[v.verse_key] && globalPublishedImages[v.verse_key].trim() !== "";
                 let finalImgSrc = hasImageConfigured ? "images/" + globalPublishedImages[v.verse_key] : DEFAULT_FALLBACK_IMAGE;
@@ -511,7 +512,6 @@
             });
         }
 
-        // Fonction pour gérer dynamiquement le masquage/affichage sans recharger la page
         function togglePhoneticDisplay() {
             const isChecked = document.getElementById('togglePhonetic').checked;
             const phonetics = document.querySelectorAll('.phonetic-text');
