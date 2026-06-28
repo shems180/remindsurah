@@ -17,7 +17,7 @@
     <link href="https://fonts.googleapis.com/css2?family=Amiri:wght@400;700&family=Inter:wght@300;500;700&display=swap" rel="stylesheet">
     
     <style>
-        /* Fige l'écran complet pour créer une interface applicative native stable */
+        /* Bloque l'écran global pour une interface applicative native stable */
         html, body { 
             background: radial-gradient(circle at top, #0f172a 0%, #020617 100%);
             color: #f8fafc; 
@@ -48,46 +48,51 @@
             border: 1px solid rgba(255, 255, 255, 0.08); 
             border-radius: 2.5rem;
         }
+        
+        /* AJUSTEMENT DU CONTENEUR DE L'AUDIO (SANS LA BANDE NOIRE FLOTTANTE SUR PC) */
         .audio-player-container {
-            background: rgba(15, 23, 42, 0.95);
-            border: 1px solid rgba(255, 255, 255, 0.15);
+            background: rgba(15, 23, 42, 0.9);
+            border: 1px solid rgba(255, 255, 255, 0.12);
             backdrop-filter: blur(20px);
             border-radius: 100px;
             max-width: 550px;
             margin: 0 auto;
-            padding: 8px 16px;
-            box-shadow: 0 20px 40px rgba(0,0,0,0.8);
+            padding: 6px 16px;
+            box-shadow: 0 15px 30px rgba(0, 0, 0, 0.6);
+            width: 100%;
         }
         audio { height: 40px; width: 100%; outline: none; }
         
         .phonetic-text.hidden { display: none !important; }
 
-        /* ZONE DE DEFILEMENT DES VERSETS : Seule cette zone centrale scroll */
+        /* ZONE DE DEFILEMENT DES VERSETS : Plus grand padding en bas pour éviter l'écrasement */
         main#main-content {
             flex-grow: 1;
             overflow-y: auto;
             -webkit-overflow-scrolling: touch;
-            padding-bottom: 130px !important; /* Marge pour ne pas masquer le dernier verset sous la barre audio */
+            padding-bottom: 180px !important; /* Augmenté pour donner de l'air avant l'audio */
         }
 
-        /* BARRE AUDIO FIXED TOUT EN BAS */
+        /* BARRE AUDIO FIXED ET TRANSPARENTE TOUT EN BAS (SANS CASSER LE FOND SUR PC ET MOBILE) */
         .bottom-audio-bar {
             position: fixed !important;
             bottom: 0 !important;
             left: 0 !important;
             right: 0 !important;
             z-index: 50;
-            background: rgba(2, 6, 23, 0.95) !important;
-            backdrop-filter: blur(16px) !important;
-            border-top: 1px solid rgba(255, 255, 255, 0.1);
-            padding: 16px 12px !important;
+            background: linear-gradient(to top, rgba(2, 6, 23, 0.98) 70%, rgba(2, 6, 23, 0)) !important;
+            backdrop-filter: blur(8px) !important;
+            padding: 24px 12px !important;
+            display: flex;
+            justify-content: center;
+            align-items: center;
         }
     </style>
 </head>
 <body class="relative">
 
-    <!-- Barre de navigation / Options figée en haut -->
-    <nav class="p-4 bg-black/70 backdrop-blur-xl border-b border-white/5 shrink-0 z-50">
+    <!-- Barre de navigation / Menu FIXE et STICKY au top (Ne bouge jamais sur mobile ou PC) -->
+    <nav class="sticky top-0 p-4 bg-black/70 backdrop-blur-xl border-b border-white/5 shrink-0 z-50">
         <div class="max-w-7xl mx-auto flex flex-col lg:flex-row justify-between items-center gap-4">
             
             <div class="flex items-center justify-between w-full lg:w-auto gap-4">
@@ -146,6 +151,19 @@
 
     <!-- Conteneur fixe et isolé pour la barre audio tout en bas -->
     <div id="fixed-audio-container"></div>
+
+    <!-- Flèches de navigation globales fixées sur les bords de l'écran -->
+    <button onclick="changeSurah(-1)" class="fixed bottom-6 left-6 z-50 bg-zinc-900/90 hover:bg-zinc-800 text-emerald-400 p-4 rounded-full border border-white/10 transition-all shadow-xl" title="Sourate précédente">
+        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M15 19l-7-7 7-7"></path>
+        </svg>
+    </button>
+    
+    <button onclick="changeSurah(1)" class="fixed bottom-6 right-6 z-50 bg-zinc-900/90 hover:bg-zinc-800 text-emerald-400 p-4 rounded-full border border-white/10 transition-all shadow-xl" title="Sourate suivante">
+        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M9 5l7 7-7 7"></path>
+        </svg>
+    </button>
 
     <button id="scrollToTopBtn" onclick="scrollToTop()" class="fixed bottom-28 right-6 z-50 bg-emerald-600 hover:bg-emerald-500 text-black p-3 rounded-full shadow-2xl transition-all duration-300 translate-y-20 opacity-0 pointer-events-none border border-emerald-400/20" title="Retourner en haut">
         <svg class="w-6 h-6 stroke-[3]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -243,7 +261,6 @@
             });
             handleSurahChange();
             
-            // On écoute le défilement de l'élément principal désormais
             mainContent.addEventListener('scroll', toggleScrollButton);
         }
 
@@ -294,22 +311,21 @@
             let userQuery = document.getElementById('searchInput').value.trim();
             if (!userQuery) return;
             
-            mainContent.innerHTML = `<div class="py-20 text-emerald-500 animate-pulse text-xl">Recherche globale en cours... (Chargement de toutes les pages d'occurrences)</div>`;
+            mainContent.innerHTML = `<div class="py-20 text-emerald-500 animate-pulse text-xl">Recherche globale en cours...</div>`;
             let normalizedKey = userQuery.toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "");
 
             if (staticSearchIndex[normalizedKey]) {
                 let keys = staticSearchIndex[normalizedKey];
                 mainContent.innerHTML = `
-                    <h2 class="text-2xl font-bold mb-2 text-emerald-500">${keys.length} occurrence(s) au total trouvée(s) pour "${userQuery}"</h2>
-                    <p class="text-zinc-400 text-sm mb-8">Affichage complet de tous les versets correspondants :</p>
+                    <h2 class="text-2xl font-bold mb-2 text-emerald-500">${keys.length} occurrence(s) trouvée(s) pour "${userQuery}"</h2>
                 `;
                 
                 keys.forEach(vk => {
                     mainContent.innerHTML += `
                         <div class="glass-card p-6 md:p-8 mb-6 bg-white/5 text-right border-r-4 border-l-0 border-emerald-500 space-y-4">
                             <div class="flex justify-between items-center text-zinc-400 text-xs"><span>Verset ${vk}</span></div>
-                            <div id="arabic-pre-${vk.replace(':','-')}" class="quran-container text-right text-xl font-serif text-zinc-100 animate-pulse">Chargement de l'arabe...</div>
-                            <p id="text-pre-${vk.replace(':','-')}" class="text-zinc-400 font-light italic text-sm text-left pt-3 border-t border-white/5 animate-pulse">Chargement de la traduction française...</p>
+                            <div id="arabic-pre-${vk.replace(':','-')}" class="quran-container text-right text-xl font-serif text-zinc-100 animate-pulse">Chargement...</div>
+                            <p id="text-pre-${vk.replace(':','-')}" class="text-zinc-400 font-light italic text-sm text-left pt-3 border-t border-white/5 animate-pulse">Chargement...</p>
                             <button onclick="goToVerse('${vk}')" class="text-emerald-500 text-xs font-bold pt-2 block hover:underline text-left">LIRE EN IMAGE →</button>
                         </div>`;
                     fetchStaticVerseDetailsAsync(vk);
@@ -334,15 +350,8 @@
                     let data = await res.json();
                     if (data && data.search && data.search.results && data.search.results.length > 0) {
                         totalResultsFound = totalResultsFound.concat(data.search.results);
-                        
-                        if (data.search.results.length < 20 && currentPage === 1) {
-                            hasMorePages = false;
-                        }
-                        
-                        if (data.search.total_pages && currentPage >= data.search.total_pages) {
-                            hasMorePages = false;
-                        }
-                        
+                        if (data.search.results.length < 20 && currentPage === 1) hasMorePages = false;
+                        if (data.search.total_pages && currentPage >= data.search.total_pages) hasMorePages = false;
                         currentPage++;
                     } else {
                         hasMorePages = false;
@@ -351,19 +360,17 @@
                 
                 if (totalResultsFound.length > 0) {
                     mainContent.innerHTML = `
-                        <h2 class="text-2xl font-bold mb-2 text-emerald-500">${totalResultsFound.length} occurrence(s) au total trouvée(s) pour "${userQuery}"</h2>
-                        <p class="text-zinc-400 text-sm mb-8">Affichage complet de tous les versets correspondants :</p>
+                        <h2 class="text-2xl font-bold mb-2 text-emerald-500">${totalResultsFound.length} occurrence(s) trouvée(s) pour "${userQuery}"</h2>
                     `;
 
                     totalResultsFound.forEach(r => {
                         let cleanText = r.text.replace(/<[^>]*>/g, '');
                         let isResultArabic = /[؀-ۿ]/.test(cleanText);
-                        
                         let textClass = isResultArabic ? "quran-container text-right text-xl font-serif text-zinc-110" : "text-zinc-200 font-light italic text-sm md:text-base text-left";
                         let cardAlign = isResultArabic ? "text-right border-r-4 border-l-0" : "text-left border-l-4 border-r-0";
 
                         let translationPlaceholder = isResultArabic 
-                            ? `<p id="trans-search-${r.verse_key.replace(':','-')}" class="text-zinc-400 font-light italic text-sm text-left pt-3 border-t border-white/5 animate-pulse">Chargement de la traduction française...</p>` 
+                            ? `<p id="trans-search-${r.verse_key.replace(':','-')}" class="text-zinc-400 font-light italic text-sm text-left pt-3 border-t border-white/5 animate-pulse">Chargement...</p>` 
                             : '';
 
                         mainContent.innerHTML += `
@@ -374,16 +381,13 @@
                                 <button onclick="goToVerse('${r.verse_key}')" class="text-emerald-500 text-xs font-bold pt-2 block hover:underline text-left">LIRE EN IMAGE →</button>
                             </div>`;
                         
-                        if (isResultArabic) {
-                            fetchSearchTranslationAsync(r.verse_key);
-                        }
+                        if (isResultArabic) fetchSearchTranslationAsync(r.verse_key);
                     });
                 } else {
                     mainContent.innerHTML = `<p class='py-20 text-zinc-400'>Aucun résultat trouvé pour "${userQuery}".</p>`;
                 }
             } catch (e) { 
-                console.error(e);
-                mainContent.innerHTML = "<p class='py-20 text-red-400'>La recherche a échoué ou l'API rencontre des difficultés de surcharge.</p>"; 
+                mainContent.innerHTML = "<p class='py-20 text-red-400'>La recherche a échoué.</p>"; 
             }
         }
 
@@ -403,11 +407,10 @@
                         if (transEl) { 
                             transEl.innerText = `Traduction : "${textFr}"`; 
                             transEl.classList.remove('animate-pulse');
-                            transEl.classList.replace('text-zinc-400', 'text-zinc-300');
                         }
                     }
                 }
-            } catch (e) { console.error(e); }
+            } catch (e) {}
         }
 
         async function fetchSearchTranslationAsync(vk) {
@@ -420,7 +423,6 @@
                     if (el) { 
                         el.innerText = `Traduction : "${text}"`; 
                         el.classList.remove('animate-pulse'); 
-                        el.classList.replace('text-zinc-400', 'text-zinc-300');
                     }
                 }
             } catch (e) {}
@@ -459,7 +461,6 @@
             if (!verseId || !surahId) return;
 
             let targetElement = document.getElementById(`v-${surahId}:${verseId}`);
-            
             if (!targetElement) {
                 await loadSurah();
                 setTimeout(() => {
@@ -474,35 +475,22 @@
         function handleImageError(imgElement) {
             imgElement.onerror = null; 
             imgElement.src = DEFAULT_FALLBACK_IMAGE;
-            
             const parent = imgElement.parentElement;
             if (parent && !parent.querySelector('.unavailable-tag')) {
                 const overlay = document.createElement('div');
                 overlay.className = "absolute inset-0 flex items-center justify-center bg-black/50 backdrop-blur-[2px] unavailable-tag";
-                overlay.innerHTML = `<span class="bg-black/70 text-zinc-400 text-xs md:text-sm font-medium px-4 py-2 rounded-xl border border-white/5 tracking-wide uppercase">Image indisponible pour le moment</span>`;
+                overlay.innerHTML = `<span class="bg-black/70 text-zinc-400 text-xs md:text-sm font-medium px-4 py-2 rounded-xl border border-white/5 tracking-wide uppercase">Image indisponible</span>`;
                 parent.appendChild(overlay);
             }
         }
 
         function renderSurah(verses, audio) {
-            // L'audio est injecté de manière isolée tout en bas dans le conteneur fixe dédié
+            // Uniquement la barre et son conteneur injectés de façon transparente
             document.getElementById('fixed-audio-container').innerHTML = `
-                <div class="bottom-audio-bar w-full flex justify-center items-center gap-2">
-                    <button onclick="changeSurah(-1)" class="bg-zinc-900/90 hover:bg-zinc-800 text-emerald-400 p-3 rounded-full border border-white/10 transition-all shadow-xl" title="Sourate précédente">
-                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M15 19l-7-7 7-7"></path>
-                        </svg>
-                    </button>
-                    
-                    <div class="audio-player-container flex-1">
+                <div class="bottom-audio-bar">
+                    <div class="audio-player-container">
                         <audio src="${audio}" controls></audio>
                     </div>
-                    
-                    <button onclick="changeSurah(1)" class="bg-zinc-900/90 hover:bg-zinc-800 text-emerald-400 p-3 rounded-full border border-white/10 transition-all shadow-xl" title="Sourate suivante">
-                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M9 5l7 7-7 7"></path>
-                        </svg>
-                    </button>
                 </div>`;
             
             mainContent.innerHTML = '';
@@ -517,7 +505,7 @@
 
                 let unavailableOverlay = !hasImageConfigured 
                     ? `<div class="absolute inset-0 flex items-center justify-center bg-black/50 backdrop-blur-[2px] unavailable-tag">
-                         <span class="bg-black/70 text-zinc-400 text-xs md:text-sm font-medium px-4 py-2 rounded-xl border border-white/5 tracking-wide uppercase">Image indisponible pour le moment</span>
+                         <span class="bg-black/70 text-zinc-400 text-xs md:text-sm font-medium px-4 py-2 rounded-xl border border-white/5 tracking-wide uppercase">Image indisponible</span>
                        </div>` 
                     : '';
 
@@ -526,18 +514,14 @@
                         <div class="relative h-64 w-full bg-zinc-950 flex items-center justify-center">
                             <img src="${finalImgSrc}" onerror="handleImageError(this)" class="w-full h-full object-cover opacity-40" loading="lazy">
                             <div class="absolute inset-0 bg-gradient-to-t from-[#020617] via-transparent to-black/40"></div>
-                            
                             ${unavailableOverlay}
-
                             <div class="absolute top-6 left-6 bg-black/60 px-4 py-1 rounded-full text-xs font-bold text-emerald-400">Verset ${v.verse_key}</div>
                         </div>
                         <div class="p-6 md:p-12 space-y-6 -mt-16 relative z-10 bg-gradient-to-b from-transparent to-[#020617]/95">
                             <p class="quran-arabic text-zinc-100">${v.text_uthmani}</p>
-                            
                             <p class="phonetic-text text-sm md:text-base font-medium italic text-teal-300/90 tracking-wide text-left pt-4 border-t border-white/5 ${isPhoneticHidden ? 'hidden' : ''}">
                                 ${textPhonetic}
                             </p>
-                            
                             <p class="text-zinc-300 font-light italic text-base md:text-lg leading-relaxed text-left pt-2">
                                 "${textFr}"
                             </p>
@@ -546,7 +530,6 @@
                 `;
             });
 
-            // Re-scrolle automatiquement la zone des versets en haut au changement de chapitre
             mainContent.scrollTop = 0;
         }
 
@@ -554,11 +537,8 @@
             const isChecked = document.getElementById('togglePhonetic').checked;
             const phonetics = document.querySelectorAll('.phonetic-text');
             phonetics.forEach(el => {
-                if (isChecked) {
-                    el.classList.remove('hidden');
-                } else {
-                    el.classList.add('hidden');
-                }
+                if (isChecked) el.classList.remove('hidden');
+                else el.classList.add('hidden');
             });
         }
 
