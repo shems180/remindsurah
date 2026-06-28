@@ -56,9 +56,9 @@
         
         .phonetic-text.hidden { display: none !important; }
 
-        /* --- AJUSTEMENT VISIBILITÉ AUDIO --- */
+        /* --- CODE ÉPURÉ ET AJUSTEMENT AUDIO POUR SMARTPHONE --- */
         @media (max-width: 768px) {
-            /* On place l'audio tout en bas sur mobile pour libérer complètement la vue */
+            /* Fixe le lecteur audio tout en bas sur mobile pour être ultra pratique sous le pouce */
             .sticky-audio-mobile {
                 position: fixed !important;
                 bottom: 0 !important;
@@ -66,15 +66,20 @@
                 left: 0 !important;
                 right: 0 !important;
                 padding: 16px !important;
-                background: linear-gradient(to top, rgba(2, 6, 23, 1) 80%, rgba(2, 6, 23, 0)) !important;
+                background: linear-gradient(to top, rgba(2, 6, 23, 0.98), rgba(2, 6, 23, 0.85)) !important;
+                backdrop-filter: blur(16px) !important;
+                border-top: 1px solid rgba(255, 255, 255, 0.1);
                 margin-bottom: 0 !important;
-                z-index: 50;
+                z-index: 50 !important;
             }
-            /* Espace de sécurité en bas de page pour ne pas cacher le dernier verset */
+            /* Laisse de la place en bas de page pour que le dernier verset ne soit pas caché par l'audio */
             #main-content { padding-bottom: 100px !important; }
             
+            /* Masque la bannière image décorative */
             .mobile-hide-img { display: none !important; }
+            /* Masque le texte arabe et la traduction française */
             .quran-arabic, .translation-text { display: none !important; }
+            /* Réduit les espaces superflus pour une lecture en liste compacte */
             .glass-card { border-radius: 1.25rem; margin-bottom: 1rem !important; }
             section[id^="v-"] .p-6 { padding: 1.25rem !important; margin-top: 0 !important; background: transparent !important; }
         }
