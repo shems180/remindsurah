@@ -126,7 +126,7 @@
         const verseSelect = document.getElementById('verseSelect');
         const scrollToTopBtn = document.getElementById('scrollToTopBtn');
         let globalPublishedImages = {};
-        let currentLoadedVersesData = []; // Stockage temporaire pour appliquer les filtres d'affichage dynamiquement
+        let currentLoadedVersesData = [];
 
         const DEFAULT_FALLBACK_IMAGE = "https://images.unsplash.com/photo-1506318137071-a8e063b4bec0?auto=format&fit=crop&w=1200&q=80";
         const deviceSessionId = 'dev_' + Math.random().toString(36).substring(2, 15) + Date.now().toString(36);
@@ -141,6 +141,8 @@
             appId: "1:374171323189:web:2496ae1cf1c0b01429da7c",
             measurementId: "G-CK02L7988Z"
         };
+
+
 
         function initLiveCounter() {
             try {
