@@ -2,7 +2,7 @@
 <html lang="fr">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>QuranVision</title>
     
     <link rel="manifest" href="manifest.json?v=8">
@@ -17,68 +17,16 @@
     <link href="https://fonts.googleapis.com/css2?family=Amiri:wght@400;700&family=Inter:wght@300;500;700&display=swap" rel="stylesheet">
     
     <style>
-        /* Règle critique : on bloque le scroll sur HTML et BODY pour éviter la double barre */
-        html, body { 
+        body { 
             background: radial-gradient(circle at top, #0f172a 0%, #020617 100%);
             color: #f8fafc; 
             font-family: 'Inter', sans-serif; 
-            margin: 0;
-            padding: 0;
-            width: 100%;
-            height: 100vh;
-            height: -webkit-fill-available; /* Ajustement pour le comportement Safari mobile */
-            overflow: hidden; 
+            min-height: 100vh;
         }
-
-        /* Structure Flexbox verticale propre */
-        body {
-            display: flex;
-            flex-direction: column;
-        }
-
-        /* La barre de navigation du haut ne doit JAMAIS rétrécir ni scroller */
-        nav {
-            flex-shrink: 0;
-            z-index: 50;
-            box-shadow: 0 4px 20px rgba(0,0,0,0.5);
-        }
-
-        /* Le conteneur central est le SEUL autorisé à scroller */
-        main#main-content {
-            flex-grow: 1;
-            overflow-y: auto !important;
-            overflow-x: hidden;
-            -webkit-overflow-scrolling: touch; /* Scroll fluide sur iPhone */
-            padding: 1rem;
-            width: 100%;
-        }
-
-        /* Zone fixe du lecteur audio en bas */
-        .audio-fixed-bar {
-            flex-shrink: 0;
-            background: #020617;
-            padding: 12px 16px;
-            border-top: 1px solid rgba(255, 255, 255, 0.05);
-            z-index: 40;
-        }
-
-        .audio-player-container {
-            background: rgba(15, 23, 42, 0.95);
-            border: 1px solid rgba(52, 211, 153, 0.3);
-            backdrop-filter: blur(20px);
-            border-radius: 100px;
-            max-w: 600px;
-            margin: 0 auto;
-            padding: 6px 12px;
-            box-shadow: 0 -10px 30px rgba(0,0,0,0.7);
-        }
-
-        audio { height: 36px; width: 100%; outline: none; }
-        
         .quran-container { direction: rtl; text-align: right; }
         .quran-arabic { 
             font-family: 'Amiri', serif !important; 
-            font-size: 1.8rem !important; 
+            font-size: 1.6rem !important; 
             line-height: 2.3 !important; 
             display: inline-block;
             width: 100%;
@@ -92,56 +40,65 @@
             background: rgba(15, 23, 42, 0.6); 
             backdrop-filter: blur(20px);
             border: 1px solid rgba(255, 255, 255, 0.08); 
-            border-radius: 2rem;
+            border-radius: 2.5rem;
         }
+        .audio-player-container {
+            background: rgba(15, 23, 42, 0.95);
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            backdrop-filter: blur(20px);
+            border-radius: 100px;
+            max-w: 550px;
+            margin: 0 auto;
+            padding: 8px 16px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.8);
+        }
+        audio { height: 40px; width: 100%; outline: none; }
         
+        /* Style pour masquer proprement la phonétique */
         .phonetic-text.hidden { display: none !important; }
     </style>
 </head>
-<body>
+<body class="overflow-x-hidden relative">
 
-    <nav class="p-3 bg-black/80 backdrop-blur-xl border-b border-white/5">
-        <div class="max-w-7xl mx-auto flex flex-col md:flex-row justify-between items-center gap-3">
-            
-            <div class="flex items-center justify-between w-full md:w-auto gap-4">
-                <h1 onclick="window.location.reload()" class="cursor-pointer text-xl font-bold tracking-tighter text-emerald-500 flex items-center gap-2">
-                    <span class="bg-emerald-500 text-black px-2 py-0.5 rounded-lg text-xs italic font-black">IQRA</span> QURAN<span class="text-white font-light">VISION</span>
+    <nav class="sticky top-0 z-50 p-4 bg-black/70 backdrop-blur-xl border-b border-white/5">
+        <div class="max-w-7xl mx-auto flex flex-col lg:flex-row justify-between items-center gap-4">
+            <div class="flex items-center gap-4">
+                <h1 onclick="window.location.reload()" class="cursor-pointer text-2xl font-bold tracking-tighter text-emerald-500 flex items-center gap-2">
+                    <span class="bg-emerald-500 text-black px-2 py-1 rounded-lg text-sm italic font-black">IQRA</span> QURAN<span class="text-white font-light">VISION</span>
                 </h1>
-                <div class="flex items-center gap-1.5 bg-zinc-900/80 border border-zinc-800 px-2.5 py-0.5 rounded-full text-[11px] font-medium text-zinc-400">
-                    <span class="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
+                <div class="flex items-center gap-1.5 bg-zinc-900/80 border border-zinc-800 px-3 py-1 rounded-full text-xs font-medium text-zinc-400">
+                    <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
                     <span id="liveCounter">1</span> en ligne
                 </div>
             </div>
             
-            <div class="w-full md:w-auto flex flex-wrap items-center justify-center gap-2">
-                
-                <div class="flex items-center gap-1 w-full sm:w-auto">
-                    <input type="text" id="searchInput" placeholder="Recherche..." class="w-full sm:w-36 px-3 py-1.5 rounded-xl text-xs text-white bg-black/40 border border-white/10 focus:border-emerald-500 focus:outline-none">
-                    <button onclick="searchVerse()" class="bg-zinc-800 hover:bg-zinc-700 text-emerald-400 p-2 rounded-xl border border-white/10 transition-all flex items-center justify-center shrink-0">
-                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <div class="flex flex-wrap justify-center items-center gap-3">
+                <div class="flex items-center gap-2 bg-zinc-900/90 border border-zinc-700 px-3 py-2 rounded-xl text-xs font-medium text-zinc-300">
+                    <input type="checkbox" id="togglePhonetic" checked onchange="togglePhoneticDisplay()" class="w-3.5 h-3.5 accent-emerald-500 cursor-pointer">
+                    <label for="togglePhonetic" class="cursor-pointer select-none">Phonétique</label>
+                </div>
+
+                <div class="flex items-center gap-2">
+                    <input type="text" id="searchInput" placeholder="Recherche / بحث..." class="w-48 md:w-56 px-4 py-2 rounded-xl text-sm text-white bg-black/40 border border-white/10 focus:border-emerald-500 focus:outline-none">
+                    <button onclick="searchVerse()" class="bg-zinc-800 hover:bg-zinc-700 text-emerald-400 p-2.5 rounded-xl border border-white/10 transition-all flex items-center justify-center" title="Rechercher">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" stroke-width="2.5" stroke-linecap="round"></path>
                         </svg>
                     </button>
                 </div>
 
-                <div class="flex items-center gap-1.5 bg-zinc-900/90 border border-zinc-700 px-2.5 py-1.5 rounded-xl text-xs font-medium text-zinc-300">
-                    <input type="checkbox" id="togglePhonetic" checked onchange="togglePhoneticDisplay()" class="w-3 h-3 accent-emerald-500 cursor-pointer">
-                    <label for="togglePhonetic" class="cursor-pointer select-none text-[11px]">Phonétique</label>
-                </div>
-
-                <select id="surahSelect" onchange="handleSurahChange()" class="bg-zinc-900 border border-zinc-700 px-2 py-1.5 rounded-xl text-xs outline-none text-white w-[48%] sm:w-32"></select>
+                <select id="surahSelect" onchange="handleSurahChange()" class="bg-zinc-900 border border-zinc-700 px-3 py-2 rounded-xl text-xs outline-none w-32 md:w-40 text-white"></select>
                 
-                <select id="verseSelect" onchange="scrollToSelectedVerse()" class="bg-zinc-900 border border-zinc-700 px-2 py-1.5 rounded-xl text-xs outline-none text-white w-[48%] sm:w-20">
+                <select id="verseSelect" onchange="scrollToSelectedVerse()" class="bg-zinc-900 border border-zinc-700 px-3 py-2 rounded-xl text-xs outline-none w-24 text-white">
                     <option value="">Verset</option>
                 </select>
 
-                <select id="reciterSelect" class="bg-zinc-900 border border-zinc-700 px-2 py-1.5 rounded-xl text-xs outline-none text-white w-full sm:w-32">
+                <select id="reciterSelect" class="bg-zinc-900 border border-zinc-700 px-3 py-2 rounded-xl text-xs outline-none text-white">
                     <option value="7">Mishary Alafasy</option>
                     <option value="3">Abdur-Rahman as-Sudais</option>
                     <option value="128">Yasser Ad-Dussary</option>
                 </select>
-
-                <button onclick="loadSurah()" class="bg-emerald-600 hover:bg-emerald-400 text-black font-bold px-4 py-1.5 rounded-xl text-xs transition-all w-full sm:w-auto uppercase tracking-wider">Explorer</button>
+                <button onclick="loadSurah()" class="bg-emerald-600 hover:bg-emerald-400 text-black font-bold px-6 py-2 rounded-xl transition-all">Explorer</button>
             </div>
         </div>
     </nav>
