@@ -43,7 +43,7 @@
             border-radius: 2.5rem;
         }
         
-        /* Réintégration de ta classe audio d'origine pour que tes scripts l'activent */
+        /* Ton lecteur d'origine stylisé */
         .audio-player-container {
             background: rgba(15, 23, 42, 0.95);
             border: 1px solid rgba(255, 255, 255, 0.15);
@@ -62,7 +62,7 @@
 </head>
 <body class="overflow-x-hidden relative">
 
-    <nav class="w-full p-4 bg-black/70 backdrop-blur-xl border-b border-white/5">
+    <nav class="sticky top-0 z-50 w-full p-4 bg-black/70 backdrop-blur-xl border-b border-white/5">
         <div class="max-w-7xl mx-auto flex flex-col lg:flex-row justify-between items-center gap-4">
             <div class="flex items-center gap-4">
                 <h1 onclick="window.location.reload()" class="cursor-pointer text-2xl font-bold tracking-tighter text-emerald-500 flex items-center gap-2">
@@ -105,10 +105,27 @@
         </div>
     </nav>
 
-    <main class="max-w-7xl mx-auto px-4 pt-3 pb-36">
-    </main>
+    <script>
+        // Dès que la page se charge ou défile, on gère la visibilité du menu
+        window.addEventListener('scroll', () => {
+            const nav = document.querySelector('nav');
+            if (window.scrollY > 50) {
+                // Dès qu'on scrolle vers le bas, le menu s'efface vers le haut
+                nav.style.transform = 'translateY(-100%)';
+                nav.style.transition = 'transform 0.3s ease';
+                nav.style.position = 'absolute';
+            } else {
+                // Quand on revient tout en haut, le menu se remet en place proprement
+                nav.style.transform = 'translateY(0)';
+                nav.style.position = 'sticky';
+            }
+        });
+    </script>
 
-    <div class="fixed bottom-4 left-0 right-0 z-50 px-4 pointer-events-none">
+    <main class="max-w-7xl mx-auto px-4 pt-8 pb-40">
+        </main>
+
+    <div class="fixed bottom-6 left-0 right-0 z-50 px-4 pointer-events-none">
         <div class="audio-player-container pointer-events-auto">
             <audio controls id="audioPlayer">
                 <source src="" type="audio/mpeg">
@@ -116,6 +133,7 @@
             </audio>
         </div>
     </div>
+
 
 
     <main id="main-content" class="w-full max-w-4xl mx-auto space-y-8 text-center py-6">
