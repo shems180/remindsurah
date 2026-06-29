@@ -43,7 +43,7 @@
             border-radius: 2.5rem;
         }
         
-        /* Conteneur Audio Fixe Unique - Sans duplication */
+        /* Conteneur Audio Fixe Unique */
         .audio-player-container {
             position: fixed !important;
             bottom: 16px !important;
@@ -51,14 +51,25 @@
             transform: translateX(-50%) !important;
             width: calc(100% - 32px) !important;
             max-w: 600px !important;
-            background: #1e293b !important; /* Couleur slate-800 stable */
+            background: #1e293b !important;
             border: 1px solid rgba(255, 255, 255, 0.15) !important;
             border-radius: 9999px !important;
             padding: 6px 12px !important;
             box-shadow: 0 20px 40px rgba(0,0,0,0.7) !important;
             z-index: 9999 !important;
+            transition: opacity 0.3s ease, transform 0.3s ease;
         }
         audio { height: 40px; width: 100%; outline: none; display: block; }
+        
+        /* Masque automatiquement la barre si aucun audio n'est chargé (évite de bloquer la page principale) */
+        audio:not([src]), audio[src=""], audio[src="null"] {
+            display: none !important;
+        }
+        .audio-player-container:has(audio:not([src])), 
+        .audio-player-container:has(audio[src=""]),
+        .audio-player-container:has(audio[src="null"]) {
+            display: none !important;
+        }
         
         /* Style pour masquer proprement la phonétique */
         .phonetic-text.hidden { display: none !important; }
@@ -109,7 +120,7 @@
         </div>
     </nav>
 
-    <main class="max-w-7xl mx-auto px-4 mt-4 pb-32 relative z-10">
+    <main class="max-w-7xl mx-auto px-4 mt-2 pb-24 relative z-10">
         </main>
 
     <div class="audio-player-container">
@@ -118,6 +129,29 @@
             Votre navigateur ne supporte pas l'élément audio.
         </audio>
     </div>
+
+    <script>
+        // Ce petit observateur s'assure que dès que le JS injecte un lien dans l'audio, le lecteur apparaît.
+        const observer = new MutationObserver((mutations) => {
+            mutations.forEach((mutation) => {
+                if (mutation.type === "attributes" && mutation.attributeName === "src") {
+                    const playerContainer = document.querySelector('.audio-player-container');
+                    const audioSrc = mutation.target.getAttribute('src');
+                    if (audioSrc && audioSrc !== "" && audioSrc !== "null") {
+                        playerContainer.style.setProperty('display', 'block', 'important');
+                    } else {
+                        playerContainer.style.setProperty('display', 'none', 'important');
+                    }
+                }
+            });
+        });
+        
+        const audioEl = document.getElementById('audioPlayer');
+        if (audioEl) {
+            observer.observe(audioEl, { attributes: true });
+        }
+    </script>
+
 
 
 
