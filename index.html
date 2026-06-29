@@ -43,8 +43,8 @@
             border-radius: 2.5rem;
         }
         
-        /* Conteneur Audio Fixe Global */
-        .audio-fixed-bar {
+        /* Conteneur Audio Fixe Unique */
+        .audio-player-container {
             position: fixed !important;
             bottom: 16px !important;
             left: 50% !important;
@@ -53,10 +53,11 @@
             max-w: 600px !important;
             background: #1e293b !important;
             border: 1px solid rgba(255, 255, 255, 0.15) !important;
-            border-radius: 2rem !important;
-            padding: 12px 16px !important;
+            border-radius: 9999px !important;
+            padding: 6px 12px !important;
             box-shadow: 0 20px 40px rgba(0,0,0,0.7) !important;
             z-index: 9999 !important;
+            transition: opacity 0.3s ease, transform 0.3s ease;
         }
         audio { height: 40px; width: 100%; outline: none; display: block; }
         
@@ -64,9 +65,9 @@
         audio:not([src]), audio[src=""], audio[src="null"] {
             display: none !important;
         }
-        .audio-fixed-bar:has(audio:not([src])), 
-        .audio-fixed-bar:has(audio[src=""]),
-        .audio-fixed-bar:has(audio[src="null"]) {
+        .audio-player-container:has(audio:not([src])), 
+        .audio-player-container:has(audio[src=""]),
+        .audio-player-container:has(audio[src="null"]) {
             display: none !important;
         }
         
@@ -119,53 +120,19 @@
         </div>
     </nav>
 
-    <main id="main-content" class="w-full max-w-3xl mx-auto space-y-4 text-center py-5 pb-44">
-        <div id="welcome-screen" class="py-2 space-y-6">
-            <div class="inline-block p-6 rounded-full bg-emerald-500/10 animate-pulse">
-                <svg class="w-12 h-12 text-emerald-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5s3.332.477 4.5 1.253v13C19.832 18.477 18.246 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"></path></svg>
-            </div>
-            <h2 class="text-3xl md:text-4xl font-bold tracking-tight">Bienvenue sur QuranVision</h2>
-            <p id="loading-status" class="text-zinc-400 text-base max-w-sm mx-auto font-light">Sélectionnez une Sourate ou faites une recherche.</p>
-        </div>
 
-        <div id="quran-verses-container" class="max-w-7xl mx-auto px-4 pt-6 mb-2 relative z-10 space-y-6">
-            </div>
-    </main>
-
-    <div id="audioPlaybackContainer" class="audio-fixed-bar">
-        <div class="max-w-4xl mx-auto flex flex-col gap-3">
-            
-            <div class="flex justify-center items-center gap-8 mb-1">
-                <button onclick="changeSurah(-1)" class="bg-zinc-800 hover:bg-zinc-700 text-emerald-400 px-4 py-1.5 rounded-full border border-white/10 transition-all shadow-md flex items-center gap-1 text-xs font-medium">
-                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M15 19l-7-7 7-7"></path>
-                    </svg>
-                    Précédente
-                </button>
-                
-                <button onclick="changeSurah(1)" class="bg-zinc-800 hover:bg-zinc-700 text-emerald-400 px-4 py-1.5 rounded-full border border-white/10 transition-all shadow-md flex items-center gap-1 text-xs font-medium">
-                    Suivante
-                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M9 5l7 7-7 7"></path>
-                    </svg>
-                </button>
-            </div>
-            
-            <div class="w-full">
-                <audio id="audioPlayer" controls>
-                    <source src="" type="audio/mpeg">
-                    Votre navigateur ne supporte pas l'élément audio.
-                </audio>
-            </div>
-            
-        </div>
+    <div class="audio-player-container">
+        <audio controls id="audioPlayer">
+            <source src="" type="audio/mpeg">
+            Votre navigateur ne supporte pas l'élément audio.
+        </audio>
     </div>
 
     <script>
         const observer = new MutationObserver((mutations) => {
             mutations.forEach((mutation) => {
                 if (mutation.type === "attributes" && mutation.attributeName === "src") {
-                    const playerContainer = document.getElementById('audioPlaybackContainer');
+                    const playerContainer = document.querySelector('.audio-player-container');
                     const audioSrc = mutation.target.getAttribute('src');
                     if (audioSrc && audioSrc !== "" && audioSrc !== "null") {
                         playerContainer.style.setProperty('display', 'block', 'important');
@@ -182,7 +149,38 @@
         }
     </script>
 
-    <button id="scrollToTopBtn" onclick="scrollToTop()" class="fixed bottom-36 right-4 z-50 bg-emerald-600 hover:bg-emerald-500 text-black p-2.5 rounded-full shadow-2xl transition-all duration-300 translate-y-20 opacity-0 pointer-events-none border border-emerald-400/20">
+    <main id="main-content" class="w-full max-w-3xl mx-auto space-y-4 text-center py-5 pb-32">
+        <div id="welcome-screen" class="py-2 space-y-6">
+            <div class="inline-block p-6 rounded-full bg-emerald-500/10 animate-pulse">
+                <svg class="w-12 h-12 text-emerald-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5s3.332.477 4.5 1.253v13C19.832 18.477 18.246 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"></path></svg>
+            </div>
+            <h2 class="text-3xl md:text-4xl font-bold tracking-tight">Bienvenue sur QuranVision</h2>
+            <p id="loading-status" class="text-zinc-400 text-base max-w-sm mx-auto font-light">Sélectionnez une Sourate ou faites une recherche.</p>
+        </div>
+
+        <div id="quran-verses-container" class="max-w-7xl mx-auto px-4 pt-6 mb-2 relative z-10 space-y-6"></div>
+
+        <div id="audioPlaybackContainer" class="hidden mt-8 px-4">
+            <div class="max-w-xs mx-auto flex justify-center items-center gap-6 bg-zinc-900/60 backdrop-blur-md p-3 rounded-2xl border border-white/5 shadow-xl">
+                <button onclick="changeSurah(-1)" class="bg-zinc-800 hover:bg-zinc-700 text-emerald-400 p-3 rounded-full border border-white/10 transition-all shrink-0" title="Sourate précédente">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M15 19l-7-7 7-7"></path>
+                    </svg>
+                </button>
+                
+                <audio id="globalAudioPlayer" src="" class="hidden"></audio>
+                <span class="text-xs text-zinc-400 font-medium select-none">Changer de Sourate</span>
+                
+                <button onclick="changeSurah(1)" class="bg-zinc-800 hover:bg-zinc-700 text-emerald-400 p-3 rounded-full border border-white/10 transition-all shrink-0" title="Sourate suivante">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M9 5l7 7-7 7"></path>
+                    </svg>
+                </button>
+            </div>
+        </div>
+    </main>
+
+    <button id="scrollToTopBtn" onclick="scrollToTop()" class="fixed bottom-20 right-4 z-50 bg-emerald-600 hover:bg-emerald-500 text-black p-2.5 rounded-full shadow-2xl transition-all duration-300 translate-y-20 opacity-0 pointer-events-none border border-emerald-400/20">
         <svg class="w-5 h-5 stroke-[3]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" d="M4.5 15.75l7.5-7.5 7.5 7.5"></path>
         </svg>
