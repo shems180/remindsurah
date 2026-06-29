@@ -61,7 +61,7 @@
         }
         audio { height: 40px; width: 100%; outline: none; display: block; }
         
-        /* Masque automatiquement la barre si aucun audio n'est chargé (évite de bloquer la page principale) */
+        /* Masque automatiquement la barre si aucun audio n'est chargé */
         audio:not([src]), audio[src=""], audio[src="null"] {
             display: none !important;
         }
@@ -120,7 +120,7 @@
         </div>
     </nav>
 
-    <main class="max-w-7xl mx-auto px-4 mt-2 pb-24 relative z-10">
+    <main class="max-w-7xl mx-auto px-4 pt-24 mb-2 relative z-10">
         </main>
 
     <div class="audio-player-container">
@@ -131,7 +131,6 @@
     </div>
 
     <script>
-        // Ce petit observateur s'assure que dès que le JS injecte un lien dans l'audio, le lecteur apparaît.
         const observer = new MutationObserver((mutations) => {
             mutations.forEach((mutation) => {
                 if (mutation.type === "attributes" && mutation.attributeName === "src") {
@@ -151,9 +150,6 @@
             observer.observe(audioEl, { attributes: true });
         }
     </script>
-
-
-
 
     <main id="main-content" class="w-full max-w-4xl mx-auto space-y-8 text-center py-6">
         <div id="welcome-screen" class="py-16 space-y-6">
