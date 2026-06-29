@@ -43,8 +43,8 @@
             border-radius: 2.5rem;
         }
         
-        /* 1. TON LECTEUR AUDIO PRINCIPAL (FIXÉ EN BAS DE L'ÉCRAN) */
-        .main-sticky-audio {
+        /* Conteneur Audio Fixe Unique (Barre du bas de l'écran) */
+        .audio-player-container {
             position: fixed !important;
             bottom: 16px !important;
             left: 50% !important;
@@ -57,29 +57,21 @@
             padding: 6px 12px !important;
             box-shadow: 0 20px 40px rgba(0,0,0,0.7) !important;
             z-index: 9999 !important;
+            transition: opacity 0.3s ease, transform 0.3s ease;
         }
         audio { height: 40px; width: 100%; outline: none; display: block; }
         
-        /* Masque automatiquement le lecteur du bas si aucun audio n'est chargé */
-        .main-sticky-audio:has(audio:not([src])), 
-        .main-sticky-audio:has(audio[src=""]),
-        .main-sticky-audio:has(audio[src="null"]) {
+        /* Masque automatiquement la barre si aucun audio n'est chargé */
+        audio:not([src]), audio[src=""], audio[src="null"] {
+            display: none !important;
+        }
+        .audio-player-container:has(audio:not([src])), 
+        .audio-player-container:has(audio[src=""]),
+        .audio-player-container:has(audio[src="null"]) {
             display: none !important;
         }
         
-        /* 2. LE BLOC FLÈCHES + AUDIO (SOUS LES VERSETS) */
-        .inline-navigation-bar {
-            width: 100% !important;
-            margin-top: 2.5rem !important;
-            margin-bottom: 2rem !important;
-        }
-        .inline-audio-box {
-            background: #1e293b !important;
-            border: 1px solid rgba(255, 255, 255, 0.15) !important;
-            border-radius: 9999px !important;
-            padding: 4px 8px !important;
-        }
-
+        /* Style pour masquer proprement la phonétique */
         .phonetic-text.hidden { display: none !important; }
     </style>
 </head>
@@ -129,7 +121,7 @@
     </nav>
 
 
-    <div class="main-sticky-audio">
+    <div class="audio-player-container">
         <audio controls id="audioPlayer">
             <source src="" type="audio/mpeg">
             Votre navigateur ne supporte pas l'élément audio.
@@ -140,7 +132,7 @@
         const observer = new MutationObserver((mutations) => {
             mutations.forEach((mutation) => {
                 if (mutation.type === "attributes" && mutation.attributeName === "src") {
-                    const playerContainer = document.querySelector('.main-sticky-audio');
+                    const playerContainer = document.querySelector('.audio-player-container');
                     const audioSrc = mutation.target.getAttribute('src');
                     if (audioSrc && audioSrc !== "" && audioSrc !== "null") {
                         playerContainer.style.setProperty('display', 'block', 'important');
@@ -157,7 +149,6 @@
         }
     </script>
 
-
     <main id="main-content" class="w-full max-w-3xl mx-auto space-y-4 text-center py-5 pb-32">
         <div id="welcome-screen" class="py-2 space-y-6">
             <div class="inline-block p-6 rounded-full bg-emerald-500/10 animate-pulse">
@@ -170,20 +161,20 @@
         <div id="quran-verses-container" class="max-w-7xl mx-auto px-4 pt-6 mb-2 relative z-10 space-y-6">
         </div>
 
-        <div id="audioPlaybackContainer" class="audio-fixed-bar inline-navigation-bar hidden">
+        <div id="audioPlaybackContainer" class="audio-fixed-bar hidden" style="position: static !important; width: 100% !important; transform: none !important; margin-top: 2.5rem !important; box-shadow: none !important; background: transparent !important; border: none !important;">
             <div class="max-w-4xl mx-auto flex justify-center items-center gap-4 px-4">
                 
-                <button onclick="changeSurah(-1)" class="bg-zinc-900/95 hover:bg-zinc-800 text-emerald-400 p-2.5 rounded-full border border-white/10 transition-all shadow-xl shrink-0">
+                <button onclick="changeSurah(-1)" class="bg-zinc-900/95 hover:bg-zinc-800 text-emerald-400 p-2.5 rounded-full border border-white/10 transition-all shadow-xl shrink-0" title="Sourate précédente">
                     <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M15 19l-7-7 7-7"></path>
                     </svg>
                 </button>
                 
-                <div class="audio-player-container inline-audio-box flex-1">
+                <div class="audio-player-container flex-1" style="position: static !important; transform: none !important; width: 100% !important; box-shadow: none !important; padding: 0 !important; background: #1e293b !important; border: 1px solid rgba(255, 255, 255, 0.15) !important; border-radius: 9999px !important;">
                     <audio id="globalAudioPlayer" src="" controls></audio>
                 </div>
                 
-                <button onclick="changeSurah(1)" class="bg-zinc-900/95 hover:bg-zinc-800 text-emerald-400 p-2.5 rounded-full border border-white/10 transition-all shadow-xl shrink-0">
+                <button onclick="changeSurah(1)" class="bg-zinc-900/95 hover:bg-zinc-800 text-emerald-400 p-2.5 rounded-full border border-white/10 transition-all shadow-xl shrink-0" title="Sourate suivante">
                     <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M9 5l7 7-7 7"></path>
                     </svg>
