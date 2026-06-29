@@ -43,7 +43,7 @@
             border-radius: 2.5rem;
         }
         
-        /* Réintégration de ton conteneur audio d'origine pour ton JavaScript */
+        /* Réintégration de ta classe audio d'origine pour que tes scripts l'activent */
         .audio-player-container {
             background: rgba(15, 23, 42, 0.95);
             border: 1px solid rgba(255, 255, 255, 0.15);
@@ -62,7 +62,7 @@
 </head>
 <body class="overflow-x-hidden relative">
 
-    <nav class="w-full p-2.5 bg-black/70 backdrop-blur-xl border-b border-white/5">
+    <nav class="w-full p-4 bg-black/70 backdrop-blur-xl border-b border-white/5">
         <div class="max-w-7xl mx-auto flex flex-col lg:flex-row justify-between items-center gap-4">
             <div class="flex items-center gap-4">
                 <h1 onclick="window.location.reload()" class="cursor-pointer text-2xl font-bold tracking-tighter text-emerald-500 flex items-center gap-2">
@@ -105,8 +105,8 @@
         </div>
     </nav>
 
-    <main class="max-w-7xl mx-auto px-4 pt-0 pb-36">
-        </main>
+    <main class="max-w-7xl mx-auto px-4 pt-3 pb-36">
+    </main>
 
     <div class="fixed bottom-4 left-0 right-0 z-50 px-4 pointer-events-none">
         <div class="audio-player-container pointer-events-auto">
@@ -116,6 +116,7 @@
             </audio>
         </div>
     </div>
+
 
     <main id="main-content" class="w-full max-w-4xl mx-auto space-y-8 text-center py-6">
         <div id="welcome-screen" class="py-16 space-y-6">
