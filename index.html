@@ -43,7 +43,7 @@
             border-radius: 2.5rem;
         }
         
-        /* Conteneur Audio Fixe Unique */
+        /* Conteneur Audio Fixe Unique (Barre du bas) */
         .audio-player-container {
             position: fixed !important;
             bottom: 16px !important;
@@ -71,7 +71,17 @@
             display: none !important;
         }
         
-        /* Style pour masquer proprement la phonétique */
+        /* LA SEULE MODIFICATION : On force la barre d'origine avec les flèches à se mettre sous les versets au lieu de flotter */
+        .audio-fixed-bar {
+            position: static !important;
+            width: 100% !important;
+            transform: none !important;
+            margin-top: 2.5rem !important;
+            box-shadow: none !important;
+            background: transparent !important;
+            border: none !important;
+        }
+        
         .phonetic-text.hidden { display: none !important; }
     </style>
 </head>
@@ -120,7 +130,6 @@
         </div>
     </nav>
 
-
     <div class="audio-player-container">
         <audio controls id="audioPlayer">
             <source src="" type="audio/mpeg">
@@ -161,7 +170,7 @@
         <div id="quran-verses-container" class="max-w-7xl mx-auto px-4 pt-6 mb-2 relative z-10 space-y-6">
         </div>
 
-        <div id="audioPlaybackContainer" class="audio-fixed-bar hidden" style="position: static !important; width: 100% !important; transform: none !important; margin-top: 2rem;">
+        <div id="audioPlaybackContainer" class="audio-fixed-bar hidden">
             <div class="max-w-4xl mx-auto flex justify-center items-center gap-3">
                 <button onclick="changeSurah(-1)" class="bg-zinc-900/95 hover:bg-zinc-800 text-emerald-400 p-2 rounded-full border border-white/10 transition-all shadow-xl shrink-0">
                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -169,7 +178,7 @@
                     </svg>
                 </button>
                 
-                <div class="audio-player-container flex-1" style="position: static !important; transform: none !important; width: 100% !important; box-shadow: none !important;">
+                <div class="audio-player-container flex-1" style="position: static !important; transform: none !important; width: 100% !important; box-shadow: none !important; padding: 0 !important;">
                     <audio id="globalAudioPlayer" src="" controls></audio>
                 </div>
                 
@@ -187,6 +196,9 @@
             <path stroke-linecap="round" stroke-linejoin="round" d="M4.5 15.75l7.5-7.5 7.5 7.5"></path>
         </svg>
     </button>
+
+</body>
+</html>
 
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-database-compat.js"></script>
