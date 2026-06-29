@@ -43,7 +43,7 @@
             border-radius: 2.5rem;
         }
         
-        /* 1. LECTEUR AUDIO PRINCIPAL FIXÉ TOUT EN BAS DE L'ÉCRAN */
+        /* Conteneur Audio Fixe Unique */
         .audio-player-container {
             position: fixed !important;
             bottom: 16px !important;
@@ -61,41 +61,17 @@
         }
         audio { height: 40px; width: 100%; outline: none; display: block; }
         
-        /* Masquage automatique du lecteur fixe si vide */
-        audio:not([src]), audio[src=""], audio[src="null"] { display: none !important; }
+        /* Masque automatiquement la barre si aucun audio n'est chargé */
+        audio:not([src]), audio[src=""], audio[src="null"] {
+            display: none !important;
+        }
         .audio-player-container:has(audio:not([src])), 
         .audio-player-container:has(audio[src=""]),
-        .audio-player-container:has(audio[src="null"]) { display: none !important; }
-        
-        /* 2. LE CORRECTIF GLOBAL POUR METTRE LES BOUTONS SOUS LE DERNIER VERSET */
-        /* On neutralise la classe fixe pour ce bloc précis */
-        #audioPlaybackContainer.audio-fixed-bar {
-            position: relative !important;
-            bottom: auto !important;
-            left: auto !important;
-            transform: none !important;
-            width: 100% !important;
-            margin-top: 2.5rem !important;
-            margin-bottom: 2rem !important;
-            box-shadow: none !important;
-            background: transparent !important;
-            border: none !important;
-            z-index: 10 !important;
-        }
-
-        /* On force l'audio à l'intérieur de ce bloc à rester sagement en ligne entre les flèches */
-        #audioPlaybackContainer .audio-player-container {
-            position: static !important;
-            transform: none !important;
-            width: 100% !important;
-            box-shadow: none !important;
-            padding: 0 !important;
-            background: #1e293b !important;
-            border: 1px solid rgba(255, 255, 255, 0.15) !important;
-            border-radius: 9999px !important;
-            display: block !important;
+        .audio-player-container:has(audio[src="null"]) {
+            display: none !important;
         }
         
+        /* Style pour masquer proprement la phonétique */
         .phonetic-text.hidden { display: none !important; }
     </style>
 </head>
@@ -144,6 +120,7 @@
         </div>
     </nav>
 
+
     <div class="audio-player-container">
         <audio controls id="audioPlayer">
             <source src="" type="audio/mpeg">
@@ -182,30 +159,28 @@
         </div>
 
         <div id="quran-verses-container" class="max-w-7xl mx-auto px-4 pt-6 mb-2 relative z-10 space-y-6">
-        </div>
-
-        <div id="audioPlaybackContainer" class="audio-fixed-bar hidden">
-            <div class="max-w-4xl mx-auto flex justify-center items-center gap-3">
-                
-                <button onclick="changeSurah(-1)" class="bg-zinc-900/95 hover:bg-zinc-800 text-emerald-400 p-2 rounded-full border border-white/10 transition-all shadow-xl shrink-0">
-                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M15 19l-7-7 7-7"></path>
-                    </svg>
-                </button>
-                
-                <div class="audio-player-container flex-1">
-                    <audio id="globalAudioPlayer" src="" controls></audio>
-                </div>
-                
-                <button onclick="changeSurah(1)" class="bg-zinc-900/95 hover:bg-zinc-800 text-emerald-400 p-2 rounded-full border border-white/10 transition-all shadow-xl shrink-0">
-                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M9 5l7 7-7 7"></path>
-                    </svg>
-                </button>
-                
             </div>
-        </div>
     </main>
+
+    <div id="audioPlaybackContainer" class="audio-fixed-bar hidden">
+        <div class="max-w-4xl mx-auto flex justify-center items-center gap-3">
+            <button onclick="changeSurah(-1)" class="bg-zinc-900/95 hover:bg-zinc-800 text-emerald-400 p-2 rounded-full border border-white/10 transition-all shadow-xl shrink-0">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M15 19l-7-7 7-7"></path>
+                </svg>
+            </button>
+            
+            <div class="audio-player-container flex-1">
+                <audio id="globalAudioPlayer" src="" controls></audio>
+            </div>
+            
+            <button onclick="changeSurah(1)" class="bg-zinc-900/95 hover:bg-zinc-800 text-emerald-400 p-2 rounded-full border border-white/10 transition-all shadow-xl shrink-0">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M9 5l7 7-7 7"></path>
+                </svg>
+            </button>
+        </div>
+    </div>
 
     <button id="scrollToTopBtn" onclick="scrollToTop()" class="fixed bottom-20 right-4 z-50 bg-emerald-600 hover:bg-emerald-500 text-black p-2.5 rounded-full shadow-2xl transition-all duration-300 translate-y-20 opacity-0 pointer-events-none border border-emerald-400/20">
         <svg class="w-5 h-5 stroke-[3]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
