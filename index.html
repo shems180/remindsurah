@@ -249,7 +249,6 @@
             window.addEventListener('scroll', toggleScrollButton);
         }
 
-        // Modifié pour éviter le saut automatique immédiat lors du choix du verset seul
         function handleSurahChange() {
             const sid = parseInt(surahSelect.value);
             const chapter = chaptersList.find(c => c.id === sid);
@@ -257,9 +256,14 @@
         }
 
         function updateVerseSelect(totalVerses) {
+            // Sauvegarde de l'ancienne valeur choisie si elle est encore valide
+            const previousValue = verseSelect.value;
             verseSelect.innerHTML = '<option value="">Verset</option>';
             for (let i = 1; i <= totalVerses; i++) {
                 verseSelect.innerHTML += `<option value="${i}">Verset ${i}</option>`;
+            }
+            if (previousValue && parseInt(previousValue) <= totalVerses) {
+                verseSelect.value = previousValue;
             }
         }
 
@@ -313,20 +317,15 @@
             }
         }
 
-        // S'exécute uniquement si l'utilisateur change de verset manuellement, sans recharger toute la page
-        async function scrollToSelectedVerse() {
+        // S'exécute uniquement si l'utilisateur change de verset manuellement
+        function scrollToSelectedVerse() {
             const verseId = verseSelect.value;
             const surahId = surahSelect.value;
             if (!verseId || !surahId) return;
 
+            // Fait simplement défiler si le verset existe déjà à l'écran, sans forcer un chargement automatique de l'API
             let targetElement = document.getElementById(`v-${surahId}:${verseId}`);
-            if (!targetElement) {
-                await loadSurah();
-                setTimeout(() => {
-                    targetElement = document.getElementById(`v-${surahId}:${verseId}`);
-                    if (targetElement) targetElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
-                }, 800);
-            } else {
+            if (targetElement) {
                 targetElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
             }
         }
