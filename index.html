@@ -364,15 +364,15 @@
                        </div>` 
                     : '';
 
-                mainContent.innerHTML += `
-                    <section id="v-${v.verse_key}" class="glass-card overflow-hidden mb-8 shadow-2xl">
-                        <div class="relative h-48 sm:h-64 w-full bg-zinc-950 flex items-center justify-center">
-                            <img src="${finalImgSrc}" onerror="handleImageError(this)" class="w-full h-full object-cover opacity-40" loading="lazy">
-                            <div class="absolute inset-0 bg-gradient-to-t from-[#020617] via-transparent to-black/40"></div>
-                            ${unavailableOverlay}
-                            <div class="absolute top-4 left-4 bg-black/60 px-3 py-1 rounded-full text-xs font-bold text-emerald-400">Verset ${v.verse_key}</div>
-                        </div>
-                        <div class="p-5 md:p-10 space-y-4 -mt-12 relative z-10 bg-gradient-to-b from-transparent to-[#020617]/95">
+                <section id="v-${v.verse_key}" class="glass-card overflow-hidden mb-8 shadow-2xl">
+    <div class="relative w-full bg-black flex items-center justify-center">
+        <img src="${finalImgSrc}" onerror="handleImageError(this)" class="w-full h-auto max-h-[450px] object-contain opacity-70" loading="lazy">
+        <div class="absolute inset-0 bg-gradient-to-t from-[#020617] via-transparent to-black/20"></div>
+        ${unavailableOverlay}
+        <div class="absolute top-4 left-4 bg-black/60 px-3 py-1 rounded-full text-xs font-bold text-emerald-400">Verset ${v.verse_key}</div>
+    </div>
+    <div class="p-5 md:p-10 space-y-4 relative z-10 bg-[#020617]/95">
+                        
                             <p class="quran-arabic text-zinc-100">${v.text_uthmani}</p>
                             <p class="phonetic-text text-xs sm:text-sm font-medium italic text-teal-300/90 tracking-wide text-left pt-3 border-t border-white/5 ${isPhoneticHidden ? 'hidden' : ''}">
                                 ${textPhonetic}
