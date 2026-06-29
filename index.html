@@ -43,7 +43,7 @@
             border-radius: 2.5rem;
         }
         
-        /* BARRE AUDIO PRINCIPALE COLLÉE EN BAS DE L'ÉCRAN */
+        /* 1. LECTEUR AUDIO PRINCIPAL FIXÉ TOUT EN BAS DE L'ÉCRAN */
         .audio-player-container {
             position: fixed !important;
             bottom: 16px !important;
@@ -61,30 +61,29 @@
         }
         audio { height: 40px; width: 100%; outline: none; display: block; }
         
-        /* Masque automatiquement la barre du bas si aucun audio n'est chargé */
-        audio:not([src]), audio[src=""], audio[src="null"] {
-            display: none !important;
-        }
+        /* Masquage automatique du lecteur fixe si vide */
+        audio:not([src]), audio[src=""], audio[src="null"] { display: none !important; }
         .audio-player-container:has(audio:not([src])), 
         .audio-player-container:has(audio[src=""]),
-        .audio-player-container:has(audio[src="null"]) {
-            display: none !important;
-        }
+        .audio-player-container:has(audio[src="null"]) { display: none !important; }
         
-        /* CORRECTION FORCEE POUR LE BLOC SOURATES SUIVANTE/PRECEDENTE */
-        /* On interdit à la classe d'origine d'aller se fixer en bas, elle reste à sa place sous le texte */
+        /* 2. LE CORRECTIF GLOBAL POUR METTRE LES BOUTONS SOUS LE DERNIER VERSET */
+        /* On neutralise la classe fixe pour ce bloc précis */
         #audioPlaybackContainer.audio-fixed-bar {
-            position: static !important;
-            width: 100% !important;
+            position: relative !important;
+            bottom: auto !important;
+            left: auto !important;
             transform: none !important;
-            margin-top: 3rem !important;
+            width: 100% !important;
+            margin-top: 2.5rem !important;
             margin-bottom: 2rem !important;
             box-shadow: none !important;
             background: transparent !important;
             border: none !important;
+            z-index: 10 !important;
         }
 
-        /* On force l'audio interne à ce bloc à ne pas cloner le style du lecteur du bas */
+        /* On force l'audio à l'intérieur de ce bloc à rester sagement en ligne entre les flèches */
         #audioPlaybackContainer .audio-player-container {
             position: static !important;
             transform: none !important;
@@ -145,7 +144,6 @@
         </div>
     </nav>
 
-
     <div class="audio-player-container">
         <audio controls id="audioPlayer">
             <source src="" type="audio/mpeg">
@@ -188,6 +186,7 @@
 
         <div id="audioPlaybackContainer" class="audio-fixed-bar hidden">
             <div class="max-w-4xl mx-auto flex justify-center items-center gap-3">
+                
                 <button onclick="changeSurah(-1)" class="bg-zinc-900/95 hover:bg-zinc-800 text-emerald-400 p-2 rounded-full border border-white/10 transition-all shadow-xl shrink-0">
                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M15 19l-7-7 7-7"></path>
@@ -203,6 +202,7 @@
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M9 5l7 7-7 7"></path>
                     </svg>
                 </button>
+                
             </div>
         </div>
     </main>
@@ -212,8 +212,6 @@
             <path stroke-linecap="round" stroke-linejoin="round" d="M4.5 15.75l7.5-7.5 7.5 7.5"></path>
         </svg>
     </button>
-
-
 
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-database-compat.js"></script>
